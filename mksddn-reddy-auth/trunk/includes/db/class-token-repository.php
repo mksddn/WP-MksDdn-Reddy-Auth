@@ -65,6 +65,7 @@ class Mksddn_Reddy_Auth_Token_Repository {
 	public function insert( array $data ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom token table has no WP API wrapper.
 		$inserted = $wpdb->insert(
 			$this->table_name,
 			$data,
@@ -90,9 +91,11 @@ class Mksddn_Reddy_Auth_Token_Repository {
 	public function find_active_by_hash( $token_hash ) {
 		global $wpdb;
 
-		$now = gmdate( 'Y-m-d H:i:s' );
+		$now        = gmdate( 'Y-m-d H:i:s' );
+		$table_name = $this->table_name;
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is plugin-owned, not user input.
 		$sql = $wpdb->prepare(
-			"SELECT * FROM {$this->table_name}
+			"SELECT * FROM {$table_name}
 			WHERE token_hash = %s
 				AND revoked_at IS NULL
 				AND expires_at > %s
@@ -100,7 +103,9 @@ class Mksddn_Reddy_Auth_Token_Repository {
 			$token_hash,
 			$now
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- query prepared above.
 		return $wpdb->get_row( $sql );
 	}
 
@@ -113,6 +118,7 @@ class Mksddn_Reddy_Auth_Token_Repository {
 	public function revoke_by_hash( $token_hash ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom token table has no WP API wrapper.
 		$wpdb->update(
 			$this->table_name,
 			array(
@@ -135,6 +141,7 @@ class Mksddn_Reddy_Auth_Token_Repository {
 	public function touch_last_used( $token_hash ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom token table has no WP API wrapper.
 		$wpdb->update(
 			$this->table_name,
 			array(

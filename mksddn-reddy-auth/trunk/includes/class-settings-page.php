@@ -127,29 +127,31 @@ class Mksddn_Reddy_Auth_Settings_Page {
 
 		add_settings_field(
 			'send_rate_limit',
-			__( 'Send-code limit per window', 'mksddn-reddy-auth' ),
+			__( 'Send-code limit (per 5 minutes)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_number_field' ),
 			self::PAGE_SLUG,
 			'mksddn_reddy_auth_main_section',
 			array(
-				'key'  => 'send_rate_limit',
-				'min'  => 1,
-				'max'  => 20,
-				'step' => 1,
+				'key'         => 'send_rate_limit',
+				'min'         => 1,
+				'max'         => 20,
+				'step'        => 1,
+				'description' => __( 'Max OTP send requests per Reddy ID and client IP within a fixed 5-minute window.', 'mksddn-reddy-auth' ),
 			)
 		);
 
 		add_settings_field(
 			'login_rate_limit',
-			__( 'Login limit per window', 'mksddn-reddy-auth' ),
+			__( 'Login attempt limit (per 10 minutes)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_number_field' ),
 			self::PAGE_SLUG,
 			'mksddn_reddy_auth_main_section',
 			array(
-				'key'  => 'login_rate_limit',
-				'min'  => 1,
-				'max'  => 30,
-				'step' => 1,
+				'key'         => 'login_rate_limit',
+				'min'         => 1,
+				'max'         => 30,
+				'step'        => 1,
+				'description' => __( 'Max login attempts per Reddy ID and client IP within a fixed 10-minute window.', 'mksddn-reddy-auth' ),
 			)
 		);
 
@@ -297,6 +299,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		$selected = isset( $settings['login_page_id'] ) ? (int) $settings['login_page_id'] : 0;
 		?>
 		<?php
+		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_dropdown_pages escapes output internally.
 		wp_dropdown_pages(
 			array(
 				'name'              => self::SETTINGS_OPTION_KEY . '[login_page_id]',
@@ -305,6 +308,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 				'option_none_value' => '0',
 			)
 		);
+		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 		?>
 		<p class="description">
 			<?php echo esc_html__( 'Select page where [mksddn_reddy_login] shortcode is placed.', 'mksddn-reddy-auth' ); ?>
@@ -335,6 +339,11 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			step="<?php echo esc_attr( (string) $step ); ?>"
 			class="small-text"
 		/>
+		<?php if ( ! empty( $args['description'] ) ) : ?>
+		<p class="description">
+			<?php echo esc_html( (string) $args['description'] ); ?>
+		</p>
+		<?php endif; ?>
 		<?php
 	}
 
@@ -421,6 +430,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	public function test_bot_connection() {
 		$this->assert_download_permissions( 'mksddn_reddy_test_bot_connection' );
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in assert_download_permissions().
 		$reddy_id = isset( $_POST['test_reddy_id'] ) ? sanitize_text_field( wp_unslash( $_POST['test_reddy_id'] ) ) : '';
 		$client   = new Mksddn_Reddy_Auth_Reddy_Client();
 		$result   = $client->test_connection( $reddy_id );
@@ -551,7 +561,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return void
 	 */
 	private function render_bot_test_notice() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag after redirect.
 		$status = isset( $_GET['mksddn_reddy_bot_test'] ) ? sanitize_key( wp_unslash( $_GET['mksddn_reddy_bot_test'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only notice after redirect; sanitized on assignment.
 		$msg    = isset( $_GET['mksddn_reddy_bot_msg'] ) ? sanitize_text_field( urldecode( (string) wp_unslash( $_GET['mksddn_reddy_bot_msg'] ) ) ) : '';
 
 		if ( '' === $status || '' === $msg ) {

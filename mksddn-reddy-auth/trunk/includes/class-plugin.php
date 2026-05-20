@@ -143,7 +143,6 @@ class Mksddn_Reddy_Auth_Plugin {
 	 * @return void
 	 */
 	public function run() {
-		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'rest_api_init', array( $this->rest_controller, 'register_routes' ) );
 		add_action( 'admin_menu', array( $this->settings_page, 'register_menu' ) );
 		add_action( 'admin_init', array( $this->settings_page, 'register_settings' ) );
@@ -154,15 +153,6 @@ class Mksddn_Reddy_Auth_Plugin {
 		add_filter( 'rest_authentication_errors', array( $this->rest_auth_middleware, 'enforce_api_content_lock' ), 20 );
 		add_action( 'template_redirect', array( $this->rest_auth_middleware, 'enforce_monolith_content_lock' ), 1 );
 		$this->login_shortcode->register_hooks();
-	}
-
-	/**
-	 * Load plugin translations.
-	 *
-	 * @return void
-	 */
-	public function load_textdomain() {
-		load_plugin_textdomain( 'mksddn-reddy-auth', false, dirname( plugin_basename( MKSDDN_REDDY_AUTH_FILE ) ) . '/languages' );
 	}
 
 	/**

@@ -63,11 +63,12 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	 * @return string
 	 */
 	public function render_shortcode() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag after redirect.
 		$status = isset( $_GET['mksddn_reddy_status'] ) ? sanitize_key( wp_unslash( $_GET['mksddn_reddy_status'] ) ) : '';
 		$message = '';
 
-		if ( isset( $_GET['mksddn_reddy_message'] ) ) {
-			$message = sanitize_text_field( urldecode( (string) wp_unslash( $_GET['mksddn_reddy_message'] ) ) );
+		if ( isset( $_GET['mksddn_reddy_message'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice after redirect.
+			$message = sanitize_text_field( urldecode( (string) wp_unslash( $_GET['mksddn_reddy_message'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized on assignment.
 		}
 
 		if ( '' === $message ) {

@@ -62,8 +62,10 @@ class Mksddn_Reddy_Auth_Identity_Service {
 
 		$users = get_users(
 			array(
-				'number'     => 1,
-				'meta_key'   => self::REDDY_ID_META_KEY,
+				'number' => 1,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- required lookup by Reddy ID mapping.
+				'meta_key' => self::REDDY_ID_META_KEY,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- required lookup by Reddy ID mapping.
 				'meta_value' => $reddy_id,
 			)
 		);

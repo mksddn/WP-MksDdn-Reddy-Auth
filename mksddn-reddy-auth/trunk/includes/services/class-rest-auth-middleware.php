@@ -153,7 +153,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return bool
 	 */
 	private function is_public_auth_route() {
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
 		if ( '' === $request_uri ) {
 			return false;
 		}
@@ -323,7 +323,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 */
 	private function is_current_request_url( $target_url ) {
 		$target_path = (string) wp_parse_url( (string) $target_url, PHP_URL_PATH );
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
 		$request_path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
 
 		return '' !== $target_path && $target_path === $request_path;
