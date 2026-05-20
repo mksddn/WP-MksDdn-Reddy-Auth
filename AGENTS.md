@@ -72,3 +72,12 @@ A task is done only when all items are true:
 
 - WordPress Plugin Handbook (Context7: `/kasparsd/wp-docs-md`)
 - WordPress Coding Standards docs (Context7: `/wordpress/wpcs-docs`)
+
+## Plugin Documentation
+
+- Keep architecture and flow notes in `docs/PLUGIN_ARCHITECTURE.md`.
+- Update this file in the same task only when plugin contracts change:
+  - REST routes or request/response contracts,
+  - option/meta keys or DB schema,
+  - public hooks,
+  - integrator-visible auth flow behavior.
