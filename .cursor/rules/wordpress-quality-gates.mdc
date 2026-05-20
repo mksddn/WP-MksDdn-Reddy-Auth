@@ -1,0 +1,35 @@
+---
+description: Quality checks for WordPress plugin changes
+globs:
+  - "**/*.php"
+alwaysApply: true
+---
+
+# WordPress Quality Gates
+
+## Mandatory Before Finish
+
+- Confirm task scope is met without unrelated file changes.
+- Confirm security path exists for changed flows (capability + nonce where applicable).
+- Confirm sanitization on write and escaping on output in changed code.
+- Confirm i18n wrappers for new user-facing strings.
+
+## Standards and Tooling
+
+- Follow WPCS for PHP.
+- Run `phpcs` on changed files when toolchain exists.
+- Use `phpcbf` only for safe mechanical fixes.
+- If standards cannot be run locally, state this explicitly and provide manual verification notes.
+
+## Minimal Verification
+
+- Validate at least one happy path.
+- Validate one negative path (invalid permission, bad nonce, invalid input, or similar).
+- Verify no backward compatibility regression in hooks/options/data contracts touched by the task.
+
+## Reporting
+
+- Final task response must include:
+  - what changed,
+  - how it was verified,
+  - any residual risks or skipped checks.

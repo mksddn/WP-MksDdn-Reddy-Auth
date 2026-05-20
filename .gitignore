@@ -1,0 +1,98 @@
+# WordPress плагин - MksDdn Migrate Content
+# Исключения для GitHub репозитория
+
+# Системные файлы
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Временные файлы
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Логи
+*.log
+logs/
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.atom/
+.brackets.json
+
+# Node.js (если используется для сборки)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# gettext — default output of `msgfmt` without `-o` (not used; plugin uses trunk/languages/mksddn-migrate-content-*.mo)
+messages.mo
+
+# PHP
+# vendor/
+composer.lock
+.phpunit.result.cache
+
+# WordPress специфичные
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/backup-db/
+wp-content/backups/
+wp-content/blogs.dir/
+wp-content/upgrade/
+wp-content/uploads/
+wp-content/mu-plugins/
+wp-content/wp-cache-config.php
+
+# Плагин специфичные
+# Исключаем файлы разработки, но оставляем структуру плагина
+mksddn-migrate-content/tests/coverage/
+mksddn-migrate-content/tests/reports/
+mksddn-migrate-content/assets/build/
+mksddn-migrate-content/assets/dist/
+
+# Конфигурационные файлы с секретами
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Временные файлы плагина
+mksddn-migrate-content/temp/
+mksddn-migrate-content/cache/
+
+# Файлы сборки (если используются)
+*.zip
+*.tar.gz
+build/
+dist/
+
+# Документация разработки (оставляем только финальную)
+docs/drafts/
+docs/temp/
+*.md.bak
+
+# Git
+.git/
+.gitignore.bak 
+
+# WordPress.org SVN
+.svn
+tags/
+
+# Cursor
+!.cursor/

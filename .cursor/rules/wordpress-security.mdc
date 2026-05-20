@@ -1,0 +1,43 @@
+---
+description: WordPress plugin security requirements
+globs:
+  - "**/*.php"
+alwaysApply: true
+---
+
+# WordPress Security
+
+## Access Control
+
+- Check capabilities (`current_user_can`) before every privileged action.
+- Never rely only on hidden fields or UI visibility for authorization.
+
+## CSRF Protection
+
+- Use nonces for any state-changing request.
+- Validate nonce with `check_admin_referer` or `check_ajax_referer` depending on context.
+
+## Input Handling
+
+- Treat all external input as untrusted.
+- Validate data shape and allowed values before business logic.
+- Sanitize input before persisting (`sanitize_text_field`, `sanitize_key`, `absint`, etc.).
+
+## Output Handling
+
+- Escape all dynamic output at render time:
+  - `esc_html` for text nodes
+  - `esc_attr` for attribute values
+  - `esc_url` for URLs
+  - `wp_kses_post` only when controlled HTML is allowed
+
+## Database Safety
+
+- Use `$wpdb->prepare()` for dynamic SQL values.
+- Avoid direct interpolation of user-controlled data in SQL.
+- Keep schema updates through controlled migrations (`dbDelta` when needed).
+
+## Operational Safety
+
+- Do not expose stack traces or sensitive internals to users.
+- Keep uninstall cleanup guarded by `WP_UNINSTALL_PLUGIN`.

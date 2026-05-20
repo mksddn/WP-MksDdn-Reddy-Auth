@@ -1,0 +1,41 @@
+---
+description: WordPress plugin architecture and coding standards
+globs:
+  - "**/*.php"
+alwaysApply: true
+---
+
+# WordPress Plugin Standards
+
+## Architecture
+
+- Keep plugin modules small and focused.
+- Prefer composition over large procedural files.
+- Add new hooks/filters for extensibility instead of hard-coded behavior.
+- Keep public hook names stable; avoid silent renames.
+- Place plugin runtime code only under `mksddn-reddy-auth/trunk`.
+- Keep agent docs and config in repository root (`AGENTS.md`, `.cursor/*`, `docs/ai/*`).
+
+## Naming
+
+- Use clear and consistent prefixes for global functions, option keys, and constants.
+- Use class names that describe domain intent.
+- Keep file names aligned with class/function responsibility.
+
+## WordPress APIs
+
+- Use WordPress APIs for options, metadata, users, HTTP, and cron instead of custom wrappers unless justified.
+- Use Settings API for admin settings pages.
+- Register assets via `wp_enqueue_script` and `wp_enqueue_style` in proper hooks.
+- For lifecycle logic, use `register_activation_hook` and `register_deactivation_hook`.
+
+## Internationalization
+
+- Wrap all user-facing strings in i18n functions.
+- Keep one consistent text domain.
+- Use escaped translation helpers when rendering into HTML attributes or plain HTML.
+
+## Backward Compatibility
+
+- Do not break existing option names, hook contracts, or persisted data shape without explicit migration.
+- If migration is required, implement explicit version checks and migration steps.
