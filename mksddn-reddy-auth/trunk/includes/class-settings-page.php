@@ -88,6 +88,14 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		);
 
 		add_settings_field(
+			'allowed_urls',
+			__( 'Allowed request sources', 'mksddn-reddy-auth' ),
+			array( $this, 'render_allowed_urls_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_main_section'
+		);
+
+		add_settings_field(
 			'api_lock_enabled',
 			__( 'Protect all REST API content', 'mksddn-reddy-auth' ),
 			array( $this, 'render_api_lock_field' ),
@@ -254,6 +262,29 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		$value = (string) get_option( self::BOT_TOKEN_OPTION_KEY, '' );
 		?>
 		<input type="password" name="<?php echo esc_attr( self::BOT_TOKEN_OPTION_KEY ); ?>" value="<?php echo esc_attr( $value ); ?>" class="regular-text" autocomplete="off" />
+		<?php
+	}
+
+	/**
+	 * Render allowed request source URLs field.
+	 *
+	 * @return void
+	 */
+	public function render_allowed_urls_field() {
+		$settings = $this->get_settings();
+		$allowed  = isset( $settings['allowed_urls'] ) && is_array( $settings['allowed_urls'] ) ? $settings['allowed_urls'] : array();
+		$value    = implode( "\n", $allowed );
+		?>
+		<textarea
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[allowed_urls]' ); ?>"
+			rows="5"
+			cols="50"
+			class="large-text code"
+			placeholder="https://app.example.com&#10;https://admin.example.com/panel"
+		><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description">
+			<?php echo esc_html__( 'One URL per line (Origin or Referer). Leave empty to allow all sources. Applies to plugin REST endpoints only.', 'mksddn-reddy-auth' ); ?>
+		</p>
 		<?php
 	}
 
@@ -464,8 +495,10 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	public function sanitize_settings( $raw ) {
 		$raw      = is_array( $raw ) ? $raw : array();
 		$defaults = $this->get_default_settings();
+		$url_guard = new Mksddn_Reddy_Auth_Request_Url_Guard();
 
 		$sanitized = array(
+			'allowed_urls' => $url_guard->sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
 			'api_lock_enabled' => ! empty( $raw['api_lock_enabled'] ) ? 1 : 0,
 			'monolith_lock_enabled' => ! empty( $raw['monolith_lock_enabled'] ) ? 1 : 0,
 			'login_page_id' => isset( $raw['login_page_id'] ) ? absint( $raw['login_page_id'] ) : 0,
@@ -508,6 +541,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 */
 	private function get_default_settings() {
 		return array(
+			'allowed_urls' => array(),
 			'api_lock_enabled' => 1,
 			'monolith_lock_enabled' => 1,
 			'login_page_id' => 0,

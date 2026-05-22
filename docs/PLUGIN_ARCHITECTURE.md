@@ -78,7 +78,7 @@
 ## Data Storage
 
 - Options:
-  - `mksddn_reddy_auth_settings`
+  - `mksddn_reddy_auth_settings` (includes `allowed_urls` string array)
   - `mksddn_reddy_auth_bot_token` (dev fallback)
   - `mksddn_reddy_auth_version`
 - User meta:
@@ -88,6 +88,16 @@
   - `{prefix}mksddn_reddy_tokens`
 - Transients:
   - OTP and rate limit state.
+
+## Request URL Allowlist
+
+- Setting: `allowed_urls` in `mksddn_reddy_auth_settings` (array of strings).
+- Empty list: no source restriction (default, backward compatible).
+- Non-empty list: only matching `Origin` or `Referer` may call plugin REST routes (`/mksddn-reddy-auth/v1/*`).
+- Supported formats: `https://host`, optional path prefix (e.g. `https://app.example.com/admin`).
+- Enforcement: `rest_pre_dispatch` via `Mksddn_Reddy_Auth_Request_Url_Guard` (HTTP 403).
+- Extension filter: `mksddn_reddy_is_request_url_allowed`.
+- Does not apply to monolith shortcode/admin-post login forms.
 
 ## Security Invariants
 

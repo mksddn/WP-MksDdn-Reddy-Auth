@@ -74,6 +74,13 @@ class Mksddn_Reddy_Auth_Plugin {
 	private $rest_auth_middleware;
 
 	/**
+	 * Request URL allowlist guard.
+	 *
+	 * @var Mksddn_Reddy_Auth_Request_Url_Guard
+	 */
+	private $request_url_guard;
+
+	/**
 	 * Settings page.
 	 *
 	 * @var Mksddn_Reddy_Auth_Settings_Page
@@ -150,6 +157,7 @@ class Mksddn_Reddy_Auth_Plugin {
 		add_action( 'admin_post_mksddn_reddy_download_postman', array( $this->settings_page, 'download_postman_collection' ) );
 		add_action( 'admin_post_mksddn_reddy_test_bot_connection', array( $this->settings_page, 'test_bot_connection' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( MKSDDN_REDDY_AUTH_FILE ), array( $this, 'add_plugin_action_links' ) );
+		add_filter( 'rest_pre_dispatch', array( $this->request_url_guard, 'enforce_rest_url_allowlist' ), 5, 3 );
 		add_filter( 'rest_authentication_errors', array( $this->rest_auth_middleware, 'enforce_api_content_lock' ), 20 );
 		add_action( 'template_redirect', array( $this->rest_auth_middleware, 'enforce_monolith_content_lock' ), 1 );
 		$this->login_shortcode->register_hooks();
@@ -217,6 +225,7 @@ class Mksddn_Reddy_Auth_Plugin {
 		$this->session_service  = new Mksddn_Reddy_Auth_Session_Service();
 		$this->token_service    = new Mksddn_Reddy_Auth_Token_Service( new Mksddn_Reddy_Auth_Token_Repository() );
 		$this->rest_auth_middleware = new Mksddn_Reddy_Auth_Rest_Auth_Middleware( $this->token_service );
+		$this->request_url_guard    = new Mksddn_Reddy_Auth_Request_Url_Guard();
 		$this->settings_page = new Mksddn_Reddy_Auth_Settings_Page();
 		$this->login_shortcode = new Mksddn_Reddy_Auth_Login_Shortcode(
 			$this->otp_service,
