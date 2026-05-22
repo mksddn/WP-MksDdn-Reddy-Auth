@@ -90,7 +90,7 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	public function get_allowed_urls() {
 		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
 		$settings = is_array( $settings ) ? $settings : array();
-		$allowed = isset( $settings['allowed_urls'] ) ? $settings['allowed_urls'] : array();
+		$allowed  = isset( $settings['allowed_urls'] ) ? $settings['allowed_urls'] : array();
 
 		if ( is_string( $allowed ) ) {
 			$allowed = self::sanitize_allowed_urls( $allowed );

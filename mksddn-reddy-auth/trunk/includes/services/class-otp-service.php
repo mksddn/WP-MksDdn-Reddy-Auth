@@ -82,7 +82,7 @@ class Mksddn_Reddy_Auth_Otp_Service {
 			return new WP_Error( 'invalid_request', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
 		}
 
-		$ip = $this->get_request_ip();
+		$ip                = $this->get_request_ip();
 		$rate_limit_result = $this->assert_rate_limit( 'send', $reddy_id, $ip, $this->send_limit, $this->send_window_seconds );
 
 		if ( is_wp_error( $rate_limit_result ) ) {
@@ -99,11 +99,11 @@ class Mksddn_Reddy_Auth_Otp_Service {
 		$stored    = set_transient(
 			$this->get_otp_key( $reddy_id ),
 			array(
-				'code_hash'   => $code_hash,
-				'created_at'  => time(),
-				'expires_at'  => time() + $this->ttl_seconds,
-				'request_ip'  => $this->hash_secret( $ip ),
-				'request_ua'  => $this->hash_secret( $this->get_request_user_agent() ),
+				'code_hash'  => $code_hash,
+				'created_at' => time(),
+				'expires_at' => time() + $this->ttl_seconds,
+				'request_ip' => $this->hash_secret( $ip ),
+				'request_ua' => $this->hash_secret( $this->get_request_user_agent() ),
 			),
 			$this->ttl_seconds
 		);
@@ -138,7 +138,7 @@ class Mksddn_Reddy_Auth_Otp_Service {
 			return new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
 		}
 
-		$ip = $this->get_request_ip();
+		$ip                = $this->get_request_ip();
 		$rate_limit_result = $this->assert_rate_limit( 'login', $reddy_id, $ip, $this->login_limit, $this->login_window_seconds );
 
 		if ( is_wp_error( $rate_limit_result ) ) {
@@ -260,12 +260,12 @@ class Mksddn_Reddy_Auth_Otp_Service {
 	 * @return true|WP_Error
 	 */
 	private function assert_rate_limit( $action, $reddy_id, $ip, $limit, $window_seconds ) {
-		$identity_hash   = md5( $action . '|' . $reddy_id . '|' . $ip );
-		$count_key       = 'mksddn_reddy_rate_count_' . $identity_hash;
-		$blocked_key     = 'mksddn_reddy_rate_block_' . $identity_hash;
-		$violations_key  = 'mksddn_reddy_rate_violation_' . $identity_hash;
-		$current_time    = time();
-		$blocked_until   = (int) get_transient( $blocked_key );
+		$identity_hash  = md5( $action . '|' . $reddy_id . '|' . $ip );
+		$count_key      = 'mksddn_reddy_rate_count_' . $identity_hash;
+		$blocked_key    = 'mksddn_reddy_rate_block_' . $identity_hash;
+		$violations_key = 'mksddn_reddy_rate_violation_' . $identity_hash;
+		$current_time   = time();
+		$blocked_until  = (int) get_transient( $blocked_key );
 
 		if ( $blocked_until > $current_time ) {
 			return new WP_Error( 'rate_limited', __( 'Too many requests. Try again later.', 'mksddn-reddy-auth' ) );
@@ -294,10 +294,10 @@ class Mksddn_Reddy_Auth_Otp_Service {
 	 * @return void
 	 */
 	private function bootstrap_from_settings() {
-		$settings                 = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings                 = is_array( $settings ) ? $settings : array();
-		$this->ttl_seconds        = isset( $settings['otp_ttl_seconds'] ) ? max( 60, min( 900, (int) $settings['otp_ttl_seconds'] ) ) : $this->ttl_seconds;
-		$this->send_limit         = isset( $settings['send_rate_limit'] ) ? max( 1, min( 20, (int) $settings['send_rate_limit'] ) ) : $this->send_limit;
-		$this->login_limit        = isset( $settings['login_rate_limit'] ) ? max( 1, min( 30, (int) $settings['login_rate_limit'] ) ) : $this->login_limit;
+		$settings          = get_option( self::SETTINGS_OPTION_KEY, array() );
+		$settings          = is_array( $settings ) ? $settings : array();
+		$this->ttl_seconds = isset( $settings['otp_ttl_seconds'] ) ? max( 60, min( 900, (int) $settings['otp_ttl_seconds'] ) ) : $this->ttl_seconds;
+		$this->send_limit  = isset( $settings['send_rate_limit'] ) ? max( 1, min( 20, (int) $settings['send_rate_limit'] ) ) : $this->send_limit;
+		$this->login_limit = isset( $settings['login_rate_limit'] ) ? max( 1, min( 30, (int) $settings['login_rate_limit'] ) ) : $this->login_limit;
 	}
 }

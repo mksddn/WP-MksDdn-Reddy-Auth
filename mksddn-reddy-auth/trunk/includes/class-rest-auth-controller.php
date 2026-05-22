@@ -63,12 +63,12 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	 * @param Mksddn_Reddy_Auth_Request_Url_Guard    $request_url_guard Request source guard.
 	 */
 	public function __construct( Mksddn_Reddy_Auth_Otp_Service $otp_service, Mksddn_Reddy_Auth_Identity_Service $identity_service, Mksddn_Reddy_Auth_Session_Service $session_service, Mksddn_Reddy_Auth_Token_Service $token_service, Mksddn_Reddy_Auth_Rest_Auth_Middleware $auth_middleware, Mksddn_Reddy_Auth_Request_Url_Guard $request_url_guard ) {
-		$this->otp_service         = $otp_service;
-		$this->identity_service    = $identity_service;
-		$this->session_service     = $session_service;
-		$this->token_service       = $token_service;
-		$this->auth_middleware     = $auth_middleware;
-		$this->request_url_guard   = $request_url_guard;
+		$this->otp_service       = $otp_service;
+		$this->identity_service  = $identity_service;
+		$this->session_service   = $session_service;
+		$this->token_service     = $token_service;
+		$this->auth_middleware   = $auth_middleware;
+		$this->request_url_guard = $request_url_guard;
 	}
 
 	/**
@@ -102,20 +102,20 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
 				'callback'            => array( $this, 'login' ),
 				'args'                => array(
-					'reddy_id' => array(
+					'reddy_id'    => array(
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
-					'code'     => array(
+					'code'        => array(
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 					'issue_token' => array(
-						'required'          => false,
-						'type'              => 'boolean',
-						'default'           => false,
+						'required' => false,
+						'type'     => 'boolean',
+						'default'  => false,
 					),
 				),
 			)

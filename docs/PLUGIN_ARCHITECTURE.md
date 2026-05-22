@@ -101,6 +101,12 @@
 - Extension filter: `mksddn_reddy_is_request_url_allowed` (always invoked; can deny even when the list is empty).
 - Does not apply to monolith shortcode/admin-post login forms.
 
+## Site and REST Protection Defaults
+
+- Fresh install seeds `mksddn_reddy_auth_settings` with `api_lock_enabled` and `monolith_lock_enabled` set to `0` (off).
+- Monolith lock does not run until a login page, login URL, or published page with `[mksddn_reddy_login]` exists.
+- Existing sites that already saved `1` for lock flags keep their behavior until an admin changes settings.
+
 ## Security Invariants
 
 - Never store raw OTP in DB/options; compare hash values only.

@@ -168,7 +168,8 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	/**
 	 * Redirect back with status query argument.
 	 *
-	 * @param string $status Status key.
+	 * @param string $status  Status key.
+	 * @param string $message Optional user-visible message.
 	 * @return void
 	 */
 	private function redirect_with_status( $status, $message = '' ) {

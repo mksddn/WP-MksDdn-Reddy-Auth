@@ -47,8 +47,8 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	 * @return true|WP_Error
 	 */
 	public function send_otp_code( $reddy_id, $otp_code, $ttl_seconds ) {
-		$reddy_id = sanitize_text_field( $reddy_id );
-		$otp_code = sanitize_text_field( $otp_code );
+		$reddy_id  = sanitize_text_field( $reddy_id );
+		$otp_code  = sanitize_text_field( $otp_code );
 		$bot_token = $this->get_bot_token();
 
 		if ( '' === $reddy_id || '' === $otp_code || $ttl_seconds <= 0 ) {
@@ -93,7 +93,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	 * @return true|WP_Error
 	 */
 	public function test_connection( $reddy_id ) {
-		$reddy_id = sanitize_text_field( (string) $reddy_id );
+		$reddy_id  = sanitize_text_field( (string) $reddy_id );
 		$bot_token = $this->get_bot_token();
 
 		if ( '' === $reddy_id ) {

@@ -2,7 +2,7 @@
 Contributors: mksddn
 Tags: authentication, otp, rest-api, login
 Requires at least: 6.2
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 0.1.1
 License: GPLv2 or later
@@ -50,7 +50,7 @@ Users enter their Reddy ID, receive a one-time code in Reddy, and sign in throug
 
 = 3. Review protection settings =
 
-By default, both options are enabled:
+By default, both protection options are **disabled** so your site stays accessible after activation. Enable them only after the login page is configured:
 
 * **Protect site content** — redirects unauthenticated visitors to the login page.
 * **Protect all REST API content** — returns `401` for protected REST routes.
@@ -118,12 +118,44 @@ Settings in WordPress options, Reddy ID mapping in user meta, Bearer token hashe
 
 If uninstall cleanup runs, plugin-owned options, user meta, custom tables, and transients are removed according to `uninstall.php`.
 
+== External services ==
+
+This plugin connects to the **Reddy bot API** to send one-time passwords and connection test messages.
+
+**What the service is used for**
+
+* Deliver OTP codes to a Reddy user during login.
+* Send an optional admin "bot connection test" message from **Settings > Reddy Auth**.
+
+**What data is sent and when**
+
+* **OTP send / login:** Reddy user ID (`userKey`), message text containing the one-time code (and expiry hint). Sent when a user requests a code or when the admin runs a bot test.
+* **Bot token:** Your bot token is included in the API request URL path (configured via `MKSDDN_REDDY_BOT_TOKEN` in `wp-config.php` or the development fallback field in settings). It is not sent to WordPress.org.
+
+Data is transmitted only when OTP delivery or the connection test is triggered. The plugin does not send site content, post data, or WordPress user passwords to Reddy.
+
+**Service provider**
+
+Reddy bot platform — API host: `https://bot.reddy.team`
+
+**Links**
+
+* Product site: https://reddy.team
+* Review Reddy terms and privacy documentation provided with your Reddy bot account before enabling the plugin on production sites.
+
+No other third-party services are required for core plugin operation.
+
 == Changelog ==
 
 = 0.1.1 =
+* **External services** disclosure in readme for Reddy bot API (OTP delivery).
+* Safer defaults: site and REST protection disabled until explicitly enabled in settings.
+* Monolith content lock skipped until a login page or shortcode page is configured.
+* Admin setup notice after activation pointing to **Settings > Reddy Auth**.
+* Uninstall cleanup removes plugin-owned transients (OTP and rate-limit state).
 * Optional **Allowed request sources** for plugin REST endpoints (Origin/Referer allowlist, HTTP 403 when mismatched).
 * Updated plugin metadata (GitHub URIs, license, WordPress and PHP requirements).
-* Tested up to WordPress 6.9.
+* Tested up to WordPress 7.0.
 * Hardened REST middleware: sanitize request URI before route checks.
 * Clearer rate limit labels and field descriptions in settings.
 * Improved uninstall cleanup and WPCS compliance across core files.

@@ -32,6 +32,13 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	const PAGE_SLUG = 'mksddn-reddy-auth';
 
 	/**
+	 * Transient key for one-time post-activation setup notice.
+	 *
+	 * @var string
+	 */
+	const SETUP_NOTICE_TRANSIENT = 'mksddn_reddy_auth_show_setup_notice';
+
+	/**
 	 * Register plugin settings page.
 	 *
 	 * @return void
@@ -225,7 +232,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 					<?php echo esc_html__( '4) If site protection is enabled, select Login page to avoid redirect loops.', 'mksddn-reddy-auth' ); ?>
 				</p>
 				<p style="margin:0;">
-					<?php echo esc_html__( 'If site/API protection flags are enabled, unauthenticated users will be redirected or receive 401 until they sign in via Reddy.', 'mksddn-reddy-auth' ); ?>
+					<?php echo esc_html__( 'Site and REST protection are off by default. Enable them only after the login page is ready.', 'mksddn-reddy-auth' ); ?>
 				</p>
 			</div>
 			<?php $this->render_bot_test_notice(); ?>
@@ -251,6 +258,50 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 */
 	public function render_section_description() {
 		echo '<p>' . esc_html__( 'Use wp-config constant MKSDDN_REDDY_BOT_TOKEN in production.', 'mksddn-reddy-auth' ) . '</p>';
+	}
+
+	/**
+	 * Show dismissible setup notice after plugin activation.
+	 *
+	 * @return void
+	 */
+	public function maybe_render_setup_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- dismiss action verified below.
+		if ( isset( $_GET['mksddn_reddy_dismiss_setup'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['mksddn_reddy_dismiss_setup'] ) ) ) {
+			check_admin_referer( 'mksddn_reddy_dismiss_setup' );
+			delete_transient( self::SETUP_NOTICE_TRANSIENT );
+			wp_safe_redirect( remove_query_arg( array( 'mksddn_reddy_dismiss_setup', '_wpnonce' ) ) );
+			exit;
+		}
+
+		if ( ! get_transient( self::SETUP_NOTICE_TRANSIENT ) ) {
+			return;
+		}
+
+		$settings_url = admin_url( 'options-general.php?page=' . self::PAGE_SLUG );
+		$dismiss_url  = wp_nonce_url(
+			add_query_arg( 'mksddn_reddy_dismiss_setup', '1' ),
+			'mksddn_reddy_dismiss_setup'
+		);
+		?>
+		<div class="notice notice-info is-dismissible">
+			<p>
+				<strong><?php echo esc_html__( 'Reddy Auth is active.', 'mksddn-reddy-auth' ); ?></strong>
+				<?php
+				echo esc_html__(
+					'Configure your bot token, create a login page with [mksddn_reddy_login], then optionally enable site or REST protection.',
+					'mksddn-reddy-auth'
+				);
+				?>
+				<a href="<?php echo esc_url( $settings_url ); ?>"><?php echo esc_html__( 'Open settings', 'mksddn-reddy-auth' ); ?></a>
+				| <a href="<?php echo esc_url( $dismiss_url ); ?>"><?php echo esc_html__( 'Dismiss', 'mksddn-reddy-auth' ); ?></a>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
@@ -478,9 +529,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 
 		$redirect_url = add_query_arg(
 			array(
-				'page'                   => self::PAGE_SLUG,
-				'mksddn_reddy_bot_test'  => $status,
-				'mksddn_reddy_bot_msg'   => rawurlencode( sanitize_text_field( $message ) ),
+				'page'                  => self::PAGE_SLUG,
+				'mksddn_reddy_bot_test' => $status,
+				'mksddn_reddy_bot_msg'  => rawurlencode( sanitize_text_field( $message ) ),
 			),
 			admin_url( 'options-general.php' )
 		);
@@ -500,15 +551,15 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		$defaults = $this->get_default_settings();
 
 		$sanitized = array(
-			'allowed_urls' => Mksddn_Reddy_Auth_Request_Url_Guard::sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
-			'api_lock_enabled' => ! empty( $raw['api_lock_enabled'] ) ? 1 : 0,
+			'allowed_urls'          => Mksddn_Reddy_Auth_Request_Url_Guard::sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
+			'api_lock_enabled'      => ! empty( $raw['api_lock_enabled'] ) ? 1 : 0,
 			'monolith_lock_enabled' => ! empty( $raw['monolith_lock_enabled'] ) ? 1 : 0,
-			'login_page_id' => isset( $raw['login_page_id'] ) ? absint( $raw['login_page_id'] ) : 0,
-			'login_page_url' => isset( $raw['login_page_url'] ) ? esc_url_raw( (string) $raw['login_page_url'] ) : '',
-			'otp_ttl_seconds' => $this->sanitize_int_range( $raw, 'otp_ttl_seconds', $defaults['otp_ttl_seconds'], 60, 900 ),
-			'send_rate_limit' => $this->sanitize_int_range( $raw, 'send_rate_limit', $defaults['send_rate_limit'], 1, 20 ),
-			'login_rate_limit' => $this->sanitize_int_range( $raw, 'login_rate_limit', $defaults['login_rate_limit'], 1, 30 ),
-			'token_ttl_seconds' => $this->sanitize_int_range( $raw, 'token_ttl_seconds', $defaults['token_ttl_seconds'], 3600, 7776000 ),
+			'login_page_id'         => isset( $raw['login_page_id'] ) ? absint( $raw['login_page_id'] ) : 0,
+			'login_page_url'        => isset( $raw['login_page_url'] ) ? esc_url_raw( (string) $raw['login_page_url'] ) : '',
+			'otp_ttl_seconds'       => $this->sanitize_int_range( $raw, 'otp_ttl_seconds', $defaults['otp_ttl_seconds'], 60, 900 ),
+			'send_rate_limit'       => $this->sanitize_int_range( $raw, 'send_rate_limit', $defaults['send_rate_limit'], 1, 20 ),
+			'login_rate_limit'      => $this->sanitize_int_range( $raw, 'login_rate_limit', $defaults['login_rate_limit'], 1, 30 ),
+			'token_ttl_seconds'     => $this->sanitize_int_range( $raw, 'token_ttl_seconds', $defaults['token_ttl_seconds'], 3600, 7776000 ),
 		);
 
 		return $sanitized;
@@ -537,22 +588,31 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
+	 * Default settings used on first install and as merge fallback.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function get_install_defaults() {
+		return array(
+			'allowed_urls'          => array(),
+			'api_lock_enabled'      => 0,
+			'monolith_lock_enabled' => 0,
+			'login_page_id'         => 0,
+			'login_page_url'        => '',
+			'otp_ttl_seconds'       => 300,
+			'send_rate_limit'       => 5,
+			'login_rate_limit'      => 7,
+			'token_ttl_seconds'     => 2592000,
+		);
+	}
+
+	/**
 	 * Get defaults for plugin settings.
 	 *
 	 * @return array<string, mixed>
 	 */
 	private function get_default_settings() {
-		return array(
-			'allowed_urls' => array(),
-			'api_lock_enabled' => 1,
-			'monolith_lock_enabled' => 1,
-			'login_page_id' => 0,
-			'login_page_url' => '',
-			'otp_ttl_seconds' => 300,
-			'send_rate_limit' => 5,
-			'login_rate_limit' => 7,
-			'token_ttl_seconds' => 2592000,
-		);
+		return self::get_install_defaults();
 	}
 
 	/**
@@ -600,7 +660,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag after redirect.
 		$status = isset( $_GET['mksddn_reddy_bot_test'] ) ? sanitize_key( wp_unslash( $_GET['mksddn_reddy_bot_test'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only notice after redirect; sanitized on assignment.
-		$msg    = isset( $_GET['mksddn_reddy_bot_msg'] ) ? sanitize_text_field( urldecode( (string) wp_unslash( $_GET['mksddn_reddy_bot_msg'] ) ) ) : '';
+		$msg = isset( $_GET['mksddn_reddy_bot_msg'] ) ? sanitize_text_field( urldecode( (string) wp_unslash( $_GET['mksddn_reddy_bot_msg'] ) ) ) : '';
 
 		if ( '' === $status || '' === $msg ) {
 			return;
@@ -637,18 +697,18 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 */
 	private function build_openapi_document() {
 		return array(
-			'openapi' => '3.0.3',
-			'info'    => array(
+			'openapi'    => '3.0.3',
+			'info'       => array(
 				'title'       => 'MksDdn Reddy Auth API',
 				'version'     => MKSDDN_REDDY_AUTH_VERSION,
 				'description' => 'REST API for OTP authentication and token/session flows. When Allowed request sources is configured in settings, auth routes may return 403 if Origin/Referer does not match (browser-source soft guard; not a substitute for OTP or Bearer auth).',
 			),
-			'servers' => array(
+			'servers'    => array(
 				array(
 					'url' => rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE ),
 				),
 			),
-			'paths'   => array(
+			'paths'      => array(
 				'/auth/send-code' => array(
 					'post' => array(
 						'summary'     => 'Send OTP code',
@@ -673,7 +733,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						),
 					),
 				),
-				'/auth/login' => array(
+				'/auth/login'     => array(
 					'post' => array(
 						'summary'     => 'Login by OTP',
 						'requestBody' => array(
@@ -700,7 +760,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						),
 					),
 				),
-				'/auth/me' => array(
+				'/auth/me'        => array(
 					'get' => array(
 						'summary'   => 'Get current user',
 						'security'  => array(
@@ -713,7 +773,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						),
 					),
 				),
-				'/auth/logout' => array(
+				'/auth/logout'    => array(
 					'post' => array(
 						'summary'   => 'Logout',
 						'security'  => array(
@@ -751,7 +811,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		$base_url = untrailingslashit( rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE ) );
 
 		return array(
-			'info' => array(
+			'info'     => array(
 				'_postman_id' => wp_generate_uuid4(),
 				'name'        => 'MksDdn Reddy Auth',
 				'description' => 'If Allowed request sources is set in WP settings, add an Origin header matching a listed URL or leave the allowlist empty for server-side clients.',
@@ -767,9 +827,18 @@ class Mksddn_Reddy_Auth_Settings_Page {
 					'value' => '',
 				),
 			),
-			'item' => array(
+			'item'     => array(
 				$this->build_postman_item( 'Send code', 'POST', '{{baseUrl}}/auth/send-code', array( 'reddy_id' => '123456' ) ),
-				$this->build_postman_item( 'Login', 'POST', '{{baseUrl}}/auth/login', array( 'reddy_id' => '123456', 'code' => '111111', 'issue_token' => true ) ),
+				$this->build_postman_item(
+					'Login',
+					'POST',
+					'{{baseUrl}}/auth/login',
+					array(
+						'reddy_id'    => '123456',
+						'code'        => '111111',
+						'issue_token' => true,
+					)
+				),
 				$this->build_postman_item( 'Me', 'GET', '{{baseUrl}}/auth/me', null, true ),
 				$this->build_postman_item( 'Logout', 'POST', '{{baseUrl}}/auth/logout', null, true ),
 			),

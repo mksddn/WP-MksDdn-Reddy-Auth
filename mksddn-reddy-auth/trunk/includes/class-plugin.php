@@ -122,6 +122,7 @@ class Mksddn_Reddy_Auth_Plugin {
 	 */
 	public static function activate() {
 		require_once MKSDDN_REDDY_AUTH_DIR . 'includes/db/class-token-repository.php';
+		require_once MKSDDN_REDDY_AUTH_DIR . 'includes/class-settings-page.php';
 
 		$token_repository = new Mksddn_Reddy_Auth_Token_Repository();
 		$token_repository->create_table();
@@ -131,6 +132,15 @@ class Mksddn_Reddy_Auth_Plugin {
 		} else {
 			update_option( 'mksddn_reddy_auth_version', MKSDDN_REDDY_AUTH_VERSION );
 		}
+
+		if ( false === get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, false ) ) {
+			add_option(
+				Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY,
+				Mksddn_Reddy_Auth_Settings_Page::get_install_defaults()
+			);
+		}
+
+		set_transient( Mksddn_Reddy_Auth_Settings_Page::SETUP_NOTICE_TRANSIENT, 1, WEEK_IN_SECONDS );
 
 		delete_option( 'mksddn_reddy_auth_auto_create_users' );
 	}
@@ -153,6 +163,7 @@ class Mksddn_Reddy_Auth_Plugin {
 		add_action( 'rest_api_init', array( $this->rest_controller, 'register_routes' ) );
 		add_action( 'admin_menu', array( $this->settings_page, 'register_menu' ) );
 		add_action( 'admin_init', array( $this->settings_page, 'register_settings' ) );
+		add_action( 'admin_notices', array( $this->settings_page, 'maybe_render_setup_notice' ) );
 		add_action( 'admin_post_mksddn_reddy_download_openapi', array( $this->settings_page, 'download_openapi' ) );
 		add_action( 'admin_post_mksddn_reddy_download_postman', array( $this->settings_page, 'download_postman_collection' ) );
 		add_action( 'admin_post_mksddn_reddy_test_bot_connection', array( $this->settings_page, 'test_bot_connection' ) );
@@ -219,20 +230,20 @@ class Mksddn_Reddy_Auth_Plugin {
 	 * @return void
 	 */
 	private function register_services() {
-		$this->reddy_client     = new Mksddn_Reddy_Auth_Reddy_Client();
-		$this->otp_service      = new Mksddn_Reddy_Auth_Otp_Service( $this->reddy_client );
-		$this->identity_service = new Mksddn_Reddy_Auth_Identity_Service();
-		$this->session_service  = new Mksddn_Reddy_Auth_Session_Service();
-		$this->token_service    = new Mksddn_Reddy_Auth_Token_Service( new Mksddn_Reddy_Auth_Token_Repository() );
+		$this->reddy_client         = new Mksddn_Reddy_Auth_Reddy_Client();
+		$this->otp_service          = new Mksddn_Reddy_Auth_Otp_Service( $this->reddy_client );
+		$this->identity_service     = new Mksddn_Reddy_Auth_Identity_Service();
+		$this->session_service      = new Mksddn_Reddy_Auth_Session_Service();
+		$this->token_service        = new Mksddn_Reddy_Auth_Token_Service( new Mksddn_Reddy_Auth_Token_Repository() );
 		$this->rest_auth_middleware = new Mksddn_Reddy_Auth_Rest_Auth_Middleware( $this->token_service );
 		$this->request_url_guard    = new Mksddn_Reddy_Auth_Request_Url_Guard();
-		$this->settings_page = new Mksddn_Reddy_Auth_Settings_Page();
-		$this->login_shortcode = new Mksddn_Reddy_Auth_Login_Shortcode(
+		$this->settings_page        = new Mksddn_Reddy_Auth_Settings_Page();
+		$this->login_shortcode      = new Mksddn_Reddy_Auth_Login_Shortcode(
 			$this->otp_service,
 			$this->identity_service,
 			$this->session_service
 		);
-		$this->rest_controller  = new Mksddn_Reddy_Auth_Rest_Auth_Controller(
+		$this->rest_controller      = new Mksddn_Reddy_Auth_Rest_Auth_Controller(
 			$this->otp_service,
 			$this->identity_service,
 			$this->session_service,

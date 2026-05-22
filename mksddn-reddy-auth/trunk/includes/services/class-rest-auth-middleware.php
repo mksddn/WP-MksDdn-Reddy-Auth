@@ -125,7 +125,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 		$settings = is_array( $settings ) ? $settings : array();
 
 		if ( ! isset( $settings['api_lock_enabled'] ) ) {
-			return true;
+			return false;
 		}
 
 		return ! empty( $settings['api_lock_enabled'] );
@@ -141,7 +141,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 		$settings = is_array( $settings ) ? $settings : array();
 
 		if ( ! isset( $settings['monolith_lock_enabled'] ) ) {
-			return true;
+			return false;
 		}
 
 		return ! empty( $settings['monolith_lock_enabled'] );
@@ -158,10 +158,10 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return false;
 		}
 
-		$path     = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
-		$prefix   = '/' . rest_get_url_prefix() . '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/';
-		$send     = $prefix . 'send-code';
-		$login    = $prefix . 'login';
+		$path   = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$prefix = '/' . rest_get_url_prefix() . '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/';
+		$send   = $prefix . 'send-code';
+		$login  = $prefix . 'login';
 
 		return $this->path_ends_with( $path, $send ) || $this->path_ends_with( $path, $login );
 	}
@@ -192,6 +192,10 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 		}
 
 		if ( ! $this->is_monolith_lock_enabled() ) {
+			return;
+		}
+
+		if ( ! $this->has_login_destination_configured() ) {
 			return;
 		}
 
@@ -240,6 +244,28 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 		}
 
 		return substr( $haystack, -$needle_length ) === $needle;
+	}
+
+	/**
+	 * True when a login page is selected, URL is set, or a shortcode page exists.
+	 *
+	 * @return bool
+	 */
+	private function has_login_destination_configured() {
+		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
+		$url      = isset( $settings['login_page_url'] ) ? esc_url_raw( (string) $settings['login_page_url'] ) : '';
+
+		if ( $page_id > 0 && get_permalink( $page_id ) ) {
+			return true;
+		}
+
+		if ( '' !== $url ) {
+			return true;
+		}
+
+		return '' !== $this->find_first_login_shortcode_page_url();
 	}
 
 	/**
@@ -322,8 +348,8 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return bool
 	 */
 	private function is_current_request_url( $target_url ) {
-		$target_path = (string) wp_parse_url( (string) $target_url, PHP_URL_PATH );
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
+		$target_path  = (string) wp_parse_url( (string) $target_url, PHP_URL_PATH );
+		$request_uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
 		$request_path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
 
 		return '' !== $target_path && $target_path === $request_path;
