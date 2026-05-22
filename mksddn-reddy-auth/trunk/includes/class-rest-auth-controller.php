@@ -46,6 +46,13 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	private $auth_middleware;
 
 	/**
+	 * Request URL allowlist guard.
+	 *
+	 * @var Mksddn_Reddy_Auth_Request_Url_Guard
+	 */
+	private $request_url_guard;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Mksddn_Reddy_Auth_Otp_Service          $otp_service OTP service.
@@ -53,13 +60,15 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	 * @param Mksddn_Reddy_Auth_Session_Service      $session_service Session service.
 	 * @param Mksddn_Reddy_Auth_Token_Service        $token_service Token service.
 	 * @param Mksddn_Reddy_Auth_Rest_Auth_Middleware $auth_middleware Auth middleware.
+	 * @param Mksddn_Reddy_Auth_Request_Url_Guard    $request_url_guard Request source guard.
 	 */
-	public function __construct( Mksddn_Reddy_Auth_Otp_Service $otp_service, Mksddn_Reddy_Auth_Identity_Service $identity_service, Mksddn_Reddy_Auth_Session_Service $session_service, Mksddn_Reddy_Auth_Token_Service $token_service, Mksddn_Reddy_Auth_Rest_Auth_Middleware $auth_middleware ) {
-		$this->otp_service      = $otp_service;
-		$this->identity_service = $identity_service;
-		$this->session_service  = $session_service;
-		$this->token_service    = $token_service;
-		$this->auth_middleware  = $auth_middleware;
+	public function __construct( Mksddn_Reddy_Auth_Otp_Service $otp_service, Mksddn_Reddy_Auth_Identity_Service $identity_service, Mksddn_Reddy_Auth_Session_Service $session_service, Mksddn_Reddy_Auth_Token_Service $token_service, Mksddn_Reddy_Auth_Rest_Auth_Middleware $auth_middleware, Mksddn_Reddy_Auth_Request_Url_Guard $request_url_guard ) {
+		$this->otp_service         = $otp_service;
+		$this->identity_service    = $identity_service;
+		$this->session_service     = $session_service;
+		$this->token_service       = $token_service;
+		$this->auth_middleware     = $auth_middleware;
+		$this->request_url_guard   = $request_url_guard;
 	}
 
 	/**
@@ -73,7 +82,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			'/auth/send-code',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
 				'callback'            => array( $this, 'send_code' ),
 				'args'                => array(
 					'reddy_id' => array(
@@ -90,7 +99,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			'/auth/login',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
 				'callback'            => array( $this, 'login' ),
 				'args'                => array(
 					'reddy_id' => array(
@@ -117,7 +126,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			'/auth/logout',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
 				'callback'            => array( $this, 'logout' ),
 			)
 		);
@@ -127,10 +136,25 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			'/auth/me',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'permission_callback' => array( $this->auth_middleware, 'authorize_request' ),
+				'permission_callback' => array( $this, 'permission_me' ),
 				'callback'            => array( $this, 'me' ),
 			)
 		);
+	}
+
+	/**
+	 * Permission check for /auth/me (allowlist + auth).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function permission_me( WP_REST_Request $request ) {
+		$source = $this->request_url_guard->rest_permission_check( $request );
+		if ( is_wp_error( $source ) ) {
+			return $source;
+		}
+
+		return $this->auth_middleware->authorize_request( $request );
 	}
 
 	/**

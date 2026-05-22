@@ -95,7 +95,7 @@
 - Empty list: no source restriction (default, backward compatible).
 - Non-empty list: only matching `Origin` or `Referer` may call plugin REST routes (`/mksddn-reddy-auth/v1/*`).
 - Supported formats: `https://host`, optional path prefix (e.g. `https://app.example.com/admin`).
-- Enforcement: `rest_pre_dispatch` via `Mksddn_Reddy_Auth_Request_Url_Guard` (HTTP 403).
+- Enforcement: `permission_callback` on plugin REST routes and `rest_pre_dispatch` via `Mksddn_Reddy_Auth_Request_Url_Guard` (HTTP 403).
 - Soft guard only: headers are client-controlled and spoofable; use OTP, rate limits, and API lock for real protection.
 - Server-to-server clients (curl, backends) without matching headers are blocked when the list is non-empty—leave empty or use the filter below.
 - Extension filter: `mksddn_reddy_is_request_url_allowed` (always invoked; can deny even when the list is empty).

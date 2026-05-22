@@ -237,7 +237,8 @@ class Mksddn_Reddy_Auth_Plugin {
 			$this->identity_service,
 			$this->session_service,
 			$this->token_service,
-			$this->rest_auth_middleware
+			$this->rest_auth_middleware,
+			$this->request_url_guard
 		);
 	}
 }

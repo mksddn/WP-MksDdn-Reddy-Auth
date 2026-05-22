@@ -25,13 +25,29 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 			return $result;
 		}
 
-		$route = (string) $request->get_route();
-		if ( ! $this->is_plugin_rest_route( $route ) ) {
+		if ( ! $this->is_plugin_rest_route( (string) $request->get_route() ) ) {
 			return $result;
 		}
 
-		if ( $this->is_request_allowed() ) {
+		$permission = $this->rest_permission_check( $request );
+		if ( true === $permission ) {
 			return $result;
+		}
+
+		return $permission;
+	}
+
+	/**
+	 * REST permission_callback for plugin routes.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function rest_permission_check( $request ) {
+		unset( $request );
+
+		if ( $this->is_request_allowed() ) {
+			return true;
 		}
 
 		return new WP_Error(
@@ -74,7 +90,11 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	public function get_allowed_urls() {
 		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
 		$settings = is_array( $settings ) ? $settings : array();
-		$allowed  = isset( $settings['allowed_urls'] ) ? $settings['allowed_urls'] : array();
+		$allowed = isset( $settings['allowed_urls'] ) ? $settings['allowed_urls'] : array();
+
+		if ( is_string( $allowed ) ) {
+			$allowed = self::sanitize_allowed_urls( $allowed );
+		}
 
 		if ( ! is_array( $allowed ) ) {
 			return array();
@@ -189,9 +209,20 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	 * @return bool
 	 */
 	private function is_plugin_rest_route( $route ) {
-		$prefix = '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE;
+		$namespace = Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE;
+		$route     = '/' . ltrim( (string) $route, '/' );
 
-		return 0 === strpos( $route, $prefix );
+		if ( '' === $route || '/' === $route ) {
+			return false;
+		}
+
+		if ( 0 === strpos( $route, '/' . $namespace ) ) {
+			return true;
+		}
+
+		$with_api_prefix = '/' . rest_get_url_prefix() . '/' . $namespace;
+
+		return 0 === strpos( $route, $with_api_prefix );
 	}
 
 	/**
