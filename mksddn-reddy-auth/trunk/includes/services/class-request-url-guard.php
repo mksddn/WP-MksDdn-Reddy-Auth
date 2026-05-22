@@ -11,13 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Mksddn_Reddy_Auth_Request_Url_Guard {
 	/**
-	 * Settings option key.
-	 *
-	 * @var string
-	 */
-	const SETTINGS_OPTION_KEY = 'mksddn_reddy_auth_settings';
-
-	/**
 	 * Block disallowed clients before REST route dispatch.
 	 *
 	 * @param mixed           $result  Response to replace dispatch, or null.
@@ -55,12 +48,13 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	 */
 	public function is_request_allowed() {
 		$allowed_urls = $this->get_allowed_urls();
-		if ( empty( $allowed_urls ) ) {
-			return true;
-		}
+		$request_url  = $this->get_request_source_url();
 
-		$request_url = $this->get_request_source_url();
-		$allowed     = $this->url_matches_allowlist( $request_url, $allowed_urls );
+		if ( empty( $allowed_urls ) ) {
+			$allowed = true;
+		} else {
+			$allowed = $this->url_matches_allowlist( $request_url, $allowed_urls );
+		}
 
 		/**
 		 * Filter whether the current request source URL is allowed.
@@ -78,7 +72,7 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	 * @return array<int, string>
 	 */
 	public function get_allowed_urls() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
+		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
 		$settings = is_array( $settings ) ? $settings : array();
 		$allowed  = isset( $settings['allowed_urls'] ) ? $settings['allowed_urls'] : array();
 
@@ -88,7 +82,7 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 
 		$normalized = array();
 		foreach ( $allowed as $entry ) {
-			$entry = $this->normalize_url_entry( (string) $entry );
+			$entry = self::normalize_url_entry( (string) $entry );
 			if ( '' !== $entry ) {
 				$normalized[] = $entry;
 			}
@@ -104,11 +98,11 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	 */
 	public function get_request_source_url() {
 		if ( ! empty( $_SERVER['HTTP_ORIGIN'] ) ) {
-			return $this->normalize_url_entry( sanitize_text_field( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) );
+			return self::normalize_url_entry( esc_url_raw( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) );
 		}
 
 		if ( ! empty( $_SERVER['HTTP_REFERER'] ) ) {
-			return $this->normalize_url_entry( esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) );
+			return self::normalize_url_entry( esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) );
 		}
 
 		return '';
@@ -120,7 +114,7 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	 * @param mixed $raw Raw settings value.
 	 * @return array<int, string>
 	 */
-	public function sanitize_allowed_urls( $raw ) {
+	public static function sanitize_allowed_urls( $raw ) {
 		if ( is_array( $raw ) ) {
 			$lines = $raw;
 		} else {
@@ -133,7 +127,7 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 
 		$allowed = array();
 		foreach ( $lines as $line ) {
-			$entry = $this->normalize_url_entry( trim( (string) $line ) );
+			$entry = self::normalize_url_entry( trim( (string) $line ) );
 			if ( '' !== $entry ) {
 				$allowed[] = $entry;
 			}
@@ -148,7 +142,7 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	 * @param string $url Raw URL.
 	 * @return string
 	 */
-	public function normalize_url_entry( $url ) {
+	public static function normalize_url_entry( $url ) {
 		$url = trim( (string) $url );
 		if ( '' === $url ) {
 			return '';

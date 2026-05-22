@@ -18,6 +18,7 @@ MksDdn Reddy Auth provides OTP-based authentication with:
 - Optional Bearer token issuing for REST clients.
 - Rate limiting and one-time OTP verification.
 - Optional site and REST API protection for unauthenticated visitors.
+- Optional allowed request sources (Origin/Referer) for plugin REST endpoints.
 
 The plugin maps each Reddy ID to a WordPress user and can create an account automatically on first successful login.
 
@@ -71,6 +72,10 @@ Typical flow:
 
 Download OpenAPI and Postman files from **Settings > Reddy Auth > Developer Resources**.
 
+= 5. Optional: restrict REST callers by browser source =
+
+In **Settings > Reddy Auth**, **Allowed request sources** limits plugin REST traffic (`/mksddn-reddy-auth/v1/*`) to listed `Origin` or `Referer` URLs. Leave empty to allow any client (recommended for server-to-server integrations). This is a soft guard for browser apps, not a secret key.
+
 == Frequently Asked Questions ==
 
 = Where should I store the bot token? =
@@ -97,6 +102,14 @@ Send `issue_token: true` in the login request, then pass the returned token in t
 
 The plugin rate-limits OTP send and login attempts per Reddy ID and client IP. Wait for the limit window to expire or adjust limits in **Settings > Reddy Auth**.
 
+= What does Allowed request sources do? =
+
+It optionally checks `Origin` or `Referer` on plugin REST routes only. Empty list = no restriction (default). Non-empty list = browser apps must call from a listed URL. It does not replace OTP, rate limits, or Bearer auth—headers can be spoofed.
+
+= Why do I get HTTP 403 with "Request not allowed from this source"? =
+
+**Allowed request sources** is configured and the request has no matching `Origin`/`Referer`. Add your frontend URL to the list, send a matching `Origin` header from server clients, leave the list empty for backends, or use the `mksddn_reddy_is_request_url_allowed` filter.
+
 = Which data does the plugin store? =
 
 Settings in WordPress options, Reddy ID mapping in user meta, Bearer token hashes in a custom database table, and OTP/rate-limit state in transients. Raw OTP codes and raw tokens are not stored.
@@ -108,6 +121,7 @@ If uninstall cleanup runs, plugin-owned options, user meta, custom tables, and t
 == Changelog ==
 
 = 0.1.1 =
+* Optional **Allowed request sources** for plugin REST endpoints (Origin/Referer allowlist, HTTP 403 when mismatched).
 * Updated plugin metadata (GitHub URIs, license, WordPress and PHP requirements).
 * Tested up to WordPress 6.9.
 * Hardened REST middleware: sanitize request URI before route checks.

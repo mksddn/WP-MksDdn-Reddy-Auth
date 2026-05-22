@@ -283,7 +283,10 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			placeholder="https://app.example.com&#10;https://admin.example.com/panel"
 		><?php echo esc_textarea( $value ); ?></textarea>
 		<p class="description">
-			<?php echo esc_html__( 'One URL per line (Origin or Referer). Leave empty to allow all sources. Applies to plugin REST endpoints only.', 'mksddn-reddy-auth' ); ?>
+			<?php echo esc_html__( 'One URL per line (scheme + host, optional path prefix). Empty = no restriction. Applies only to plugin REST routes (/mksddn-reddy-auth/v1/*), not the login shortcode.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<p class="description">
+			<?php echo esc_html__( 'Soft guard for browser apps: checks Origin or Referer, not a secret key. Headers can be spoofed—rely on OTP, rate limits, and API lock for real protection. Server clients (curl, Postman, backends) usually need an empty list or the mksddn_reddy_is_request_url_allowed filter.', 'mksddn-reddy-auth' ); ?>
 		</p>
 		<?php
 	}
@@ -490,15 +493,14 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * Sanitize settings array.
 	 *
 	 * @param mixed $raw Raw input.
-	 * @return array<string, int>
+	 * @return array<string, mixed>
 	 */
 	public function sanitize_settings( $raw ) {
 		$raw      = is_array( $raw ) ? $raw : array();
 		$defaults = $this->get_default_settings();
-		$url_guard = new Mksddn_Reddy_Auth_Request_Url_Guard();
 
 		$sanitized = array(
-			'allowed_urls' => $url_guard->sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
+			'allowed_urls' => Mksddn_Reddy_Auth_Request_Url_Guard::sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
 			'api_lock_enabled' => ! empty( $raw['api_lock_enabled'] ) ? 1 : 0,
 			'monolith_lock_enabled' => ! empty( $raw['monolith_lock_enabled'] ) ? 1 : 0,
 			'login_page_id' => isset( $raw['login_page_id'] ) ? absint( $raw['login_page_id'] ) : 0,
@@ -525,7 +527,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	/**
 	 * Return merged settings with defaults.
 	 *
-	 * @return array<string, int>
+	 * @return array<string, mixed>
 	 */
 	private function get_settings() {
 		$raw = get_option( self::SETTINGS_OPTION_KEY, array() );
@@ -537,7 +539,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	/**
 	 * Get defaults for plugin settings.
 	 *
-	 * @return array<string, int>
+	 * @return array<string, mixed>
 	 */
 	private function get_default_settings() {
 		return array(
@@ -639,7 +641,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'info'    => array(
 				'title'       => 'MksDdn Reddy Auth API',
 				'version'     => MKSDDN_REDDY_AUTH_VERSION,
-				'description' => 'REST API for OTP authentication and token/session flows.',
+				'description' => 'REST API for OTP authentication and token/session flows. When Allowed request sources is configured in settings, auth routes may return 403 if Origin/Referer does not match (browser-source soft guard; not a substitute for OTP or Bearer auth).',
 			),
 			'servers' => array(
 				array(
@@ -667,6 +669,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						'responses'   => array(
 							'200' => array( 'description' => 'OTP request accepted' ),
 							'400' => array( 'description' => 'Validation or auth flow error' ),
+							'403' => array( 'description' => 'Request source not allowed (allowed_urls setting)' ),
 						),
 					),
 				),
@@ -692,6 +695,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						'responses'   => array(
 							'200' => array( 'description' => 'Authenticated' ),
 							'400' => array( 'description' => 'Invalid credentials' ),
+							'403' => array( 'description' => 'Request source not allowed (allowed_urls setting)' ),
 							'500' => array( 'description' => 'Session or token issue error' ),
 						),
 					),
@@ -750,6 +754,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'info' => array(
 				'_postman_id' => wp_generate_uuid4(),
 				'name'        => 'MksDdn Reddy Auth',
+				'description' => 'If Allowed request sources is set in WP settings, add an Origin header matching a listed URL or leave the allowlist empty for server-side clients.',
 				'schema'      => 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
 			),
 			'variable' => array(
