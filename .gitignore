@@ -41,7 +41,7 @@ yarn.lock
 messages.mo
 
 # PHP
-# vendor/
+vendor/
 composer.lock
 .phpunit.result.cache
 

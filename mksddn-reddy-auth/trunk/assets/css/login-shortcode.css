@@ -1,0 +1,41 @@
+.mksddn-reddy-auth-form {
+	max-width: 420px;
+	padding: 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.mksddn-reddy-auth-form form + form {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.mksddn-reddy-auth-form label {
+	font-weight: 600;
+}
+
+.mksddn-reddy-auth-form input[type="text"] {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 8px 10px;
+	margin-top: 6px;
+}
+
+.mksddn-reddy-auth-form button[type="submit"] {
+	padding: 8px 14px;
+	border: 1px solid #2271b1;
+	border-radius: 4px;
+	background: #2271b1;
+	color: #fff;
+	cursor: pointer;
+}
+
+.mksddn-reddy-auth-message {
+	margin-top: 0;
+	margin-bottom: 12px;
+	padding: 8px 10px;
+	border-left: 3px solid #2271b1;
+	background: #f0f6fc;
+}
