@@ -91,7 +91,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return $result;
 		}
 
-		if ( $this->is_reddy_session_authenticated() ) {
+		if ( $this->is_content_lock_exempt() ) {
 			return $result;
 		}
 
@@ -189,6 +189,28 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	}
 
 	/**
+	 * True when user may bypass Reddy-only content lock.
+	 *
+	 * Reddy-authenticated users and WP staff (edit_posts) are exempt by default.
+	 *
+	 * @return bool
+	 */
+	private function is_content_lock_exempt() {
+		if ( $this->is_reddy_session_authenticated() ) {
+			return true;
+		}
+
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+
+		$user  = wp_get_current_user();
+		$exempt = current_user_can( 'edit_posts' );
+
+		return (bool) apply_filters( 'mksddn_reddy_content_lock_bypass', $exempt, $user );
+	}
+
+	/**
 	 * Enforce frontend content lock for monolith websites.
 	 *
 	 * @return void
@@ -206,7 +228,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return;
 		}
 
-		if ( $this->is_reddy_session_authenticated() ) {
+		if ( $this->is_content_lock_exempt() ) {
 			return;
 		}
 
