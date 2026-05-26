@@ -18,6 +18,13 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	const SETTINGS_OPTION_KEY = 'mksddn_reddy_auth_settings';
 
 	/**
+	 * Login shortcode tag used to locate the login page.
+	 *
+	 * @var string
+	 */
+	const LOGIN_SHORTCODE = '[mksddn_reddy_login]';
+
+	/**
 	 * Token service.
 	 *
 	 * @var Mksddn_Reddy_Auth_Token_Service
@@ -80,15 +87,15 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return $result;
 		}
 
-		if ( ! empty( $result ) ) {
-			return $result;
-		}
-
 		if ( $this->is_public_auth_route() ) {
 			return $result;
 		}
 
 		if ( $this->is_reddy_session_authenticated() ) {
+			return $result;
+		}
+
+		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
@@ -203,14 +210,11 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return;
 		}
 
-		if ( $this->is_login_shortcode_page() ) {
+		if ( $this->is_login_page_request() ) {
 			return;
 		}
 
 		$login_url = $this->resolve_login_url();
-		if ( $this->is_current_request_url( $login_url ) ) {
-			return;
-		}
 
 		wp_safe_redirect( add_query_arg( 'mksddn_reddy_status', 'auth_required', $login_url ) );
 		exit;
@@ -283,7 +287,28 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return false;
 		}
 
-		return false !== strpos( (string) $post->post_content, '[mksddn_reddy_login]' );
+		return false !== strpos( (string) $post->post_content, self::LOGIN_SHORTCODE );
+	}
+
+	/**
+	 * True when the current frontend request targets the configured login page.
+	 *
+	 * @return bool
+	 */
+	private function is_login_page_request() {
+		if ( $this->is_login_shortcode_page() ) {
+			return true;
+		}
+
+		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
+
+		if ( $page_id > 0 && is_page( $page_id ) ) {
+			return true;
+		}
+
+		return $this->is_current_request_url( $this->resolve_login_url() );
 	}
 
 	/**
@@ -322,21 +347,23 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return string
 	 */
 	private function find_first_login_shortcode_page_url() {
-		$pages = get_posts(
-			array(
-				'post_type'      => 'page',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				's'              => '[mksddn_reddy_login]',
-				'no_found_rows'  => true,
+		global $wpdb;
+
+		$like = '%' . $wpdb->esc_like( self::LOGIN_SHORTCODE ) . '%';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$page_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE %s LIMIT 1",
+				$like
 			)
 		);
 
-		if ( empty( $pages ) || ! isset( $pages[0] ) ) {
+		if ( ! $page_id ) {
 			return '';
 		}
 
-		$url = get_permalink( $pages[0] );
+		$url = get_permalink( (int) $page_id );
 
 		return $url ? (string) $url : '';
 	}
@@ -348,10 +375,27 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return bool
 	 */
 	private function is_current_request_url( $target_url ) {
-		$target_path  = (string) wp_parse_url( (string) $target_url, PHP_URL_PATH );
+		$target_path  = $this->normalize_request_path( (string) wp_parse_url( (string) $target_url, PHP_URL_PATH ) );
 		$request_uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) : '';
-		$request_path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$request_path = $this->normalize_request_path( (string) wp_parse_url( $request_uri, PHP_URL_PATH ) );
 
 		return '' !== $target_path && $target_path === $request_path;
+	}
+
+	/**
+	 * Normalize URL path for comparison.
+	 *
+	 * @param string $path Raw path.
+	 * @return string
+	 */
+	private function normalize_request_path( $path ) {
+		$path = (string) $path;
+		if ( '' === $path ) {
+			return '';
+		}
+
+		$normalized = untrailingslashit( $path );
+
+		return '' === $normalized ? '/' : $normalized;
 	}
 }
