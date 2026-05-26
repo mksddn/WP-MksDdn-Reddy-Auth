@@ -123,18 +123,18 @@ class Mksddn_Reddy_Auth_Token_Repository {
 			return;
 		}
 
-		$table_name = $this->table_name;
-
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom token table has no WP API wrapper.
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$table_name}
-				SET revoked_at = %s
-				WHERE user_id = %d
-					AND revoked_at IS NULL",
-				gmdate( 'Y-m-d H:i:s' ),
-				$user_id
-			)
+		$wpdb->update(
+			$this->table_name,
+			array(
+				'revoked_at' => gmdate( 'Y-m-d H:i:s' ),
+			),
+			array(
+				'user_id'    => $user_id,
+				'revoked_at' => null,
+			),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
