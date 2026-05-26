@@ -110,6 +110,35 @@ class Mksddn_Reddy_Auth_Token_Repository {
 	}
 
 	/**
+	 * Revoke all active tokens for a WordPress user.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return void
+	 */
+	public function revoke_all_for_user( $user_id ) {
+		global $wpdb;
+
+		$user_id = (int) $user_id;
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		$table_name = $this->table_name;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom token table has no WP API wrapper.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table_name}
+				SET revoked_at = %s
+				WHERE user_id = %d
+					AND revoked_at IS NULL",
+				gmdate( 'Y-m-d H:i:s' ),
+				$user_id
+			)
+		);
+	}
+
+	/**
 	 * Revoke token by hash.
 	 *
 	 * @param string $token_hash Token hash.

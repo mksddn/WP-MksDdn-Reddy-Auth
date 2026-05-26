@@ -171,7 +171,30 @@ class Mksddn_Reddy_Auth_Plugin {
 		add_filter( 'rest_pre_dispatch', array( $this->request_url_guard, 'enforce_rest_url_allowlist' ), 5, 3 );
 		add_filter( 'rest_authentication_errors', array( $this->rest_auth_middleware, 'enforce_api_content_lock' ), 20 );
 		add_action( 'template_redirect', array( $this->rest_auth_middleware, 'enforce_monolith_content_lock' ), 1 );
+		add_action( 'delete_user', array( $this, 'revoke_user_credentials' ), 10, 2 );
 		$this->login_shortcode->register_hooks();
+	}
+
+	/**
+	 * Revoke plugin credentials when a WordPress user is deleted.
+	 *
+	 * @param int      $user_id ID of the deleted user.
+	 * @param int|null $reassign Reassign ID.
+	 * @return void
+	 */
+	public function revoke_user_credentials( $user_id, $reassign ) {
+		unset( $reassign );
+
+		$user_id = (int) $user_id;
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		$this->token_service->revoke_all_for_user( $user_id );
+
+		if ( function_exists( 'wp_destroy_user_sessions' ) ) {
+			wp_destroy_user_sessions( $user_id );
+		}
 	}
 
 	/**
