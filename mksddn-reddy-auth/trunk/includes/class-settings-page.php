@@ -701,7 +701,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'info'       => array(
 				'title'       => 'MksDdn Reddy Auth API',
 				'version'     => MKSDDN_REDDY_AUTH_VERSION,
-				'description' => 'REST API for OTP authentication and token/session flows. When Allowed request sources is configured in settings, auth routes may return 403 if Origin/Referer does not match (browser-source soft guard; not a substitute for OTP or Bearer auth).',
+				'description' => 'REST API for OTP authentication and token/session flows. REST login sets a WordPress cookie only when issue_session is true (default false). Use issue_token for Bearer auth. When Allowed request sources is configured in settings, auth routes may return 403 if Origin/Referer does not match (browser-source soft guard; not a substitute for OTP or Bearer auth).',
 			),
 			'servers'    => array(
 				array(
@@ -736,6 +736,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 				'/auth/login'     => array(
 					'post' => array(
 						'summary'     => 'Login by OTP',
+						'description' => 'Verify OTP and resolve the WordPress user. issue_token returns a Bearer token. issue_session sets the WordPress auth cookie (default false). Shortcode login always sets a cookie.',
 						'requestBody' => array(
 							'required' => true,
 							'content'  => array(
@@ -744,9 +745,24 @@ class Mksddn_Reddy_Auth_Settings_Page {
 										'type'       => 'object',
 										'required'   => array( 'reddy_id', 'code' ),
 										'properties' => array(
-											'reddy_id'    => array( 'type' => 'string' ),
-											'code'        => array( 'type' => 'string' ),
-											'issue_token' => array( 'type' => 'boolean' ),
+											'reddy_id'      => array(
+												'type'        => 'string',
+												'description' => 'Reddy user identifier.',
+											),
+											'code'          => array(
+												'type'        => 'string',
+												'description' => 'Six-digit OTP from Reddy.',
+											),
+											'issue_token'   => array(
+												'type'        => 'boolean',
+												'default'     => false,
+												'description' => 'Return a Bearer access token for REST API clients.',
+											),
+											'issue_session' => array(
+												'type'        => 'boolean',
+												'default'     => false,
+												'description' => 'Set the WordPress auth cookie. Required for Protect site content in the browser. Default false on REST login.',
+											),
 										),
 									),
 								),
@@ -762,7 +778,8 @@ class Mksddn_Reddy_Auth_Settings_Page {
 				),
 				'/auth/me'        => array(
 					'get' => array(
-						'summary'   => 'Get current user',
+						'summary'     => 'Get current user',
+						'description' => 'Accepts Bearer token or WordPress cookie session (shortcode login or REST login with issue_session: true).',
 						'security'  => array(
 							array( 'bearerAuth' => array() ),
 							array( 'cookieAuth' => array() ),
@@ -775,7 +792,8 @@ class Mksddn_Reddy_Auth_Settings_Page {
 				),
 				'/auth/logout'    => array(
 					'post' => array(
-						'summary'   => 'Logout',
+						'summary'     => 'Logout',
+						'description' => 'Destroys the WordPress cookie session and revokes the Bearer token when sent in Authorization.',
 						'security'  => array(
 							array( 'bearerAuth' => array() ),
 							array( 'cookieAuth' => array() ),
@@ -814,7 +832,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'info'     => array(
 				'_postman_id' => wp_generate_uuid4(),
 				'name'        => 'MksDdn Reddy Auth',
-				'description' => 'If Allowed request sources is set in WP settings, add an Origin header matching a listed URL or leave the allowlist empty for server-side clients.',
+				'description' => 'REST login does not set a WordPress cookie unless issue_session is true. Use issue_token for Bearer auth (headless). Protect site content requires a cookie (shortcode or issue_session: true). Protect REST API content requires Bearer. If Allowed request sources is set in WP settings, add an Origin header matching a listed URL or leave the allowlist empty for server-side clients.',
 				'schema'      => 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
 			),
 			'variable' => array(
@@ -830,13 +848,25 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'item'     => array(
 				$this->build_postman_item( 'Send code', 'POST', '{{baseUrl}}/auth/send-code', array( 'reddy_id' => '123456' ) ),
 				$this->build_postman_item(
-					'Login',
+					'Login (Bearer only)',
 					'POST',
 					'{{baseUrl}}/auth/login',
 					array(
-						'reddy_id'    => '123456',
-						'code'        => '111111',
-						'issue_token' => true,
+						'reddy_id'      => '123456',
+						'code'          => '111111',
+						'issue_token'   => true,
+						'issue_session' => false,
+					)
+				),
+				$this->build_postman_item(
+					'Login (Bearer + cookie)',
+					'POST',
+					'{{baseUrl}}/auth/login',
+					array(
+						'reddy_id'      => '123456',
+						'code'          => '111111',
+						'issue_token'   => true,
+						'issue_session' => true,
 					)
 				),
 				$this->build_postman_item( 'Me', 'GET', '{{baseUrl}}/auth/me', null, true ),

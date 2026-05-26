@@ -112,7 +112,12 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
-					'issue_token' => array(
+					'issue_token'   => array(
+						'required' => false,
+						'type'     => 'boolean',
+						'default'  => false,
+					),
+					'issue_session' => array(
 						'required' => false,
 						'type'     => 'boolean',
 						'default'  => false,
@@ -220,15 +225,17 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			return $this->error_response_from_wp_error( $user );
 		}
 
-		$session_result = $this->session_service->login( $user );
-		if ( is_wp_error( $session_result ) ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => __( 'Unable to create session.', 'mksddn-reddy-auth' ),
-				),
-				500
-			);
+		if ( rest_sanitize_boolean( $request->get_param( 'issue_session' ) ) ) {
+			$session_result = $this->session_service->login( $user );
+			if ( is_wp_error( $session_result ) ) {
+				return new WP_REST_Response(
+					array(
+						'success' => false,
+						'message' => __( 'Unable to create session.', 'mksddn-reddy-auth' ),
+					),
+					500
+				);
+			}
 		}
 
 		do_action( 'mksddn_reddy_after_login', $user, $reddy_id );

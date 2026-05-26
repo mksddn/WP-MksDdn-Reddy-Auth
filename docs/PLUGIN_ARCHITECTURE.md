@@ -4,8 +4,8 @@
 
 `mksddn-reddy-auth` provides OTP-based authentication through Reddy bot and supports:
 
-- WordPress monolith login via cookie session.
-- API clients via opaque Bearer tokens.
+- WordPress monolith login via cookie session (shortcode or REST `issue_session: true`).
+- API clients via opaque Bearer tokens (`issue_token: true`; cookie not set by default).
 
 ## Main Flows
 
@@ -23,19 +23,26 @@
 ### 2) Login
 
 - Endpoint: `POST /mksddn-reddy-auth/v1/auth/login`
-- Input: `reddy_id`, `code`, optional `issue_token`
+- Input: `reddy_id`, `code`, optional `issue_token`, optional `issue_session`
 - Process:
   - Verify OTP (one-time, TTL, login rate limit).
   - Resolve user via `IdentityService` (auto-create on first login if missing).
-  - Start WP cookie session via `SessionService`.
-  - Optionally issue Bearer token via `TokenService`.
+  - Start WP cookie session via `SessionService` only when `issue_session` is true (default false).
+  - Optionally issue Bearer token via `TokenService` when `issue_token` is true.
+- Shortcode login always sets a WP cookie session; REST login does not unless `issue_session` is true.
 
 ### 3) Current User
 
 - Endpoint: `GET /mksddn-reddy-auth/v1/auth/me`
 - Auth:
-  - WP cookie session, or
+  - WP cookie session (shortcode login or REST login with `issue_session: true`), or
   - Bearer token through REST auth middleware.
+
+### 3a) Monolith vs REST protection
+
+- **Monolith content lock** (`monolith_lock_enabled`): allows access when the visitor has a WordPress cookie session and `_mksddn_reddy_id` user meta. Does not read `Authorization: Bearer`.
+- **REST API content lock** (`api_lock_enabled`): requires `Authorization: Bearer` with a valid plugin token tied to a Reddy-mapped user. Ignores cookie-only sessions.
+- REST login with `issue_token: true` alone does not grant monolith site access. REST login with `issue_session: true` sets the cookie used by monolith lock.
 
 ### 4) Logout
 
@@ -64,6 +71,8 @@
   - WordPress cookie login/logout.
 - `Mksddn_Reddy_Auth_Token_Service`
   - Opaque token issue/validate/revoke with hash-only storage.
+  - Validates Bearer tokens only for users with `_mksddn_reddy_id` meta.
+  - Revokes all tokens for a user on WordPress user deletion.
 - `Mksddn_Reddy_Auth_Token_Repository`
   - DB access layer for token records.
 - `Mksddn_Reddy_Auth_Rest_Auth_Middleware`
@@ -106,6 +115,16 @@
 - Fresh install seeds `mksddn_reddy_auth_settings` with `api_lock_enabled` and `monolith_lock_enabled` set to `0` (off).
 - Monolith lock does not run until a login page, login URL, or published page with `[mksddn_reddy_login]` exists.
 - Existing sites that already saved `1` for lock flags keep their behavior until an admin changes settings.
+- When either lock is enabled, Reddy-authenticated users pass. WP users with `edit_posts` (administrator, editor) also bypass the lock so staff can preview content and call REST without Reddy OTP.
+- Extension filter: `mksddn_reddy_content_lock_bypass` (bool `$exempt`, `WP_User $user`) — default follows `edit_posts`; return `true` to allow bypass for other roles.
+
+## Credential lifecycle
+
+- Shortcode login always calls `SessionService::login()` (WordPress auth cookie).
+- REST login calls `SessionService::login()` only when `issue_session` is true (default false).
+- Deleting a WordPress user triggers `delete_user`: revoke all Bearer tokens for that user ID and call `wp_destroy_user_sessions()` when available.
+- Bearer validation rejects tokens when the mapped user is missing or has no `_mksddn_reddy_id` meta.
+- Deleting a WordPress user does not block the Reddy ID permanently; the next successful OTP login can recreate the account via `IdentityService`.
 
 ## Security Invariants
 
@@ -113,6 +132,8 @@
 - OTP is one-time and expires by TTL.
 - Send and login flows are rate-limited with progressive backoff.
 - Bearer tokens are stored only as HMAC hash.
+- Bearer tokens are revoked when the WordPress user is deleted.
+- REST login must not set a cookie unless `issue_session` is true.
 - Nonces protect state-changing shortcode forms.
 - Admin settings are restricted by `manage_options`.
 - Uninstall cleanup removes only plugin-owned data.

@@ -107,6 +107,11 @@ class Mksddn_Reddy_Auth_Token_Service {
 			return new WP_Error( 'invalid_token', __( 'Invalid token.', 'mksddn-reddy-auth' ) );
 		}
 
+		$reddy_id = (string) get_user_meta( (int) $user->ID, Mksddn_Reddy_Auth_Identity_Service::REDDY_ID_META_KEY, true );
+		if ( '' === $reddy_id ) {
+			return new WP_Error( 'invalid_token', __( 'Invalid token.', 'mksddn-reddy-auth' ) );
+		}
+
 		$this->repository->touch_last_used( $token_hash );
 
 		return $user;
@@ -125,6 +130,21 @@ class Mksddn_Reddy_Auth_Token_Service {
 		}
 
 		$this->repository->revoke_by_hash( $this->hash_token( $raw_token ) );
+	}
+
+	/**
+	 * Revoke all active bearer tokens for a WordPress user.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return void
+	 */
+	public function revoke_all_for_user( $user_id ) {
+		$user_id = (int) $user_id;
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		$this->repository->revoke_all_for_user( $user_id );
 	}
 
 	/**

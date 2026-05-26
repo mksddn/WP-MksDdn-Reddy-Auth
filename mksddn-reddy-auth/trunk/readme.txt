@@ -4,7 +4,7 @@ Tags: authentication, otp, rest-api, login
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,8 +14,8 @@ Authenticate WordPress users via Reddy OTP flow for monolith and REST API client
 
 MksDdn Reddy Auth provides OTP-based authentication with:
 
-- WordPress cookie session login for the frontend.
-- Optional Bearer token issuing for REST clients.
+- WordPress cookie session login for the frontend (shortcode, or REST with `issue_session: true`).
+- Optional Bearer token issuing for REST clients (`issue_token: true`; cookie not set by default on REST login).
 - Rate limiting and one-time OTP verification.
 - Optional site and REST API protection for unauthenticated visitors.
 - Optional allowed request sources (Origin/Referer) for plugin REST endpoints.
@@ -65,10 +65,12 @@ Public auth routes remain available without login:
 Typical flow:
 
 1. `POST /auth/send-code` with `{ "reddy_id": "123456" }`
-2. `POST /auth/login` with `{ "reddy_id": "123456", "code": "111111", "issue_token": true }`
-3. Call protected routes with `Authorization: Bearer <token>` or use the WordPress cookie session.
-4. `GET /auth/me` to read the current user.
-5. `POST /auth/logout` to end the session and revoke the Bearer token.
+2. `POST /auth/login` with `{ "reddy_id": "123456", "code": "111111", "issue_token": true }` for headless clients. Add `"issue_session": true` only when the browser must also receive a WordPress cookie (same-origin SPA).
+3. Call protected REST routes with `Authorization: Bearer <token>`.
+4. `GET /auth/me` to read the current user (Bearer or cookie session).
+5. `POST /auth/logout` to end the cookie session and revoke the Bearer token when provided.
+
+**Protect site content** checks the WordPress cookie session (shortcode login or REST login with `issue_session: true`). It does not accept Bearer tokens. **Protect all REST API content** requires a Bearer token and ignores cookie-only sessions.
 
 Download OpenAPI and Postman files from **Settings > Reddy Auth > Developer Resources**.
 
@@ -96,7 +98,15 @@ Yes. On first successful OTP login the plugin creates a WordPress user mapped to
 
 = How do REST clients authenticate? =
 
-Send `issue_token: true` in the login request, then pass the returned token in the `Authorization: Bearer` header. Cookie-based WordPress sessions also work for browser clients.
+Send `issue_token: true` in the login request, then pass the returned token in the `Authorization: Bearer` header. REST login does **not** set a WordPress cookie unless you also send `issue_session: true`. Use the login shortcode or `issue_session: true` when the browser needs access to **Protect site content** pages.
+
+= What is the difference between issue_token and issue_session? =
+
+`issue_token` returns a Bearer token for REST API clients. `issue_session` sets the WordPress auth cookie. Shortcode login always sets a cookie. REST login sets a cookie only when `issue_session` is true (default false). Headless integrations should use `issue_token` without `issue_session` so site content stays locked until an explicit cookie login.
+
+= What happens when an administrator deletes a Reddy user? =
+
+All plugin Bearer tokens for that WordPress user are revoked and WordPress session tokens are destroyed. The user must complete OTP login again. Deleting the WordPress account does not permanently block the Reddy ID; a successful OTP login can recreate the account.
 
 = Why do I get HTTP 429? =
 
@@ -140,6 +150,16 @@ This service is provided by Reddy: terms of use and privacy policy at https://he
 No other third-party services are required for core plugin operation.
 
 == Changelog ==
+
+= 0.1.3 =
+* REST login no longer sets a WordPress cookie by default. Optional `issue_session` parameter (default false); use `issue_token` for Bearer auth. Shortcode login still sets a cookie.
+* **Protect site content** uses cookie sessions only; **Protect all REST API content** requires Bearer tokens. Documented split between monolith and REST protection.
+* Revoke all Bearer tokens and destroy WordPress sessions when a WordPress user is deleted.
+* Bearer token validation requires an active `_mksddn_reddy_id` user meta mapping.
+* Site and REST content lock: WP staff with `edit_posts` (administrator, editor) bypass Reddy-only lock without OTP.
+* Filter `mksddn_reddy_content_lock_bypass` to customize lock bypass per user.
+* More reliable login page detection for monolith content lock (configured page, URL path, shortcode fallback).
+* REST content lock respects existing authentication errors before enforcing Reddy check.
 
 = 0.1.2 =
 * Direct Reddy terms of use and privacy policy links in External services readme section.
