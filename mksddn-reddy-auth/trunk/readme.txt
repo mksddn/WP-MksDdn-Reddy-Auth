@@ -4,7 +4,7 @@ Tags: authentication, otp, rest-api, login
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -120,7 +120,7 @@ If uninstall cleanup runs, plugin-owned options, user meta, custom tables, and t
 
 == External services ==
 
-This plugin connects to the **Reddy bot API** to send one-time passwords and connection test messages.
+This plugin connects to the **Reddy bot API** at `https://bot.reddy.team` to deliver one-time passwords and optional admin connection test messages.
 
 **What the service is used for**
 
@@ -129,23 +129,21 @@ This plugin connects to the **Reddy bot API** to send one-time passwords and con
 
 **What data is sent and when**
 
-* **OTP send / login:** Reddy user ID (`userKey`), message text containing the one-time code (and expiry hint). Sent when a user requests a code or when the admin runs a bot test.
+* **OTP send / login:** Reddy user ID (`userKey`) and message text containing the one-time code (and expiry hint). Sent when a user requests a code via the login form or REST API.
+* **Bot connection test:** Reddy user ID (`userKey`) and a fixed test message. Sent only when an administrator runs **Bot connection test** in **Settings > Reddy Auth**.
 * **Bot token:** Your bot token is included in the API request URL path (configured via `MKSDDN_REDDY_BOT_TOKEN` in `wp-config.php` or the development fallback field in settings). It is not sent to WordPress.org.
 
 Data is transmitted only when OTP delivery or the connection test is triggered. The plugin does not send site content, post data, or WordPress user passwords to Reddy.
 
-**Service provider**
-
-Reddy bot platform — API host: `https://bot.reddy.team`
-
-**Links**
-
-* Product site: https://reddy.team
-* Review Reddy terms and privacy documentation provided with your Reddy bot account before enabling the plugin on production sites.
+This service is provided by Reddy: terms of use and privacy policy at https://help.reddy.team/pages/user-agreement
 
 No other third-party services are required for core plugin operation.
 
 == Changelog ==
+
+= 0.1.2 =
+* Direct Reddy terms of use and privacy policy links in External services readme section.
+* Require cookie session or Bearer token authentication for POST `/auth/logout` REST endpoint.
 
 = 0.1.1 =
 * **External services** disclosure in readme for Reddy bot API (OTP delivery).

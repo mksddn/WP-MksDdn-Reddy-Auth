@@ -126,7 +126,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			'/auth/logout',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
-				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
+				'permission_callback' => array( $this, 'permission_logout' ),
 				'callback'            => array( $this, 'logout' ),
 			)
 		);
@@ -155,6 +155,16 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		}
 
 		return $this->auth_middleware->authorize_request( $request );
+	}
+
+	/**
+	 * Permission check for /auth/logout (allowlist + auth).
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return true|WP_Error
+	 */
+	public function permission_logout( WP_REST_Request $request ) {
+		return $this->permission_me( $request );
 	}
 
 	/**

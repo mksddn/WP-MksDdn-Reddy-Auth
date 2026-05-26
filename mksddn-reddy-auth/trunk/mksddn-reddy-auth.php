@@ -3,7 +3,7 @@
  * Plugin Name: MksDdn Reddy Auth
  * Plugin URI: https://github.com/mksddn/WP-MksDdn-Reddy-Auth
  * Description: Authentication plugin for Reddy bot OTP login in WordPress and REST API clients.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Author: mksddn
  * Author URI: https://github.com/mksddn
  * Text Domain: mksddn-reddy-auth
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MKSDDN_REDDY_AUTH_VERSION', '0.1.1' );
+define( 'MKSDDN_REDDY_AUTH_VERSION', '0.1.2' );
 define( 'MKSDDN_REDDY_AUTH_FILE', __FILE__ );
 define( 'MKSDDN_REDDY_AUTH_DIR', plugin_dir_path( __FILE__ ) );
 
