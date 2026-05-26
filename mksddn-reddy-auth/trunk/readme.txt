@@ -4,7 +4,7 @@ Tags: authentication, otp, rest-api, login
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -140,6 +140,12 @@ This service is provided by Reddy: terms of use and privacy policy at https://he
 No other third-party services are required for core plugin operation.
 
 == Changelog ==
+
+= 0.1.3 =
+* Site and REST content lock: WP staff with `edit_posts` (administrator, editor) bypass Reddy-only lock without OTP.
+* Filter `mksddn_reddy_content_lock_bypass` to customize lock bypass per user.
+* More reliable login page detection for monolith content lock (configured page, URL path, shortcode fallback).
+* REST content lock respects existing authentication errors before enforcing Reddy check.
 
 = 0.1.2 =
 * Direct Reddy terms of use and privacy policy links in External services readme section.
