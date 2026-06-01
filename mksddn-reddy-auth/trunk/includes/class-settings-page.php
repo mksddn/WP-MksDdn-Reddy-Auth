@@ -185,6 +185,29 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		);
 
 		add_settings_section(
+			'mksddn_reddy_auth_messages_section',
+			__( 'Bot Messages', 'mksddn-reddy-auth' ),
+			array( $this, 'render_messages_section_description' ),
+			self::PAGE_SLUG
+		);
+
+		add_settings_field(
+			'otp_message_template',
+			__( 'OTP message template', 'mksddn-reddy-auth' ),
+			array( $this, 'render_otp_message_template_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_messages_section'
+		);
+
+		add_settings_field(
+			'bot_test_message',
+			__( 'Connection test message', 'mksddn-reddy-auth' ),
+			array( $this, 'render_bot_test_message_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_messages_section'
+		);
+
+		add_settings_section(
 			'mksddn_reddy_auth_dev_section',
 			__( 'Developer Resources', 'mksddn-reddy-auth' ),
 			'__return_empty_string',
@@ -258,6 +281,15 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 */
 	public function render_section_description() {
 		echo '<p>' . esc_html__( 'Use wp-config constant MKSDDN_REDDY_BOT_TOKEN in production.', 'mksddn-reddy-auth' ) . '</p>';
+	}
+
+	/**
+	 * Render bot messages section description.
+	 *
+	 * @return void
+	 */
+	public function render_messages_section_description() {
+		echo '<p>' . esc_html__( 'Customize texts sent by the Reddy bot. Placeholders in the OTP template are replaced at send time.', 'mksddn-reddy-auth' ) . '</p>';
 	}
 
 	/**
@@ -465,6 +497,58 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Render OTP message template field.
+	 *
+	 * @return void
+	 */
+	public function render_otp_message_template_field() {
+		$settings = $this->get_settings();
+		$value    = isset( $settings['otp_message_template'] ) ? (string) $settings['otp_message_template'] : '';
+		?>
+		<textarea
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[otp_message_template]' ); ?>"
+			rows="3"
+			cols="50"
+			class="large-text"
+		><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description">
+			<?php
+			echo esc_html__(
+				'Use {code} for the one-time password and {ttl} for expiry time in seconds. Example: Your verification code: {code}. It expires in {ttl} seconds.',
+				'mksddn-reddy-auth'
+			);
+			?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render bot connection test message field.
+	 *
+	 * @return void
+	 */
+	public function render_bot_test_message_field() {
+		$settings = $this->get_settings();
+		$value    = isset( $settings['bot_test_message'] ) ? (string) $settings['bot_test_message'] : '';
+		?>
+		<input
+			type="text"
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[bot_test_message]' ); ?>"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="large-text"
+		/>
+		<p class="description">
+			<?php echo esc_html__( 'Sent when an administrator runs Bot connection test.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render test bot connection action.
+	 *
+	 * @return void
+	 */
 	public function render_bot_connection_test_field() {
 		?>
 		<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -560,6 +644,8 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'send_rate_limit'       => $this->sanitize_int_range( $raw, 'send_rate_limit', $defaults['send_rate_limit'], 1, 20 ),
 			'login_rate_limit'      => $this->sanitize_int_range( $raw, 'login_rate_limit', $defaults['login_rate_limit'], 1, 30 ),
 			'token_ttl_seconds'     => $this->sanitize_int_range( $raw, 'token_ttl_seconds', $defaults['token_ttl_seconds'], 3600, 7776000 ),
+			'otp_message_template'  => $this->sanitize_otp_message_template( isset( $raw['otp_message_template'] ) ? $raw['otp_message_template'] : '' ),
+			'bot_test_message'      => $this->sanitize_bot_test_message( isset( $raw['bot_test_message'] ) ? $raw['bot_test_message'] : '' ),
 		);
 
 		return $sanitized;
@@ -603,7 +689,27 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'send_rate_limit'       => 5,
 			'login_rate_limit'      => 7,
 			'token_ttl_seconds'     => 2592000,
+			'otp_message_template'  => self::get_default_otp_message_template(),
+			'bot_test_message'      => self::get_default_bot_test_message(),
 		);
+	}
+
+	/**
+	 * Default OTP message template with placeholders.
+	 *
+	 * @return string
+	 */
+	public static function get_default_otp_message_template() {
+		return __( 'Your verification code: {code}. It expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+	}
+
+	/**
+	 * Default bot connection test message.
+	 *
+	 * @return string
+	 */
+	public static function get_default_bot_test_message() {
+		return __( 'Reddy bot connection test from WordPress plugin.', 'mksddn-reddy-auth' );
 	}
 
 	/**
@@ -625,6 +731,51 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @param int                  $max Max value.
 	 * @return int
 	 */
+	/**
+	 * Sanitize OTP message template.
+	 *
+	 * @param mixed $raw Raw input.
+	 * @return string
+	 */
+	private function sanitize_otp_message_template( $raw ) {
+		$template = sanitize_textarea_field( (string) $raw );
+		$template = trim( $template );
+
+		if ( '' === $template ) {
+			return self::get_default_otp_message_template();
+		}
+
+		if ( false === strpos( $template, '{code}' ) ) {
+			add_settings_error(
+				self::SETTINGS_OPTION_KEY,
+				'otp_message_template_missing_code',
+				__( 'OTP message template must include the {code} placeholder. Default template restored.', 'mksddn-reddy-auth' ),
+				'error'
+			);
+
+			return self::get_default_otp_message_template();
+		}
+
+		return substr( $template, 0, 500 );
+	}
+
+	/**
+	 * Sanitize bot connection test message.
+	 *
+	 * @param mixed $raw Raw input.
+	 * @return string
+	 */
+	private function sanitize_bot_test_message( $raw ) {
+		$message = sanitize_text_field( (string) $raw );
+		$message = trim( $message );
+
+		if ( '' === $message ) {
+			return self::get_default_bot_test_message();
+		}
+
+		return substr( $message, 0, 500 );
+	}
+
 	private function sanitize_int_range( array $raw, $key, $default, $min, $max ) {
 		if ( ! isset( $raw[ $key ] ) ) {
 			return (int) $default;

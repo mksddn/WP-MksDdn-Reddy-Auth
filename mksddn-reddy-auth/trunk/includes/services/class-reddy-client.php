@@ -105,6 +105,11 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 		}
 
 		$url      = self::API_DOMAIN . self::API_VERSION . $bot_token . self::SEND_ENDPOINT;
+		$message  = apply_filters(
+			'mksddn_reddy_bot_test_message',
+			$this->resolve_bot_test_message(),
+			$reddy_id
+		);
 		$response = wp_remote_post(
 			$url,
 			array(
@@ -114,7 +119,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 				),
 				'body'    => wp_json_encode(
 					array(
-						'msg'     => __( 'Reddy bot connection test from WordPress plugin.', 'mksddn-reddy-auth' ),
+						'msg'     => (string) $message,
 						'userKey' => $reddy_id,
 					)
 				),
@@ -153,12 +158,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	private function send_via_default_transport( $bot_token, $reddy_id, $otp_code, $ttl_seconds ) {
 		$message = apply_filters(
 			'mksddn_reddy_otp_message',
-			sprintf(
-				/* translators: 1: otp code 2: ttl seconds */
-				__( 'Your verification code: %1$s. It expires in %2$d seconds.', 'mksddn-reddy-auth' ),
-				$otp_code,
-				(int) $ttl_seconds
-			),
+			$this->build_otp_message( $otp_code, (int) $ttl_seconds ),
 			$reddy_id,
 			(int) $ttl_seconds
 		);
@@ -214,6 +214,59 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 		}
 
 		return new WP_Error( 'reddy_transport_failed', __( 'Unable to deliver OTP via bot API.', 'mksddn-reddy-auth' ) );
+	}
+
+	/**
+	 * Build OTP message from admin template and placeholders.
+	 *
+	 * @param string $otp_code OTP value.
+	 * @param int    $ttl_seconds OTP lifetime.
+	 * @return string
+	 */
+	private function build_otp_message( $otp_code, $ttl_seconds ) {
+		$template = $this->resolve_otp_message_template();
+
+		return str_replace(
+			array( '{code}', '{ttl}' ),
+			array( $otp_code, (string) $ttl_seconds ),
+			$template
+		);
+	}
+
+	/**
+	 * Resolve OTP message template from settings.
+	 *
+	 * @return string
+	 */
+	private function resolve_otp_message_template() {
+		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
+		$template = isset( $settings['otp_message_template'] ) ? trim( (string) $settings['otp_message_template'] ) : '';
+
+		if ( '' === $template || false === strpos( $template, '{code}' ) ) {
+			return (string) $defaults['otp_message_template'];
+		}
+
+		return $template;
+	}
+
+	/**
+	 * Resolve bot connection test message from settings.
+	 *
+	 * @return string
+	 */
+	private function resolve_bot_test_message() {
+		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
+		$message  = isset( $settings['bot_test_message'] ) ? trim( (string) $settings['bot_test_message'] ) : '';
+
+		if ( '' === $message ) {
+			return (string) $defaults['bot_test_message'];
+		}
+
+		return $message;
 	}
 
 	/**
