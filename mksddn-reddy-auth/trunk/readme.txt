@@ -4,7 +4,7 @@ Tags: authentication, otp, rest-api, login
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -150,6 +150,10 @@ This service is provided by Reddy: terms of use and privacy policy at https://he
 No other third-party services are required for core plugin operation.
 
 == Changelog ==
+
+= 0.1.4 =
+* Admin settings for bot message texts: OTP template ({code}, {ttl}) and connection test message.
+* Filter `mksddn_reddy_bot_test_message` for customizing the connection test message.
 
 = 0.1.3 =
 * REST login no longer sets a WordPress cookie by default. Optional `issue_session` parameter (default false); use `issue_token` for Bearer auth. Shortcode login still sets a cookie.
