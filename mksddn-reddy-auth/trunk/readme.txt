@@ -139,8 +139,8 @@ This plugin connects to the **Reddy bot API** at `https://bot.reddy.team` to del
 
 **What data is sent and when**
 
-* **OTP send / login:** Reddy user ID (`userKey`) and message text containing the one-time code (and expiry hint). Sent when a user requests a code via the login form or REST API.
-* **Bot connection test:** Reddy user ID (`userKey`) and a fixed test message. Sent only when an administrator runs **Bot connection test** in **Settings > Reddy Auth**.
+* **OTP send / login:** Reddy user ID (`userKey`) and message text containing the one-time code (and expiry hint). Message text is configurable in **Settings > Reddy Auth > Bot Messages** (placeholders `{code}`, `{ttl}`). Sent when a user requests a code via the login form or REST API.
+* **Bot connection test:** Reddy user ID (`userKey`) and a configurable test message from **Settings > Reddy Auth > Bot Messages**. Sent only when an administrator runs **Bot connection test** in **Settings > Reddy Auth**.
 * **Bot token:** Your bot token is included in the API request URL path (configured via `MKSDDN_REDDY_BOT_TOKEN` in `wp-config.php` or the development fallback field in settings). It is not sent to WordPress.org.
 
 Data is transmitted only when OTP delivery or the connection test is triggered. The plugin does not send site content, post data, or WordPress user passwords to Reddy.
@@ -153,6 +153,7 @@ No other third-party services are required for core plugin operation.
 
 = 0.1.4 =
 * Admin settings for bot message texts: OTP template ({code}, {ttl}) and connection test message.
+* Filter `mksddn_reddy_otp_message` still overrides the final OTP text after the admin template is applied.
 * Filter `mksddn_reddy_bot_test_message` for customizing the connection test message.
 
 = 0.1.3 =

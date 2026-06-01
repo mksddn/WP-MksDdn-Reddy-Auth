@@ -63,6 +63,8 @@
 - `Mksddn_Reddy_Auth_Reddy_Client`
   - Sends OTP through upstream bot transport.
   - Reads bot token from `MKSDDN_REDDY_BOT_TOKEN` or dev fallback option.
+  - Builds OTP and connection test message text from admin settings (`otp_message_template`, `bot_test_message`).
+  - Custom transport via `mksddn_reddy_send_code_transport` bypasses the admin OTP template.
 - `Mksddn_Reddy_Auth_Otp_Service`
   - OTP generation, hashing, TTL, one-time validation, rate limiting.
 - `Mksddn_Reddy_Auth_Identity_Service`
@@ -87,7 +89,7 @@
 ## Data Storage
 
 - Options:
-  - `mksddn_reddy_auth_settings` (includes `allowed_urls` string array)
+  - `mksddn_reddy_auth_settings` (includes `allowed_urls` string array, `otp_message_template`, `bot_test_message`, lock flags, rate limits, TTLs)
   - `mksddn_reddy_auth_bot_token` (dev fallback)
   - `mksddn_reddy_auth_version`
 - User meta:
@@ -97,6 +99,15 @@
   - `{prefix}mksddn_reddy_tokens`
 - Transients:
   - OTP and rate limit state.
+
+## Bot Message Texts
+
+- Settings (Settings > Reddy Auth > Bot Messages):
+  - `otp_message_template` — placeholders `{code}` (required) and `{ttl}` (optional).
+  - `bot_test_message` — text sent by the admin bot connection test action.
+- Extension filters (applied after admin template resolution for OTP):
+  - `mksddn_reddy_otp_message` (string `$message`, string `$reddy_id`, int `$ttl_seconds`)
+  - `mksddn_reddy_bot_test_message` (string `$message`, string `$reddy_id`)
 
 ## Request URL Allowlist
 

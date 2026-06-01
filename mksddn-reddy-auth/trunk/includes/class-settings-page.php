@@ -493,11 +493,6 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
-	 * Render test bot connection action.
-	 *
-	 * @return void
-	 */
-	/**
 	 * Render OTP message template field.
 	 *
 	 * @return void
@@ -722,16 +717,6 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
-	 * Sanitize and clamp integer option.
-	 *
-	 * @param array<string, mixed> $raw Raw settings array.
-	 * @param string               $key Setting key.
-	 * @param int                  $default Default value.
-	 * @param int                  $min Min value.
-	 * @param int                  $max Max value.
-	 * @return int
-	 */
-	/**
 	 * Sanitize OTP message template.
 	 *
 	 * @param mixed $raw Raw input.
@@ -776,6 +761,16 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		return substr( $message, 0, 500 );
 	}
 
+	/**
+	 * Sanitize and clamp integer option.
+	 *
+	 * @param array<string, mixed> $raw Raw settings array.
+	 * @param string               $key Setting key.
+	 * @param int                  $default Default value.
+	 * @param int                  $min Min value.
+	 * @param int                  $max Max value.
+	 * @return int
+	 */
 	private function sanitize_int_range( array $raw, $key, $default, $min, $max ) {
 		if ( ! isset( $raw[ $key ] ) ) {
 			return (int) $default;
