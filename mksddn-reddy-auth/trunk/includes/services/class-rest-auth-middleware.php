@@ -95,6 +95,10 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return $result;
 		}
 
+		if ( $this->is_cors_preflight_request() ) {
+			return $result;
+		}
+
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -120,6 +124,19 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 		wp_set_current_user( (int) $user->ID );
 
 		return $result;
+	}
+
+	/**
+	 * True when the request is a CORS preflight (OPTIONS).
+	 *
+	 * Preflight must not require Bearer; the real request is validated separately.
+	 *
+	 * @return bool
+	 */
+	private function is_cors_preflight_request() {
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_METHOD'] ) ) : '';
+
+		return 'OPTIONS' === strtoupper( $method );
 	}
 
 	/**

@@ -4,7 +4,7 @@ Tags: authentication, otp, rest-api, login
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.4
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -150,6 +150,10 @@ This service is provided by Reddy: terms of use and privacy policy at https://he
 No other third-party services are required for core plugin operation.
 
 == Changelog ==
+
+= 1.0.0 =
+* Do not require Bearer on HTTP OPTIONS when REST API content lock is enabled (CORS preflight for cross-origin SPAs).
+* Stable 1.0.0 release.
 
 = 0.1.4 =
 * Admin settings for bot message texts: OTP template ({code}, {ttl}) and connection test message.

@@ -41,7 +41,7 @@
 ### 3a) Monolith vs REST protection
 
 - **Monolith content lock** (`monolith_lock_enabled`): allows access when the visitor has a WordPress cookie session and `_mksddn_reddy_id` user meta. Does not read `Authorization: Bearer`.
-- **REST API content lock** (`api_lock_enabled`): requires `Authorization: Bearer` with a valid plugin token tied to a Reddy-mapped user. Ignores cookie-only sessions.
+- **REST API content lock** (`api_lock_enabled`): requires `Authorization: Bearer` with a valid plugin token tied to a Reddy-mapped user. Ignores cookie-only sessions. HTTP `OPTIONS` (CORS preflight) is not challenged; Bearer is enforced on the actual method (`GET`, `POST`, etc.).
 - REST login with `issue_token: true` alone does not grant monolith site access. REST login with `issue_session: true` sets the cookie used by monolith lock.
 
 ### 4) Logout
