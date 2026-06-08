@@ -178,10 +178,11 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			self::PAGE_SLUG,
 			'mksddn_reddy_auth_limits_section',
 			array(
-				'key'  => 'otp_ttl_seconds',
-				'min'  => 60,
-				'max'  => 900,
-				'step' => 1,
+				'key'         => 'otp_ttl_seconds',
+				'min'         => 60,
+				'max'         => 900,
+				'step'        => 1,
+				'description' => __( 'How long an OTP code stays valid after it is sent.', 'mksddn-reddy-auth' ),
 			)
 		);
 
@@ -222,10 +223,11 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			self::PAGE_SLUG,
 			'mksddn_reddy_auth_limits_section',
 			array(
-				'key'  => 'token_ttl_seconds',
-				'min'  => 3600,
-				'max'  => 7776000,
-				'step' => 60,
+				'key'         => 'token_ttl_seconds',
+				'min'         => 3600,
+				'max'         => 7776000,
+				'step'        => 60,
+				'description' => __( 'How long API Bearer tokens remain valid before users must log in again.', 'mksddn-reddy-auth' ),
 			)
 		);
 
@@ -308,16 +310,21 @@ class Mksddn_Reddy_Auth_Settings_Page {
 				<p style="margin:0 0 8px;">
 					<strong><?php echo esc_html__( 'Quick Start', 'mksddn-reddy-auth' ); ?></strong>
 				</p>
-				<p style="margin:0 0 8px;">
-					<?php echo esc_html__( '1) Set bot token (prefer MKSDDN_REDDY_BOT_TOKEN in wp-config.php). 2) Create a login page and add shortcode:', 'mksddn-reddy-auth' ); ?>
-					<code>[mksddn_reddy_login]</code>.
-				</p>
-				<p style="margin:0 0 8px;">
-					<?php echo esc_html__( '3) Select that page in Login page. 4) Enable content protection only after the page works.', 'mksddn-reddy-auth' ); ?>
-				</p>
-				<p style="margin:0;">
-					<?php echo esc_html__( 'Optional: choose a messenger delivery mode with an Authorize button for one-click login.', 'mksddn-reddy-auth' ); ?>
-				</p>
+				<ol style="margin:0 0 8px 20px; padding:0;">
+					<li style="margin:0 0 6px;">
+						<?php echo esc_html__( 'In Reddy, message Bot Mother (72220000000) to create your bot.', 'mksddn-reddy-auth' ); ?>
+					</li>
+					<li style="margin:0 0 6px;">
+						<?php echo esc_html__( 'Paste your bot token here to connect WordPress with Reddy.', 'mksddn-reddy-auth' ); ?>
+					</li>
+					<li style="margin:0 0 6px;">
+						<?php echo esc_html__( 'For monolith WordPress site mode, create a login page and add shortcode:', 'mksddn-reddy-auth' ); ?>
+						<code>[mksddn_reddy_login]</code>.
+					</li>
+					<li style="margin:0 0 6px;">
+						<?php echo esc_html__( 'After a successful login test, enable protection.', 'mksddn-reddy-auth' ); ?>
+					</li>
+				</ol>
 			</div>
 			<?php $this->render_bot_test_notice(); ?>
 			<form method="post" action="options.php">
@@ -469,6 +476,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			<input type="checkbox" name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[api_lock_enabled]' ); ?>" value="1" <?php checked( $checked ); ?> />
 			<?php echo esc_html__( 'Require Reddy authentication for all REST API content (except send-code/login).', 'mksddn-reddy-auth' ); ?>
 		</label>
+		<p class="description">
+			<?php echo esc_html__( 'Enable when your API must be private. Public endpoints from other plugins may also require authentication.', 'mksddn-reddy-auth' ); ?>
+		</p>
 		<?php
 	}
 
@@ -485,6 +495,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			<input type="checkbox" name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[monolith_lock_enabled]' ); ?>" value="1" <?php checked( $checked ); ?> />
 			<?php echo esc_html__( 'Require Reddy authentication for frontend site content.', 'mksddn-reddy-auth' ); ?>
 		</label>
+		<p class="description">
+			<?php echo esc_html__( 'Locks public pages for non-authenticated visitors. Keep the selected login page accessible so users can sign in.', 'mksddn-reddy-auth' ); ?>
+		</p>
 		<?php
 	}
 
