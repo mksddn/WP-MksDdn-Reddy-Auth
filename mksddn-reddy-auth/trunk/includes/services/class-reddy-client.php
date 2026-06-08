@@ -67,7 +67,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 
 		/**
 		 * Placeholder hook for transport implementation.
-		 * OTP value is intentionally not passed to avoid accidental leaks.
+		 * OTP value is passed as the 4th filter argument; keep handlers trusted.
 		 */
 		$transport_result = apply_filters( 'mksddn_reddy_send_code_transport', null, $reddy_id, (int) $ttl_seconds, $otp_code );
 		if ( null === $transport_result ) {

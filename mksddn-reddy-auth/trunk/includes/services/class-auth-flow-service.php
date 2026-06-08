@@ -124,6 +124,18 @@ class Mksddn_Reddy_Auth_Auth_Flow_Service {
 	}
 
 	/**
+	 * Return resolved one-click delivery mode.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings array.
+	 * @return string
+	 */
+	public function get_delivery_mode( $settings = null ) {
+		$settings = is_array( $settings ) ? $settings : $this->get_settings();
+
+		return $this->resolve_delivery_mode( $settings );
+	}
+
+	/**
 	 * Resolve delivery mode from settings.
 	 *
 	 * @param array<string, mixed> $settings Settings array.

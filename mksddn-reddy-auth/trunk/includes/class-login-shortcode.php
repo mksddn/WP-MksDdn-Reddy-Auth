@@ -132,8 +132,9 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		$intent_id       = isset( $polling_context['intent_id'] ) ? (string) $polling_context['intent_id'] : '';
 		$intent_secret   = isset( $polling_context['intent_secret'] ) ? (string) $polling_context['intent_secret'] : '';
 		$login_reddy_id  = $this->get_login_reddy_id_from_cookie();
-		$show_code_step  = ( $is_code_step && '' !== $login_reddy_id );
-		$awaiting_approval = ( 'code_sent' === $status && $show_code_step && '' !== $intent_id && '' !== $intent_secret && $this->auth_flow_service->is_one_click_enabled() );
+		$delivery_mode   = $this->auth_flow_service->get_delivery_mode();
+		$show_code_step  = ( $is_code_step && '' !== $login_reddy_id && 'link_only' !== $delivery_mode );
+		$awaiting_approval = ( 'code_sent' === $status && '' !== $intent_id && '' !== $intent_secret && $this->auth_flow_service->is_one_click_enabled() );
 
 		$this->enqueue_assets( $awaiting_approval, $intent_id, $intent_secret );
 

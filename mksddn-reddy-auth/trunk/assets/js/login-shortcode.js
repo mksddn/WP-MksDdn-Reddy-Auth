@@ -74,6 +74,10 @@
 					return;
 				}
 
+				if (pollTimer) {
+					window.clearInterval(pollTimer);
+				}
+
 				hideForms();
 				window.location.href = config.redirectUrl || window.location.href;
 			})
@@ -101,9 +105,6 @@
 				}
 
 				if (payload.status === 'approved') {
-					if (pollTimer) {
-						window.clearInterval(pollTimer);
-					}
 					completeIntent();
 				}
 			})
