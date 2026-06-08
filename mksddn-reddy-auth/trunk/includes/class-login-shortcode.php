@@ -11,6 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Mksddn_Reddy_Auth_Login_Shortcode {
 	/**
+	 * Cookie name for login step context.
+	 *
+	 * @var string
+	 */
+	const LOGIN_CONTEXT_COOKIE_NAME = 'mksddn_reddy_login_context';
+
+	/**
 	 * Cookie name for one-click polling context.
 	 *
 	 * @var string
@@ -113,14 +120,20 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 			$message = $this->status_to_message( $status );
 		}
 
-		if ( 'code_sent' !== $status ) {
+		$code_step_statuses = array( 'code_sent', 'invalid_credentials' );
+		$is_code_step       = in_array( $status, $code_step_statuses, true );
+
+		if ( ! $is_code_step ) {
 			$this->clear_polling_context_cookie();
+			$this->clear_login_context_cookie();
 		}
 
 		$polling_context = $this->get_polling_context_from_cookie();
 		$intent_id       = isset( $polling_context['intent_id'] ) ? (string) $polling_context['intent_id'] : '';
 		$intent_secret   = isset( $polling_context['intent_secret'] ) ? (string) $polling_context['intent_secret'] : '';
-		$awaiting_approval = ( 'code_sent' === $status && '' !== $intent_id && '' !== $intent_secret && $this->auth_flow_service->is_one_click_enabled() );
+		$login_reddy_id  = $this->get_login_reddy_id_from_cookie();
+		$show_code_step  = ( $is_code_step && '' !== $login_reddy_id );
+		$awaiting_approval = ( 'code_sent' === $status && $show_code_step && '' !== $intent_id && '' !== $intent_secret && $this->auth_flow_service->is_one_click_enabled() );
 
 		$this->enqueue_assets( $awaiting_approval, $intent_id, $intent_secret );
 
@@ -137,33 +150,32 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 				</p>
 			<?php endif; ?>
 
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mksddn-reddy-auth-send-form">
-				<?php wp_nonce_field( 'mksddn_reddy_send_code_action' ); ?>
-				<input type="hidden" name="action" value="mksddn_reddy_send_code" />
-				<p>
-					<label for="mksddn-reddy-id-send"><?php echo esc_html__( 'Reddy ID', 'mksddn-reddy-auth' ); ?></label><br />
-					<input id="mksddn-reddy-id-send" type="text" name="reddy_id" required />
-				</p>
-				<p>
-					<button type="submit"><?php echo esc_html__( 'Send code', 'mksddn-reddy-auth' ); ?></button>
-				</p>
-			</form>
-
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mksddn-reddy-auth-login-form">
-				<?php wp_nonce_field( 'mksddn_reddy_login_action' ); ?>
-				<input type="hidden" name="action" value="mksddn_reddy_login" />
-				<p>
-					<label for="mksddn-reddy-id-login"><?php echo esc_html__( 'Reddy ID', 'mksddn-reddy-auth' ); ?></label><br />
-					<input id="mksddn-reddy-id-login" type="text" name="reddy_id" required />
-				</p>
-				<p>
-					<label for="mksddn-reddy-code"><?php echo esc_html__( 'One-time code', 'mksddn-reddy-auth' ); ?></label><br />
-					<input id="mksddn-reddy-code" type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" required />
-				</p>
-				<p>
-					<button type="submit"><?php echo esc_html__( 'Log in', 'mksddn-reddy-auth' ); ?></button>
-				</p>
-			</form>
+			<?php if ( $show_code_step ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mksddn-reddy-auth-login-form">
+					<?php wp_nonce_field( 'mksddn_reddy_login_action' ); ?>
+					<input type="hidden" name="action" value="mksddn_reddy_login" />
+					<input type="hidden" name="reddy_id" value="<?php echo esc_attr( $login_reddy_id ); ?>" />
+					<p>
+						<label for="mksddn-reddy-code"><?php echo esc_html__( 'One-time code', 'mksddn-reddy-auth' ); ?></label><br />
+						<input id="mksddn-reddy-code" type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" required />
+					</p>
+					<p>
+						<button type="submit"><?php echo esc_html__( 'Log in', 'mksddn-reddy-auth' ); ?></button>
+					</p>
+				</form>
+			<?php else : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="mksddn-reddy-auth-send-form">
+					<?php wp_nonce_field( 'mksddn_reddy_send_code_action' ); ?>
+					<input type="hidden" name="action" value="mksddn_reddy_send_code" />
+					<p>
+						<label for="mksddn-reddy-id-send"><?php echo esc_html__( 'Reddy ID', 'mksddn-reddy-auth' ); ?></label><br />
+						<input id="mksddn-reddy-id-send" type="text" name="reddy_id" required />
+					</p>
+					<p>
+						<button type="submit"><?php echo esc_html__( 'Send code', 'mksddn-reddy-auth' ); ?></button>
+					</p>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 
@@ -182,8 +194,11 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		$result   = $this->auth_flow_service->request_login( $reddy_id );
 
 		if ( is_wp_error( $result ) ) {
+			$this->clear_login_context_cookie();
 			$this->redirect_with_status( 'error', $result->get_error_message() );
 		}
+
+		$this->set_login_context_cookie( $reddy_id );
 
 		if ( ! empty( $result['intent_id'] ) && ! empty( $result['intent_secret'] ) ) {
 			$this->set_polling_context_cookie( (string) $result['intent_id'], (string) $result['intent_secret'] );
@@ -200,8 +215,14 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	public function handle_login() {
 		check_admin_referer( 'mksddn_reddy_login_action' );
 
-		$reddy_id = isset( $_POST['reddy_id'] ) ? sanitize_text_field( wp_unslash( $_POST['reddy_id'] ) ) : '';
-		$code     = isset( $_POST['code'] ) ? sanitize_text_field( wp_unslash( $_POST['code'] ) ) : '';
+		$posted_reddy_id = isset( $_POST['reddy_id'] ) ? sanitize_text_field( wp_unslash( $_POST['reddy_id'] ) ) : '';
+		$stored_reddy_id = $this->get_login_reddy_id_from_cookie();
+		$reddy_id        = '' !== $stored_reddy_id ? $stored_reddy_id : $posted_reddy_id;
+		$code            = isset( $_POST['code'] ) ? sanitize_text_field( wp_unslash( $_POST['code'] ) ) : '';
+
+		if ( '' === $reddy_id || '' === $code ) {
+			$this->redirect_with_status( 'invalid_credentials' );
+		}
 
 		$otp_result = $this->otp_service->verify_code( $reddy_id, $code );
 		if ( is_wp_error( $otp_result ) ) {
@@ -220,6 +241,7 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		}
 
 		$this->clear_polling_context_cookie();
+		$this->clear_login_context_cookie();
 		$this->redirect_with_status( 'logged_in' );
 	}
 
@@ -468,6 +490,97 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	private function clear_polling_context_cookie() {
 		setcookie(
 			self::POLLING_COOKIE_NAME,
+			'',
+			time() - HOUR_IN_SECONDS,
+			$this->get_cookie_path(),
+			$this->get_cookie_domain(),
+			is_ssl(),
+			true
+		);
+	}
+
+	/**
+	 * Persist login step context in signed HttpOnly cookie.
+	 *
+	 * @param string $reddy_id Reddy ID.
+	 * @return void
+	 */
+	private function set_login_context_cookie( $reddy_id ) {
+		$reddy_id = sanitize_text_field( (string) $reddy_id );
+		if ( '' === $reddy_id ) {
+			return;
+		}
+
+		$expires_at = time() + self::POLLING_COOKIE_TTL;
+		$payload    = array(
+			'reddy_id'   => $reddy_id,
+			'expires_at' => $expires_at,
+		);
+		$encoded    = base64_encode( (string) wp_json_encode( $payload ) );
+		$signature  = hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
+		$value      = $encoded . '.' . $signature;
+
+		setcookie(
+			self::LOGIN_CONTEXT_COOKIE_NAME,
+			$value,
+			$expires_at,
+			$this->get_cookie_path(),
+			$this->get_cookie_domain(),
+			is_ssl(),
+			true
+		);
+	}
+
+	/**
+	 * Read and validate Reddy ID from login context cookie.
+	 *
+	 * @return string
+	 */
+	private function get_login_reddy_id_from_cookie() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only cookie access.
+		if ( empty( $_COOKIE[ self::LOGIN_CONTEXT_COOKIE_NAME ] ) ) {
+			return '';
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only cookie access.
+		$raw   = (string) wp_unslash( $_COOKIE[ self::LOGIN_CONTEXT_COOKIE_NAME ] );
+		$parts = explode( '.', $raw, 2 );
+		if ( 2 !== count( $parts ) ) {
+			return '';
+		}
+
+		$encoded   = (string) $parts[0];
+		$signature = (string) $parts[1];
+		$expected  = hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
+		if ( ! hash_equals( $expected, $signature ) ) {
+			return '';
+		}
+
+		$decoded = base64_decode( $encoded, true );
+		if ( false === $decoded ) {
+			return '';
+		}
+
+		$payload = json_decode( $decoded, true );
+		if ( ! is_array( $payload ) || empty( $payload['reddy_id'] ) || empty( $payload['expires_at'] ) ) {
+			return '';
+		}
+
+		if ( time() > (int) $payload['expires_at'] ) {
+			return '';
+		}
+
+		return sanitize_text_field( (string) $payload['reddy_id'] );
+	}
+
+	/**
+	 * Clear login step context cookie.
+	 *
+	 * @return void
+	 */
+	private function clear_login_context_cookie() {
+		setcookie(
+			self::LOGIN_CONTEXT_COOKIE_NAME,
 			'',
 			time() - HOUR_IN_SECONDS,
 			$this->get_cookie_path(),

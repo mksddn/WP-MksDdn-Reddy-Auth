@@ -6,10 +6,8 @@
 	background: #fff;
 }
 
-.mksddn-reddy-auth-form form + form {
-	margin-top: 16px;
-	padding-top: 16px;
-	border-top: 1px solid #f0f0f1;
+.mksddn-reddy-auth-form form {
+	margin: 0;
 }
 
 .mksddn-reddy-auth-form label {
