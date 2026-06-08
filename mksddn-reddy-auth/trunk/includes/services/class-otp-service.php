@@ -72,10 +72,11 @@ class Mksddn_Reddy_Auth_Otp_Service {
 	/**
 	 * Request OTP code dispatch for given Reddy ID.
 	 *
-	 * @param string $reddy_id Reddy user identifier.
+	 * @param string               $reddy_id Reddy user identifier.
+	 * @param array<string, mixed> $delivery Delivery options (delivery_mode, magic_link_url).
 	 * @return true|WP_Error
 	 */
-	public function request_code( $reddy_id ) {
+	public function request_code( $reddy_id, array $delivery = array() ) {
 		$reddy_id = $this->normalize_reddy_id( $reddy_id );
 
 		if ( '' === $reddy_id ) {
@@ -112,7 +113,7 @@ class Mksddn_Reddy_Auth_Otp_Service {
 			return new WP_Error( 'otp_storage_failed', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
 		}
 
-		$send_result = $this->reddy_client->send_otp_code( $reddy_id, $code, $this->ttl_seconds );
+		$send_result = $this->reddy_client->send_otp_code( $reddy_id, $code, $this->ttl_seconds, $delivery );
 
 		if ( is_wp_error( $send_result ) ) {
 			delete_transient( $this->get_otp_key( $reddy_id ) );

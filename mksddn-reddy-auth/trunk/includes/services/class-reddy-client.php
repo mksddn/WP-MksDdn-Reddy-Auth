@@ -41,12 +41,13 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	/**
 	 * Request OTP delivery from Reddy API.
 	 *
-	 * @param string $reddy_id Reddy user identifier.
-	 * @param string $otp_code One-time password.
-	 * @param int    $ttl_seconds OTP lifetime.
+	 * @param string               $reddy_id Reddy user identifier.
+	 * @param string               $otp_code One-time password.
+	 * @param int                  $ttl_seconds OTP lifetime.
+	 * @param array<string, mixed> $delivery Delivery options.
 	 * @return true|WP_Error
 	 */
-	public function send_otp_code( $reddy_id, $otp_code, $ttl_seconds ) {
+	public function send_otp_code( $reddy_id, $otp_code, $ttl_seconds, array $delivery = array() ) {
 		$reddy_id  = sanitize_text_field( $reddy_id );
 		$otp_code  = sanitize_text_field( $otp_code );
 		$bot_token = $this->get_bot_token();
@@ -70,7 +71,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 		 */
 		$transport_result = apply_filters( 'mksddn_reddy_send_code_transport', null, $reddy_id, (int) $ttl_seconds, $otp_code );
 		if ( null === $transport_result ) {
-			$transport_result = $this->send_via_default_transport( $bot_token, $reddy_id, $otp_code, $ttl_seconds );
+			$transport_result = $this->send_via_default_transport( $bot_token, $reddy_id, $otp_code, $ttl_seconds, $delivery );
 		}
 
 		if ( true !== $transport_result ) {
@@ -149,16 +150,29 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	/**
 	 * Default transport implementation for Reddy bot API.
 	 *
-	 * @param string $bot_token Bot token.
-	 * @param string $reddy_id Reddy user ID.
-	 * @param string $otp_code One-time code.
-	 * @param int    $ttl_seconds Code TTL.
+	 * @param string               $bot_token Bot token.
+	 * @param string               $reddy_id Reddy user ID.
+	 * @param string               $otp_code One-time code.
+	 * @param int                  $ttl_seconds Code TTL.
+	 * @param array<string, mixed> $delivery Delivery options.
 	 * @return true|WP_Error
 	 */
-	private function send_via_default_transport( $bot_token, $reddy_id, $otp_code, $ttl_seconds ) {
+	private function send_via_default_transport( $bot_token, $reddy_id, $otp_code, $ttl_seconds, array $delivery = array() ) {
+		$delivery_mode  = isset( $delivery['delivery_mode'] ) ? sanitize_key( (string) $delivery['delivery_mode'] ) : 'otp_only';
+		$magic_link_url = isset( $delivery['magic_link_url'] ) ? esc_url_raw( (string) $delivery['magic_link_url'] ) : '';
+
+		if ( ! in_array( $delivery_mode, array( 'otp_only', 'otp_plus_link', 'link_only' ), true ) ) {
+			$delivery_mode = 'otp_only';
+		}
+
+		if ( 'link_only' === $delivery_mode && '' === $magic_link_url ) {
+			$delivery_mode = 'otp_only';
+		}
+
+		$message = $this->build_auth_message( $otp_code, (int) $ttl_seconds, $delivery_mode, $magic_link_url );
 		$message = apply_filters(
 			'mksddn_reddy_otp_message',
-			$this->build_otp_message( $otp_code, (int) $ttl_seconds ),
+			$message,
 			$reddy_id,
 			(int) $ttl_seconds
 		);
@@ -168,6 +182,28 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 			'msg'     => (string) $message,
 			'userKey' => $reddy_id,
 		);
+
+		$button_label = $this->resolve_magic_link_button_label();
+		if ( '' !== $magic_link_url && in_array( $delivery_mode, array( 'otp_plus_link', 'link_only' ), true ) ) {
+			$payload['keyboard'] = array(
+				array(
+					array(
+						'type'  => 'command',
+						'title' => $button_label,
+						'data'  => $magic_link_url,
+					),
+				),
+			);
+		}
+
+		/**
+		 * Filter Reddy bot send payload before transport.
+		 *
+		 * @param array<string, mixed> $payload   Request payload.
+		 * @param string               $reddy_id  Reddy user identifier.
+		 * @param int                  $ttl_seconds OTP TTL.
+		 */
+		$payload = apply_filters( 'mksddn_reddy_send_payload', $payload, $reddy_id, (int) $ttl_seconds );
 
 		$last_error = null;
 		for ( $attempt = 0; $attempt < 3; $attempt++ ) {
@@ -217,38 +253,97 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	}
 
 	/**
-	 * Build OTP message from admin template and placeholders.
+	 * Build auth message from admin template and placeholders.
 	 *
 	 * @param string $otp_code OTP value.
 	 * @param int    $ttl_seconds OTP lifetime.
+	 * @param string $delivery_mode Delivery mode.
+	 * @param string $magic_link_url Magic link URL.
 	 * @return string
 	 */
-	private function build_otp_message( $otp_code, $ttl_seconds ) {
-		$template = $this->resolve_otp_message_template();
+	private function build_auth_message( $otp_code, $ttl_seconds, $delivery_mode, $magic_link_url ) {
+		$template = $this->resolve_otp_message_template( $delivery_mode );
+		$link     = $this->format_magic_link_for_message( $magic_link_url );
 
-		return str_replace(
-			array( '{code}', '{ttl}' ),
-			array( $otp_code, (string) $ttl_seconds ),
-			$template
+		$replacements = array(
+			'{code}' => 'link_only' === $delivery_mode ? '' : $otp_code,
+			'{ttl}'  => (string) $ttl_seconds,
+			'{link}' => $link,
 		);
+
+		$message = str_replace( array_keys( $replacements ), array_values( $replacements ), $template );
+		$message = trim( preg_replace( '/\s+/', ' ', $message ) );
+
+		if ( 'link_only' === $delivery_mode && '' !== $magic_link_url ) {
+			return $message;
+		}
+
+		return $message;
+	}
+
+	/**
+	 * Format magic link for message body.
+	 *
+	 * Reddy clients support BBCode links; this improves clickability when
+	 * integrators use the {link} placeholder in custom templates.
+	 *
+	 * @param string $magic_link_url Raw magic link URL.
+	 * @return string
+	 */
+	private function format_magic_link_for_message( $magic_link_url ) {
+		$magic_link_url = esc_url_raw( (string) $magic_link_url );
+		if ( '' === $magic_link_url ) {
+			return '';
+		}
+
+		return '[url=' . $magic_link_url . ']' . $magic_link_url . '[/url]';
 	}
 
 	/**
 	 * Resolve OTP message template from settings.
 	 *
+	 * @param string $delivery_mode Delivery mode.
 	 * @return string
 	 */
-	private function resolve_otp_message_template() {
+	private function resolve_otp_message_template( $delivery_mode = 'otp_only' ) {
 		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
 		$settings = is_array( $settings ) ? $settings : array();
 		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
+
+		if ( 'link_only' === $delivery_mode ) {
+			$template = isset( $settings['magic_link_message_template'] ) ? trim( (string) $settings['magic_link_message_template'] ) : '';
+			if ( '' === $template ) {
+				return (string) $defaults['magic_link_message_template'];
+			}
+
+			return $template;
+		}
+
 		$template = isset( $settings['otp_message_template'] ) ? trim( (string) $settings['otp_message_template'] ) : '';
 
-		if ( '' === $template || false === strpos( $template, '{code}' ) ) {
+		if ( '' === $template || ( 'otp_only' === $delivery_mode && false === strpos( $template, '{code}' ) ) ) {
 			return (string) $defaults['otp_message_template'];
 		}
 
 		return $template;
+	}
+
+	/**
+	 * Resolve magic link button label from settings.
+	 *
+	 * @return string
+	 */
+	private function resolve_magic_link_button_label() {
+		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
+		$label    = isset( $settings['magic_link_button_label'] ) ? trim( (string) $settings['magic_link_button_label'] ) : '';
+
+		if ( '' === $label ) {
+			return (string) $defaults['magic_link_button_label'];
+		}
+
+		return substr( $label, 0, 64 );
 	}
 
 	/**

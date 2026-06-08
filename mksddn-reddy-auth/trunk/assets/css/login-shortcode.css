@@ -39,3 +39,10 @@
 	border-left: 3px solid #2271b1;
 	background: #f0f6fc;
 }
+
+.mksddn-reddy-auth-waiting {
+	margin: 0 0 12px;
+	padding: 8px 10px;
+	border-left: 3px solid #dba617;
+	background: #fcf9e8;
+}

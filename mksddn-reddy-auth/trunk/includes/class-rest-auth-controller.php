@@ -18,11 +18,25 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	private $otp_service;
 
 	/**
-	 * Identity service.
+	 * Auth flow service.
 	 *
-	 * @var Mksddn_Reddy_Auth_Identity_Service
+	 * @var Mksddn_Reddy_Auth_Auth_Flow_Service
 	 */
-	private $identity_service;
+	private $auth_flow_service;
+
+	/**
+	 * Auth finalizer service.
+	 *
+	 * @var Mksddn_Reddy_Auth_Auth_Finalizer_Service
+	 */
+	private $auth_finalizer_service;
+
+	/**
+	 * Login intent service.
+	 *
+	 * @var Mksddn_Reddy_Auth_Login_Intent_Service
+	 */
+	private $login_intent_service;
 
 	/**
 	 * Session service.
@@ -55,20 +69,24 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param Mksddn_Reddy_Auth_Otp_Service          $otp_service OTP service.
-	 * @param Mksddn_Reddy_Auth_Identity_Service     $identity_service Identity service.
-	 * @param Mksddn_Reddy_Auth_Session_Service      $session_service Session service.
-	 * @param Mksddn_Reddy_Auth_Token_Service        $token_service Token service.
-	 * @param Mksddn_Reddy_Auth_Rest_Auth_Middleware $auth_middleware Auth middleware.
-	 * @param Mksddn_Reddy_Auth_Request_Url_Guard    $request_url_guard Request source guard.
+	 * @param Mksddn_Reddy_Auth_Otp_Service            $otp_service OTP service.
+	 * @param Mksddn_Reddy_Auth_Auth_Flow_Service      $auth_flow_service Auth flow service.
+	 * @param Mksddn_Reddy_Auth_Auth_Finalizer_Service $auth_finalizer_service Auth finalizer service.
+	 * @param Mksddn_Reddy_Auth_Login_Intent_Service   $login_intent_service Login intent service.
+	 * @param Mksddn_Reddy_Auth_Session_Service        $session_service Session service.
+	 * @param Mksddn_Reddy_Auth_Token_Service          $token_service Token service.
+	 * @param Mksddn_Reddy_Auth_Rest_Auth_Middleware   $auth_middleware Auth middleware.
+	 * @param Mksddn_Reddy_Auth_Request_Url_Guard      $request_url_guard Request source guard.
 	 */
-	public function __construct( Mksddn_Reddy_Auth_Otp_Service $otp_service, Mksddn_Reddy_Auth_Identity_Service $identity_service, Mksddn_Reddy_Auth_Session_Service $session_service, Mksddn_Reddy_Auth_Token_Service $token_service, Mksddn_Reddy_Auth_Rest_Auth_Middleware $auth_middleware, Mksddn_Reddy_Auth_Request_Url_Guard $request_url_guard ) {
-		$this->otp_service       = $otp_service;
-		$this->identity_service  = $identity_service;
-		$this->session_service   = $session_service;
-		$this->token_service     = $token_service;
-		$this->auth_middleware   = $auth_middleware;
-		$this->request_url_guard = $request_url_guard;
+	public function __construct( Mksddn_Reddy_Auth_Otp_Service $otp_service, Mksddn_Reddy_Auth_Auth_Flow_Service $auth_flow_service, Mksddn_Reddy_Auth_Auth_Finalizer_Service $auth_finalizer_service, Mksddn_Reddy_Auth_Login_Intent_Service $login_intent_service, Mksddn_Reddy_Auth_Session_Service $session_service, Mksddn_Reddy_Auth_Token_Service $token_service, Mksddn_Reddy_Auth_Rest_Auth_Middleware $auth_middleware, Mksddn_Reddy_Auth_Request_Url_Guard $request_url_guard ) {
+		$this->otp_service            = $otp_service;
+		$this->auth_flow_service      = $auth_flow_service;
+		$this->auth_finalizer_service = $auth_finalizer_service;
+		$this->login_intent_service   = $login_intent_service;
+		$this->session_service        = $session_service;
+		$this->token_service          = $token_service;
+		$this->auth_middleware        = $auth_middleware;
+		$this->request_url_guard      = $request_url_guard;
 	}
 
 	/**
@@ -102,12 +120,66 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
 				'callback'            => array( $this, 'login' ),
 				'args'                => array(
-					'reddy_id'    => array(
+					'reddy_id'      => array(
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
-					'code'        => array(
+					'code'          => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'issue_token'   => array(
+						'required' => false,
+						'type'     => 'boolean',
+						'default'  => false,
+					),
+					'issue_session' => array(
+						'required' => false,
+						'type'     => 'boolean',
+						'default'  => false,
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE,
+			'/auth/intent-status',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
+				'callback'            => array( $this, 'intent_status' ),
+				'args'                => array(
+					'intent_id'     => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'intent_secret' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE,
+			'/auth/complete-intent',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
+				'callback'            => array( $this, 'complete_intent' ),
+				'args'                => array(
+					'intent_id'     => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'intent_secret' => array(
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -179,7 +251,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function send_code( WP_REST_Request $request ) {
-		$result = $this->otp_service->request_code( (string) $request->get_param( 'reddy_id' ) );
+		$result = $this->auth_flow_service->request_login( (string) $request->get_param( 'reddy_id' ) );
 
 		if ( is_wp_error( $result ) ) {
 			$status = 'rate_limited' === $result->get_error_code() ? 429 : 400;
@@ -194,13 +266,17 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			);
 		}
 
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => __( 'OTP was sent successfully.', 'mksddn-reddy-auth' ),
-			),
-			200
+		$response = array(
+			'success' => true,
+			'message' => __( 'OTP was sent successfully.', 'mksddn-reddy-auth' ),
 		);
+
+		if ( ! empty( $result['intent_id'] ) && ! empty( $result['intent_secret'] ) ) {
+			$response['intent_id']     = (string) $result['intent_id'];
+			$response['intent_secret'] = (string) $result['intent_secret'];
+		}
+
+		return new WP_REST_Response( $response, 200 );
 	}
 
 	/**
@@ -220,55 +296,111 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			return $this->error_response_from_wp_error( $result );
 		}
 
-		$user = $this->identity_service->resolve_or_create_user( $reddy_id );
-		if ( is_wp_error( $user ) ) {
-			return $this->error_response_from_wp_error( $user );
-		}
+		$finalize = $this->auth_finalizer_service->finalize(
+			$reddy_id,
+			array(
+				'issue_session' => rest_sanitize_boolean( $request->get_param( 'issue_session' ) ),
+				'issue_token'   => rest_sanitize_boolean( $request->get_param( 'issue_token' ) ),
+			)
+		);
 
-		if ( rest_sanitize_boolean( $request->get_param( 'issue_session' ) ) ) {
-			$session_result = $this->session_service->login( $user );
-			if ( is_wp_error( $session_result ) ) {
-				return new WP_REST_Response(
-					array(
-						'success' => false,
-						'message' => __( 'Unable to create session.', 'mksddn-reddy-auth' ),
-					),
-					500
-				);
-			}
+		if ( is_wp_error( $finalize ) ) {
+			return $this->error_response_from_finalize( $finalize );
 		}
-
-		do_action( 'mksddn_reddy_after_login', $user, $reddy_id );
 
 		$response = array(
 			'success' => true,
 			'message' => __( 'Authentication successful.', 'mksddn-reddy-auth' ),
-			'user'    => array(
-				'id'           => (int) $user->ID,
-				'display_name' => $user->display_name,
-				'email'        => $user->user_email,
-			),
+			'user'    => $this->auth_finalizer_service->format_user_payload( $finalize['user'] ),
 		);
 
-		if ( rest_sanitize_boolean( $request->get_param( 'issue_token' ) ) ) {
-			$token_result = $this->token_service->issue_token( (int) $user->ID );
-			if ( is_wp_error( $token_result ) ) {
-				return new WP_REST_Response(
-					array(
-						'success' => false,
-						'message' => __( 'Unable to issue token.', 'mksddn-reddy-auth' ),
-					),
-					500
-				);
-			}
+		if ( ! empty( $finalize['token'] ) && is_array( $finalize['token'] ) ) {
+			$response = array_merge( $response, $finalize['token'] );
+		}
 
-			$response = array_merge( $response, $token_result );
+		return new WP_REST_Response( $response, 200 );
+	}
+
+	/**
+	 * Handle login intent polling endpoint.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function intent_status( WP_REST_Request $request ) {
+		$result = $this->login_intent_service->get_status(
+			(string) $request->get_param( 'intent_id' ),
+			(string) $request->get_param( 'intent_secret' )
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $result->get_error_message(),
+					'code'    => $result->get_error_code(),
+				),
+				400
+			);
 		}
 
 		return new WP_REST_Response(
-			$response,
+			array(
+				'success' => true,
+				'status'  => (string) $result['status'],
+			),
 			200
 		);
+	}
+
+	/**
+	 * Complete cross-device login after intent approval.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function complete_intent( WP_REST_Request $request ) {
+		$reddy_id = $this->login_intent_service->consume_approved(
+			(string) $request->get_param( 'intent_id' ),
+			(string) $request->get_param( 'intent_secret' )
+		);
+
+		if ( is_wp_error( $reddy_id ) ) {
+			$status = 'intent_not_approved' === $reddy_id->get_error_code() ? 409 : 400;
+
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $reddy_id->get_error_message(),
+					'code'    => $reddy_id->get_error_code(),
+				),
+				$status
+			);
+		}
+
+		$finalize = $this->auth_finalizer_service->finalize(
+			$reddy_id,
+			array(
+				'issue_session' => rest_sanitize_boolean( $request->get_param( 'issue_session' ) ),
+				'issue_token'   => rest_sanitize_boolean( $request->get_param( 'issue_token' ) ),
+			)
+		);
+
+		if ( is_wp_error( $finalize ) ) {
+			return $this->error_response_from_finalize( $finalize );
+		}
+
+		$response = array(
+			'success' => true,
+			'message' => __( 'Authentication successful.', 'mksddn-reddy-auth' ),
+			'user'    => $this->auth_finalizer_service->format_user_payload( $finalize['user'] ),
+		);
+
+		if ( ! empty( $finalize['token'] ) && is_array( $finalize['token'] ) ) {
+			$response = array_merge( $response, $finalize['token'] );
+		}
+
+		return new WP_REST_Response( $response, 200 );
 	}
 
 	/**
@@ -278,10 +410,11 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function logout( WP_REST_Request $request ) {
-		// Request is reserved for future token revocation payload.
 		unset( $request );
 
-		$this->session_service->logout();
+		$session_service = $this->session_service;
+		$session_service->logout();
+
 		$bearer = $this->token_service->get_bearer_token_from_request();
 		if ( '' !== $bearer ) {
 			$this->token_service->revoke_token( $bearer );
@@ -319,11 +452,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		return new WP_REST_Response(
 			array(
 				'success' => true,
-				'user'    => array(
-					'id'           => (int) $user->ID,
-					'display_name' => $user->display_name,
-					'email'        => $user->user_email,
-				),
+				'user'    => $this->auth_finalizer_service->format_user_payload( $user ),
 			),
 			200
 		);
@@ -356,6 +485,36 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 				'message' => $message,
 			),
 			$status
+		);
+	}
+
+	/**
+	 * Build finalize error response.
+	 *
+	 * @param WP_Error $error Error object.
+	 * @return WP_REST_Response
+	 */
+	private function error_response_from_finalize( WP_Error $error ) {
+		$code = (string) $error->get_error_code();
+
+		if ( in_array( $code, array( 'identity_create_failed', 'invalid_identity' ), true ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => $code,
+					'message' => __( 'Unable to create or resolve account. Contact the site administrator.', 'mksddn-reddy-auth' ),
+				),
+				400
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success' => false,
+				'code'    => $code,
+				'message' => $error->get_error_message(),
+			),
+			500
 		);
 	}
 }

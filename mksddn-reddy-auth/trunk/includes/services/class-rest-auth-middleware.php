@@ -184,10 +184,15 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 
 		$path   = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
 		$prefix = '/' . rest_get_url_prefix() . '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/';
-		$send   = $prefix . 'send-code';
-		$login  = $prefix . 'login';
+		$send           = $prefix . 'send-code';
+		$login          = $prefix . 'login';
+		$intent_status  = $prefix . 'intent-status';
+		$complete_intent = $prefix . 'complete-intent';
 
-		return $this->path_ends_with( $path, $send ) || $this->path_ends_with( $path, $login );
+		return $this->path_ends_with( $path, $send )
+			|| $this->path_ends_with( $path, $login )
+			|| $this->path_ends_with( $path, $intent_status )
+			|| $this->path_ends_with( $path, $complete_intent );
 	}
 
 	/**

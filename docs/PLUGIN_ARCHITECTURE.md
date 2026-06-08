@@ -18,7 +18,27 @@
   - Check send rate limit.
   - Generate one-time OTP with TTL.
   - Store only OTP hash in transient.
+  - When delivery mode is not `otp_only`:
+    - Create login intent (`intent_id`, `intent_secret`).
+    - Issue one-time magic link token bound to intent.
+    - Send Reddy message with optional authorize button (`buttons` payload).
   - Trigger Reddy delivery through `ReddyClient`.
+- Response (one-click enabled): may include `intent_id` and `intent_secret` for browser polling.
+
+### 1a) One-Click Authorization
+
+- Magic link handler: `admin-post.php?action=mksddn_reddy_verify_link&token=...`
+  - Validates signed one-time token (hash-only transient, TTL, rate limit).
+  - Approves login intent for cross-device polling.
+  - Does not finalize session directly; completion is performed by `/auth/complete-intent`.
+- Intent polling: `GET /mksddn-reddy-auth/v1/auth/intent-status`
+  - Input: `intent_id`, `intent_secret`
+  - Returns `pending` or `approved`.
+- Intent completion: `POST /mksddn-reddy-auth/v1/auth/complete-intent`
+  - Input: `intent_id`, `intent_secret`, optional `issue_session`, optional `issue_token`
+  - Consumes approved intent and runs shared finalize-auth pipeline.
+- Shortcode: after send-code redirect, `assets/js/login-shortcode.js` polls intent status and completes login in the original browser tab.
+- Shortcode polling context (`intent_id`, `intent_secret`) is stored in a signed HttpOnly cookie instead of URL query params.
 
 ### 2) Login
 
@@ -57,13 +77,24 @@
 - Handlers: nonce-protected `admin-post` actions:
   - `mksddn_reddy_send_code`
   - `mksddn_reddy_login`
+  - `mksddn_reddy_verify_link` (one-click magic link, token-validated)
 
 ## Core Modules
 
+- `Mksddn_Reddy_Auth_Auth_Flow_Service`
+  - Orchestrates OTP send, login intent, and magic link issuance.
+- `Mksddn_Reddy_Auth_Auth_Finalizer_Service`
+  - Shared resolve/create user + session/token + `mksddn_reddy_after_login` pipeline.
+- `Mksddn_Reddy_Auth_Magic_Link_Service`
+  - One-time signed magic link tokens (hash-only transient, TTL, verify rate limit).
+- `Mksddn_Reddy_Auth_Login_Intent_Service`
+  - Cross-device pending/approved/consumed intent state for browser polling.
 - `Mksddn_Reddy_Auth_Reddy_Client`
   - Sends OTP through upstream bot transport.
   - Reads bot token from `MKSDDN_REDDY_BOT_TOKEN` or dev fallback option.
-  - Builds OTP and connection test message text from admin settings (`otp_message_template`, `bot_test_message`).
+  - Builds OTP and connection test message text from admin settings (`otp_message_template`, `magic_link_message_template`, `bot_test_message`).
+  - Supports delivery modes: `otp_only`, `otp_plus_link`, `link_only`.
+  - Sends optional inline authorize button via `buttons` payload (when API accepts it).
   - Custom transport via `mksddn_reddy_send_code_transport` bypasses the admin OTP template.
 - `Mksddn_Reddy_Auth_Otp_Service`
   - OTP generation, hashing, TTL, one-time validation, rate limiting.
@@ -89,7 +120,7 @@
 ## Data Storage
 
 - Options:
-  - `mksddn_reddy_auth_settings` (includes `allowed_urls` string array, `otp_message_template`, `bot_test_message`, lock flags, rate limits, TTLs)
+  - `mksddn_reddy_auth_settings` (includes `allowed_urls`, `one_click_delivery_mode`, `magic_link_ttl_seconds`, `one_click_redirect_url`, `otp_message_template`, `magic_link_message_template`, `magic_link_button_label`, `bot_test_message`, lock flags, rate limits, TTLs)
   - `mksddn_reddy_auth_bot_token` (dev fallback)
   - `mksddn_reddy_auth_version`
 - User meta:
@@ -98,15 +129,23 @@
 - Custom DB table:
   - `{prefix}mksddn_reddy_tokens`
 - Transients:
-  - OTP and rate limit state.
+  - OTP, magic link, login intent, and rate limit state.
 
 ## Bot Message Texts
 
 - Settings (Settings > Reddy Auth > Bot Messages):
-  - `otp_message_template` — placeholders `{code}` (required) and `{ttl}` (optional).
+  - `otp_message_template` — placeholders `{code}` (required for OTP modes), `{ttl}`, `{link}`.
+  - `magic_link_message_template` — used when delivery mode is `link_only`; placeholders `{link}`, `{ttl}`.
+  - `magic_link_button_label` — label for authorize button in messenger.
   - `bot_test_message` — text sent by the admin bot connection test action.
+- One-click settings (Settings > Reddy Auth > One-Click Authorization):
+  - `one_click_delivery_mode` — `otp_only` (disabled), `otp_plus_link`, `link_only`.
+  - `magic_link_ttl_seconds` — magic link and intent TTL.
+  - `one_click_redirect_url` — optional redirect after one-click login.
 - Extension filters (applied after admin template resolution for OTP):
   - `mksddn_reddy_otp_message` (string `$message`, string `$reddy_id`, int `$ttl_seconds`)
+  - `mksddn_reddy_magic_link_url` (string `$url`, string `$reddy_id`, string `$intent_id`)
+  - `mksddn_reddy_send_payload` (array `$payload`, string `$reddy_id`, int `$ttl_seconds`)
   - `mksddn_reddy_bot_test_message` (string `$message`, string `$reddy_id`)
 
 ## Request URL Allowlist
@@ -139,7 +178,9 @@
 
 ## Security Invariants
 
-- Never store raw OTP in DB/options; compare hash values only.
+- Never store raw OTP or magic link tokens in DB/options; compare hash values only.
+- Magic link tokens are one-time, signed, and expire by TTL.
+- Login intents require `intent_id` + `intent_secret` for polling and completion.
 - OTP is one-time and expires by TTL.
 - Send and login flows are rate-limited with progressive backoff.
 - Bearer tokens are stored only as HMAC hash.

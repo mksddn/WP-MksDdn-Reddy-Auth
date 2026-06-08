@@ -95,6 +95,34 @@ class Mksddn_Reddy_Auth_Plugin {
 	private $login_shortcode;
 
 	/**
+	 * Auth flow orchestrator.
+	 *
+	 * @var Mksddn_Reddy_Auth_Auth_Flow_Service
+	 */
+	private $auth_flow_service;
+
+	/**
+	 * Auth finalizer service.
+	 *
+	 * @var Mksddn_Reddy_Auth_Auth_Finalizer_Service
+	 */
+	private $auth_finalizer_service;
+
+	/**
+	 * Magic link service.
+	 *
+	 * @var Mksddn_Reddy_Auth_Magic_Link_Service
+	 */
+	private $magic_link_service;
+
+	/**
+	 * Login intent service.
+	 *
+	 * @var Mksddn_Reddy_Auth_Login_Intent_Service
+	 */
+	private $login_intent_service;
+
+	/**
 	 * Return plugin singleton.
 	 *
 	 * @return Mksddn_Reddy_Auth_Plugin
@@ -253,22 +281,39 @@ class Mksddn_Reddy_Auth_Plugin {
 	 * @return void
 	 */
 	private function register_services() {
-		$this->reddy_client         = new Mksddn_Reddy_Auth_Reddy_Client();
-		$this->otp_service          = new Mksddn_Reddy_Auth_Otp_Service( $this->reddy_client );
-		$this->identity_service     = new Mksddn_Reddy_Auth_Identity_Service();
-		$this->session_service      = new Mksddn_Reddy_Auth_Session_Service();
-		$this->token_service        = new Mksddn_Reddy_Auth_Token_Service( new Mksddn_Reddy_Auth_Token_Repository() );
-		$this->rest_auth_middleware = new Mksddn_Reddy_Auth_Rest_Auth_Middleware( $this->token_service );
-		$this->request_url_guard    = new Mksddn_Reddy_Auth_Request_Url_Guard();
-		$this->settings_page        = new Mksddn_Reddy_Auth_Settings_Page();
-		$this->login_shortcode      = new Mksddn_Reddy_Auth_Login_Shortcode(
+		$this->reddy_client           = new Mksddn_Reddy_Auth_Reddy_Client();
+		$this->otp_service            = new Mksddn_Reddy_Auth_Otp_Service( $this->reddy_client );
+		$this->magic_link_service     = new Mksddn_Reddy_Auth_Magic_Link_Service();
+		$this->login_intent_service   = new Mksddn_Reddy_Auth_Login_Intent_Service();
+		$this->auth_flow_service      = new Mksddn_Reddy_Auth_Auth_Flow_Service(
 			$this->otp_service,
-			$this->identity_service,
-			$this->session_service
+			$this->magic_link_service,
+			$this->login_intent_service,
+			$this->reddy_client
 		);
-		$this->rest_controller      = new Mksddn_Reddy_Auth_Rest_Auth_Controller(
-			$this->otp_service,
+		$this->identity_service       = new Mksddn_Reddy_Auth_Identity_Service();
+		$this->session_service        = new Mksddn_Reddy_Auth_Session_Service();
+		$this->token_service          = new Mksddn_Reddy_Auth_Token_Service( new Mksddn_Reddy_Auth_Token_Repository() );
+		$this->auth_finalizer_service = new Mksddn_Reddy_Auth_Auth_Finalizer_Service(
 			$this->identity_service,
+			$this->session_service,
+			$this->token_service
+		);
+		$this->rest_auth_middleware   = new Mksddn_Reddy_Auth_Rest_Auth_Middleware( $this->token_service );
+		$this->request_url_guard      = new Mksddn_Reddy_Auth_Request_Url_Guard();
+		$this->settings_page          = new Mksddn_Reddy_Auth_Settings_Page();
+		$this->login_shortcode        = new Mksddn_Reddy_Auth_Login_Shortcode(
+			$this->otp_service,
+			$this->auth_flow_service,
+			$this->auth_finalizer_service,
+			$this->magic_link_service,
+			$this->login_intent_service
+		);
+		$this->rest_controller        = new Mksddn_Reddy_Auth_Rest_Auth_Controller(
+			$this->otp_service,
+			$this->auth_flow_service,
+			$this->auth_finalizer_service,
+			$this->login_intent_service,
 			$this->session_service,
 			$this->token_service,
 			$this->rest_auth_middleware,
