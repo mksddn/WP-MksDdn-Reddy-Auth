@@ -61,6 +61,11 @@ class Mksddn_Reddy_Auth_Auth_Flow_Service {
 	 */
 	public function request_login( $reddy_id ) {
 		$reddy_id = sanitize_text_field( (string) $reddy_id );
+
+		if ( ! Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::is_allowed( $reddy_id ) ) {
+			return Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::not_allowed_error();
+		}
+
 		$settings = $this->get_settings();
 
 		$intent_payload = null;

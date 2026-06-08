@@ -32,8 +32,10 @@ alwaysApply: true
 ## Internationalization
 
 - Wrap all user-facing strings in i18n functions.
-- Keep one consistent text domain.
+- Keep one consistent text domain: `mksddn-reddy-auth`.
 - Use escaped translation helpers when rendering into HTML attributes or plain HTML.
+- Update `.po` files in `mksddn-reddy-auth/trunk/languages/` for every new or changed translatable string.
+- Provide Russian translations in `mksddn-reddy-auth-ru_RU.po`.
 
 ## Backward Compatibility
 

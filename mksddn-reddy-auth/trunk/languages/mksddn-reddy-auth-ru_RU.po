@@ -21,6 +21,9 @@ msgstr "После успешной проверки входа включите
 msgid "Allowed request sources"
 msgstr "Разрешенные источники запросов"
 
+msgid "Allowed Reddy IDs"
+msgstr "Разрешённые Reddy ID"
+
 msgid "Authentication required."
 msgstr "Требуется аутентификация."
 
@@ -194,6 +197,9 @@ msgstr "OTP успешно отправлен."
 
 msgid "One URL per line (scheme + host, optional path prefix). Empty = no restriction. Applies only to plugin REST routes (/mksddn-reddy-auth/v1/*), not the login shortcode."
 msgstr "Один URL в строке (scheme + host, префикс пути опционален). Пусто = без ограничений. Применяется только к REST-маршрутам плагина (/mksddn-reddy-auth/v1/*), не к шорткоду входа."
+
+msgid "One Reddy ID per line. Empty = no restriction. Applies to OTP send and login completion."
+msgstr "Один Reddy ID на строку. Пусто = без ограничений. Применяется к отправке OTP и завершению входа."
 
 msgid "One-Click Authorization"
 msgstr "One-click авторизация"

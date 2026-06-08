@@ -34,7 +34,8 @@ Build and maintain a WordPress plugin with predictable behavior, strong security
 - Protect state-changing requests with nonces (`wp_nonce_field`, `check_admin_referer`, `check_ajax_referer`).
 - Sanitize input on write and escape output on render.
 - For SQL, use `$wpdb->prepare()` for dynamic values.
-- Keep plugin localization-ready: use `__()`, `_e()`, `esc_html__()`, `esc_attr__()`, and a consistent text domain.
+- Keep plugin localization-ready: use `__()`, `_e()`, `esc_html__()`, `esc_attr__()`, and text domain `mksddn-reddy-auth`.
+- When adding user-facing strings, update `mksddn-reddy-auth/trunk/languages/*.po` (en_US + ru_RU) in the same task.
 - If schema changes are needed, use `dbDelta()` with versioned migration logic.
 - For uninstall cleanup, use `uninstall.php` with `WP_UNINSTALL_PLUGIN` guard.
 
@@ -65,6 +66,7 @@ A task is done only when all items are true:
 - Requested functionality works as expected.
 - Security checks are present (capabilities, nonce, sanitize/escape where applicable).
 - Code follows WordPress standards and project rules.
+- New user-facing strings are i18n-wrapped and reflected in `.po` files (`en_US`, `ru_RU`).
 - No unrelated files were changed.
 - Verification steps are documented in the final response.
 

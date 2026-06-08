@@ -472,6 +472,9 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		if ( 'rate_limited' === $code ) {
 			$status  = 429;
 			$message = $error->get_error_message();
+		} elseif ( 'reddy_id_not_allowed' === $code ) {
+			$status  = 403;
+			$message = $error->get_error_message();
 		} elseif ( in_array( $code, array( 'identity_create_failed', 'invalid_identity' ), true ) ) {
 			$message = __( 'Unable to create or resolve account. Contact the site administrator.', 'mksddn-reddy-auth' );
 		} elseif ( in_array( $code, array( 'invalid_credentials', 'invalid_request' ), true ) ) {
@@ -505,6 +508,17 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 					'message' => __( 'Unable to create or resolve account. Contact the site administrator.', 'mksddn-reddy-auth' ),
 				),
 				400
+			);
+		}
+
+		if ( 'reddy_id_not_allowed' === $code ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => $code,
+					'message' => $error->get_error_message(),
+				),
+				403
 			);
 		}
 

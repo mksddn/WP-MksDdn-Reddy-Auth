@@ -24,7 +24,8 @@ Deliver safe, minimal, and maintainable WordPress plugin changes with predictabl
 3. Implement:
    - add capability and nonce checks for privileged actions,
    - sanitize input on write, escape on render,
-   - use WordPress APIs first.
+   - use WordPress APIs first,
+   - wrap user-facing strings in i18n helpers and update `.po` catalogs when strings change.
 4. Self-review:
    - verify security, i18n, and compatibility constraints,
    - ensure no unrelated changes were made.

@@ -13,6 +13,7 @@ alwaysApply: true
 - Confirm security path exists for changed flows (capability + nonce where applicable).
 - Confirm sanitization on write and escaping on output in changed code.
 - Confirm i18n wrappers for new user-facing strings.
+- Update `mksddn-reddy-auth-en_US.po` and `mksddn-reddy-auth-ru_RU.po` for every new translatable string; recompile `.mo` when possible.
 
 ## Standards and Tooling
 

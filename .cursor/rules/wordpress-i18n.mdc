@@ -1,0 +1,47 @@
+---
+description: WordPress plugin localization (i18n) requirements
+globs:
+  - "**/*.php"
+  - "**/*.po"
+alwaysApply: true
+---
+
+# WordPress Localization (i18n)
+
+This project uses localization. Text domain: `mksddn-reddy-auth`.
+
+## When Adding or Changing User-Facing Text
+
+- Wrap every user-visible string in i18n helpers: `__()`, `_e()`, `esc_html__()`, `esc_attr__()`, `_n()`, `_x()` as appropriate.
+- Never hardcode UI labels, errors, or admin descriptions in PHP without i18n wrappers.
+- Use escaped translation helpers at render time (`esc_html__`, `esc_attr__`).
+
+## Translation Files
+
+- Catalogs live in `mksddn-reddy-auth/trunk/languages/`.
+- When adding new `msgid` strings, update **both**:
+  - `mksddn-reddy-auth-en_US.po`
+  - `mksddn-reddy-auth-ru_RU.po` (with Russian `msgstr`)
+- Keep entries alphabetically sorted by `msgid` when practical.
+- Recompile `.mo` files when `msgfmt` is available.
+
+## Definition of Done (i18n)
+
+A change is not complete until:
+
+1. All new user-facing strings use the project text domain.
+2. Matching entries exist in `.po` files for new strings.
+3. Russian translations are provided in `mksddn-reddy-auth-ru_RU.po`.
+
+## Examples
+
+```php
+// Admin field label
+__( 'Allowed Reddy IDs', 'mksddn-reddy-auth' );
+
+// Rendered description
+esc_html__( 'One Reddy ID per line. Empty = no restriction.', 'mksddn-reddy-auth' );
+
+// REST/user error (neutral message)
+__( 'Unable to process authentication request.', 'mksddn-reddy-auth' );
+```

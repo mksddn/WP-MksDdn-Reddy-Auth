@@ -56,6 +56,10 @@ class Mksddn_Reddy_Auth_Auth_Finalizer_Service {
 		$issue_session = ! empty( $options['issue_session'] );
 		$issue_token   = ! empty( $options['issue_token'] );
 
+		if ( ! Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::is_allowed( $reddy_id ) ) {
+			return Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::not_allowed_error();
+		}
+
 		$user = $this->identity_service->resolve_or_create_user( $reddy_id );
 		if ( is_wp_error( $user ) ) {
 			return $user;

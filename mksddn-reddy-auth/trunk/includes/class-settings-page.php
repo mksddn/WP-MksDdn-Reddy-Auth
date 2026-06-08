@@ -103,6 +103,14 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		);
 
 		add_settings_field(
+			'allowed_reddy_ids',
+			__( 'Allowed Reddy IDs', 'mksddn-reddy-auth' ),
+			array( $this, 'render_allowed_reddy_ids_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_main_section'
+		);
+
+		add_settings_field(
 			'api_lock_enabled',
 			__( 'Protect all REST API content', 'mksddn-reddy-auth' ),
 			array( $this, 'render_api_lock_field' ),
@@ -464,6 +472,29 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
+	 * Render allowed Reddy ID whitelist field.
+	 *
+	 * @return void
+	 */
+	public function render_allowed_reddy_ids_field() {
+		$settings = $this->get_settings();
+		$allowed  = isset( $settings['allowed_reddy_ids'] ) && is_array( $settings['allowed_reddy_ids'] ) ? $settings['allowed_reddy_ids'] : array();
+		$value    = implode( "\n", $allowed );
+		?>
+		<textarea
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[allowed_reddy_ids]' ); ?>"
+			rows="5"
+			cols="50"
+			class="large-text code"
+			placeholder="123456&#10;789012"
+		><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description">
+			<?php echo esc_html__( 'One Reddy ID per line. Empty = no restriction. Applies to OTP send and login completion.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
 	 * Render API lock checkbox.
 	 *
 	 * @return void
@@ -810,6 +841,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 
 		$sanitized = array(
 			'allowed_urls'               => Mksddn_Reddy_Auth_Request_Url_Guard::sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
+			'allowed_reddy_ids'          => Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::sanitize_allowed_reddy_ids( isset( $raw['allowed_reddy_ids'] ) ? $raw['allowed_reddy_ids'] : '' ),
 			'api_lock_enabled'           => ! empty( $raw['api_lock_enabled'] ) ? 1 : 0,
 			'monolith_lock_enabled'      => ! empty( $raw['monolith_lock_enabled'] ) ? 1 : 0,
 			'login_page_id'              => isset( $raw['login_page_id'] ) ? absint( $raw['login_page_id'] ) : 0,
@@ -866,6 +898,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	public static function get_install_defaults() {
 		return array(
 			'allowed_urls'                => array(),
+			'allowed_reddy_ids'           => array(),
 			'api_lock_enabled'            => 0,
 			'monolith_lock_enabled'       => 0,
 			'login_page_id'               => 0,
