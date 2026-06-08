@@ -1,0 +1,337 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mksddn-reddy-auth 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Codex\n"
+
+msgid "-- Select page --"
+msgstr "-- Select page --"
+
+msgid "API Contracts"
+msgstr "API Contracts"
+
+msgid "After a successful login test, enable protection."
+msgstr "After a successful login test, enable protection."
+
+msgid "Allowed request sources"
+msgstr "Allowed request sources"
+
+msgid "Authentication required."
+msgstr "Authentication required."
+
+msgid "Authentication successful."
+msgstr "Authentication successful."
+
+msgid "Authorization confirmed. Redirecting..."
+msgstr "Authorization confirmed. Redirecting..."
+
+msgid "Authorization confirmed. Return to the original login tab to complete sign-in."
+msgstr "Authorization confirmed. Return to the original login tab to complete sign-in."
+
+msgid "Authorization failed"
+msgstr "Authorization failed"
+
+msgid "Authorization is not confirmed yet."
+msgstr "Authorization is not confirmed yet."
+
+msgid "Authorization link is invalid or expired."
+msgstr "Authorization link is invalid or expired."
+
+msgid "Authorization request is invalid or expired."
+msgstr "Authorization request is invalid or expired."
+
+msgid "Authorization request was already completed."
+msgstr "Authorization request was already completed."
+
+msgid "Authorize"
+msgstr "Authorize"
+
+msgid "Authorize button label"
+msgstr "Authorize button label"
+
+msgid "Authorize button only"
+msgstr "Authorize button only"
+
+msgid "Bearer token TTL (seconds)"
+msgstr "Bearer token TTL (seconds)"
+
+msgid "Bot API rejected OTP delivery."
+msgstr "Bot API rejected OTP delivery."
+
+msgid "Bot API request failed."
+msgstr "Bot API request failed."
+
+msgid "Bot Messages"
+msgstr "Bot Messages"
+
+msgid "Bot connection test"
+msgstr "Bot connection test"
+
+msgid "Bot connection test message sent successfully."
+msgstr "Bot connection test message sent successfully."
+
+msgid "Bot did not confirm OTP delivery."
+msgstr "Bot did not confirm OTP delivery."
+
+msgid "Bot token (dev fallback)"
+msgstr "Bot token (dev fallback)"
+
+msgid "Bot token is not configured."
+msgstr "Bot token is not configured."
+
+msgid "Configure required authentication settings first, then move to one-click and security limits."
+msgstr "Configure required authentication settings first, then move to one-click and security limits."
+
+msgid "Configure your bot token, create a login page with [mksddn_reddy_login], then optionally enable site or REST protection."
+msgstr "Configure your bot token, create a login page with [mksddn_reddy_login], then optionally enable site or REST protection."
+
+msgid "Connection test message"
+msgstr "Connection test message"
+
+msgid "Core Authentication"
+msgstr "Core Authentication"
+
+msgid "Customize texts sent by the Reddy bot. OTP template supports {code}, {ttl}, and {link}. One-click template is used when delivery mode is link only."
+msgstr "Customize texts sent by the Reddy bot. OTP template supports {code}, {ttl}, and {link}. One-click template is used when delivery mode is link only."
+
+msgid "Developer Resources"
+msgstr "Developer Resources"
+
+msgid "Development fallback. In production prefer MKSDDN_REDDY_BOT_TOKEN in wp-config.php."
+msgstr "Development fallback. In production prefer MKSDDN_REDDY_BOT_TOKEN in wp-config.php."
+
+msgid "Dismiss"
+msgstr "Dismiss"
+
+msgid "Download OpenAPI"
+msgstr "Download OpenAPI"
+
+msgid "Download Postman collection"
+msgstr "Download Postman collection"
+
+msgid "Enable when your API must be private. Public endpoints from other plugins may also require authentication."
+msgstr "Enable when your API must be private. Public endpoints from other plugins may also require authentication."
+
+msgid "Export current REST contracts for API clients and tests."
+msgstr "Export current REST contracts for API clients and tests."
+
+msgid "For monolith WordPress site mode, create a login page and add shortcode:"
+msgstr "For monolith WordPress site mode, create a login page and add shortcode:"
+
+msgid "How long API Bearer tokens remain valid before users must log in again."
+msgstr "How long API Bearer tokens remain valid before users must log in again."
+
+msgid "How long an OTP code stays valid after it is sent."
+msgstr "How long an OTP code stays valid after it is sent."
+
+msgid "In Reddy, message Bot Mother (72220000000) to create your bot."
+msgstr "In Reddy, message Bot Mother (72220000000) to create your bot."
+
+msgid "Insufficient permissions."
+msgstr "Insufficient permissions."
+
+msgid "Invalid Reddy ID."
+msgstr "Invalid Reddy ID."
+
+msgid "Invalid credentials."
+msgstr "Invalid credentials."
+
+msgid "Invalid token."
+msgstr "Invalid token."
+
+msgid "Lifetime of the authorize button link and login intent."
+msgstr "Lifetime of the authorize button link and login intent."
+
+msgid "Locks public pages for non-authenticated visitors. Keep the selected login page accessible so users can sign in."
+msgstr "Locks public pages for non-authenticated visitors. Keep the selected login page accessible so users can sign in."
+
+msgid "Log in"
+msgstr "Log in"
+
+msgid "Logged out."
+msgstr "Logged out."
+
+msgid "Login attempt limit (per 10 minutes)"
+msgstr "Login attempt limit (per 10 minutes)"
+
+msgid "Login page"
+msgstr "Login page"
+
+msgid "Max OTP send requests per Reddy ID and client IP within a fixed 5-minute window."
+msgstr "Max OTP send requests per Reddy ID and client IP within a fixed 5-minute window."
+
+msgid "Max login attempts per Reddy ID and client IP within a fixed 10-minute window."
+msgstr "Max login attempts per Reddy ID and client IP within a fixed 10-minute window."
+
+msgid "Messenger delivery mode"
+msgstr "Messenger delivery mode"
+
+msgid "OTP + authorize button"
+msgstr "OTP + authorize button"
+
+msgid "OTP TTL (seconds)"
+msgstr "OTP TTL (seconds)"
+
+msgid "OTP is invalid or expired. Request a new code and try again."
+msgstr "OTP is invalid or expired. Request a new code and try again."
+
+msgid "OTP message template"
+msgstr "OTP message template"
+
+msgid "OTP message template must include the {code} placeholder. Default template restored."
+msgstr "OTP message template must include the {code} placeholder. Default template restored."
+
+msgid "OTP only"
+msgstr "OTP only"
+
+msgid "OTP was sent successfully."
+msgstr "OTP was sent successfully."
+
+msgid "One URL per line (scheme + host, optional path prefix). Empty = no restriction. Applies only to plugin REST routes (/mksddn-reddy-auth/v1/*), not the login shortcode."
+msgstr "One URL per line (scheme + host, optional path prefix). Empty = no restriction. Applies only to plugin REST routes (/mksddn-reddy-auth/v1/*), not the login shortcode."
+
+msgid "One-Click Authorization"
+msgstr "One-Click Authorization"
+
+msgid "One-click lets users authorize from messenger without entering OTP manually. Keep OTP flow as fallback."
+msgstr "One-click lets users authorize from messenger without entering OTP manually. Keep OTP flow as fallback."
+
+msgid "One-click link TTL (seconds)"
+msgstr "One-click link TTL (seconds)"
+
+msgid "One-click message template"
+msgstr "One-click message template"
+
+msgid "One-click redirect URL"
+msgstr "One-click redirect URL"
+
+msgid "One-time code"
+msgstr "One-time code"
+
+msgid "Open settings"
+msgstr "Open settings"
+
+msgid "Optional. Redirect target after successful one-click login. Defaults to home or login page."
+msgstr "Optional. Redirect target after successful one-click login. Defaults to home or login page."
+
+msgid "Paste your bot token here to connect WordPress with Reddy."
+msgstr "Paste your bot token here to connect WordPress with Reddy."
+
+msgid "Please sign in with Reddy to access site content."
+msgstr "Please sign in with Reddy to access site content."
+
+msgid "Protect all REST API content"
+msgstr "Protect all REST API content"
+
+msgid "Protect site content"
+msgstr "Protect site content"
+
+msgid "Quick Start"
+msgstr "Quick Start"
+
+msgid "Recommended: OTP + authorize button. Select OTP only to disable one-click authorization."
+msgstr "Recommended: OTP + authorize button. Select OTP only to disable one-click authorization."
+
+msgid "Reddy Auth"
+msgstr "Reddy Auth"
+
+msgid "Reddy Auth Settings"
+msgstr "Reddy Auth Settings"
+
+msgid "Reddy Auth is active."
+msgstr "Reddy Auth is active."
+
+msgid "Reddy ID"
+msgstr "Reddy ID"
+
+msgid "Reddy authentication required."
+msgstr "Reddy authentication required."
+
+msgid "Reddy bot connection test from WordPress plugin."
+msgstr "Reddy bot connection test from WordPress plugin."
+
+msgid "Request not allowed from this source."
+msgstr "Request not allowed from this source."
+
+msgid "Require Reddy authentication for all REST API content (except send-code/login)."
+msgstr "Require Reddy authentication for all REST API content (except send-code/login)."
+
+msgid "Require Reddy authentication for frontend site content."
+msgstr "Require Reddy authentication for frontend site content."
+
+msgid "Security Limits"
+msgstr "Security Limits"
+
+msgid "Select page where [mksddn_reddy_login] shortcode is placed."
+msgstr "Select page where [mksddn_reddy_login] shortcode is placed."
+
+msgid "Send code"
+msgstr "Send code"
+
+msgid "Send-code limit (per 5 minutes)"
+msgstr "Send-code limit (per 5 minutes)"
+
+msgid "Sends a test message to the specified Reddy user."
+msgstr "Sends a test message to the specified Reddy user."
+
+msgid "Sent when an administrator runs Bot connection test."
+msgstr "Sent when an administrator runs Bot connection test."
+
+msgid "Settings"
+msgstr "Settings"
+
+msgid "Short label shown on messenger button (for example: Authorize, Log in)."
+msgstr "Short label shown on messenger button (for example: Authorize, Log in)."
+
+msgid "Soft guard for browser apps: checks Origin or Referer, not a secret key. Headers can be spoofed—rely on OTP, rate limits, and API lock for real protection. Server clients (curl, Postman, backends) usually need an empty list or the mksddn_reddy_is_request_url_allowed filter."
+msgstr "Soft guard for browser apps: checks Origin or Referer, not a secret key. Headers can be spoofed—rely on OTP, rate limits, and API lock for real protection. Server clients (curl, Postman, backends) usually need an empty list or the mksddn_reddy_is_request_url_allowed filter."
+
+msgid "Tap Authorize to sign in. The link expires in {ttl} seconds."
+msgstr "Tap Authorize to sign in. The link expires in {ttl} seconds."
+
+msgid "Test Reddy ID is required."
+msgstr "Test Reddy ID is required."
+
+msgid "Test bot connection"
+msgstr "Test bot connection"
+
+msgid "Too many requests. Try again later."
+msgstr "Too many requests. Try again later."
+
+msgid "Tune OTP/token TTL and anti-abuse limits. Start with defaults unless you have specific security requirements."
+msgstr "Tune OTP/token TTL and anti-abuse limits. Start with defaults unless you have specific security requirements."
+
+msgid "Unable to create or resolve account. Contact the site administrator."
+msgstr "Unable to create or resolve account. Contact the site administrator."
+
+msgid "Unable to create session."
+msgstr "Unable to create session."
+
+msgid "Unable to deliver OTP via bot API."
+msgstr "Unable to deliver OTP via bot API."
+
+msgid "Unable to issue token."
+msgstr "Unable to issue token."
+
+msgid "Unable to process authentication request."
+msgstr "Unable to process authentication request."
+
+msgid "Unable to resolve identity."
+msgstr "Unable to resolve identity."
+
+msgid "Use {code} for the one-time password, {ttl} for expiry time in seconds, and {link} for the authorize URL. Example: Your verification code: {code}. It expires in {ttl} seconds."
+msgstr "Use {code} for the one-time password, {ttl} for expiry time in seconds, and {link} for the authorize URL. Example: Your verification code: {code}. It expires in {ttl} seconds."
+
+msgid "Used when delivery mode is authorize button only. Placeholders: {link}, {ttl}."
+msgstr "Used when delivery mode is authorize button only. Placeholders: {link}, {ttl}."
+
+msgid "Waiting for authorization in Reddy. You can also enter the code below."
+msgstr "Waiting for authorization in Reddy. You can also enter the code below."
+
+msgid "Your verification code: {code}. It expires in {ttl} seconds."
+msgstr "Your verification code: {code}. It expires in {ttl} seconds."
