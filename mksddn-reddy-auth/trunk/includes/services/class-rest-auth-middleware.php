@@ -241,10 +241,6 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return;
 		}
 
-		if ( ! $this->has_login_destination_configured() ) {
-			return;
-		}
-
 		if ( $this->is_content_lock_exempt() ) {
 			return;
 		}
@@ -287,28 +283,6 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 		}
 
 		return substr( $haystack, -$needle_length ) === $needle;
-	}
-
-	/**
-	 * True when a login page is selected, URL is set, or a shortcode page exists.
-	 *
-	 * @return bool
-	 */
-	private function has_login_destination_configured() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
-		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
-		$url      = isset( $settings['login_page_url'] ) ? esc_url_raw( (string) $settings['login_page_url'] ) : '';
-
-		if ( $page_id > 0 && get_permalink( $page_id ) ) {
-			return true;
-		}
-
-		if ( '' !== $url ) {
-			return true;
-		}
-
-		return '' !== $this->find_first_login_shortcode_page_url();
 	}
 
 	/**
@@ -377,7 +351,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return $fallback;
 		}
 
-		return home_url( '/' );
+		return wp_login_url();
 	}
 
 	/**

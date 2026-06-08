@@ -28,7 +28,7 @@ The plugin maps each Reddy ID to a WordPress user and can create an account auto
 2. Activate the plugin through the **Plugins** menu in WordPress.
 3. Open **Settings > Reddy Auth** and configure bot token and security options.
 4. Create a login page and add the shortcode `[mksddn_reddy_login]`.
-5. If site protection is enabled, select that page in the **Login page** setting.
+5. If site protection is enabled, select that page in the **Login page** setting (otherwise guests are redirected to `wp-login.php` fallback).
 
 == Getting Started ==
 

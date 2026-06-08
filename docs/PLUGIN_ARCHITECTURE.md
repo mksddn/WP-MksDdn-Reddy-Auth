@@ -124,7 +124,7 @@
 ## Site and REST Protection Defaults
 
 - Fresh install seeds `mksddn_reddy_auth_settings` with `api_lock_enabled` and `monolith_lock_enabled` set to `0` (off).
-- Monolith lock does not run until a login page, login URL, or published page with `[mksddn_reddy_login]` exists.
+- Monolith lock runs whenever enabled. If no plugin login page is configured, unauthenticated visitors are redirected to `wp-login.php` as a safe fallback.
 - Existing sites that already saved `1` for lock flags keep their behavior until an admin changes settings.
 - When either lock is enabled, Reddy-authenticated users pass. WP users with `edit_posts` (administrator, editor) also bypass the lock so staff can preview content and call REST without Reddy OTP.
 - Extension filter: `mksddn_reddy_content_lock_bypass` (bool `$exempt`, `WP_User $user`) — default follows `edit_posts`; return `true` to allow bypass for other roles.
