@@ -453,5 +453,11 @@ msgstr "Waiting for authorization in Reddy. You can also enter the code below."
 msgid "Webhook URL"
 msgstr "Webhook URL"
 
+msgid "Webhook secret (optional)"
+msgstr "Webhook secret (optional)"
+
+msgid "Must match Secret in BotMother webhook settings. Leave empty to use sha256(body + token) compatibility mode."
+msgstr "Must match Secret in BotMother webhook settings. Leave empty to use sha256(body + token) compatibility mode."
+
 msgid "Your verification code: {code}. It expires in {ttl} seconds."
 msgstr "Your verification code: {code}. It expires in {ttl} seconds."

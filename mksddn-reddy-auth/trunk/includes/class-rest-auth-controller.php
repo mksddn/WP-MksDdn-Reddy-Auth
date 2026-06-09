@@ -454,15 +454,37 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 				continue;
 			}
 
-			$intent_id = '';
+			$button_data = '';
 			if ( ! empty( $update['button']['data'] ) ) {
-				$intent_id = sanitize_text_field( (string) $update['button']['data'] );
+				$button_data = sanitize_text_field( (string) $update['button']['data'] );
 			} elseif ( ! empty( $update['data'] ) ) {
-				$intent_id = sanitize_text_field( (string) $update['data'] );
+				$button_data = sanitize_text_field( (string) $update['data'] );
 			}
 
+			list( $intent_id, $intent_secret ) = $this->parse_button_callback_data( $button_data );
 			if ( '' !== $intent_id ) {
-				$this->login_intent_service->approve( $intent_id );
+				$approver_reddy_id = '' === $intent_secret ? $this->extract_update_reddy_id( $update ) : '';
+				if ( '' === $intent_secret && '' === $approver_reddy_id ) {
+					do_action(
+						'mksddn_reddy_auth_failure',
+						array(
+							'stage'      => 'button_callback',
+							'error_code' => 'missing_intent_proof',
+						)
+					);
+					continue;
+				}
+
+				$approve_result    = $this->login_intent_service->approve( $intent_id, $intent_secret, $approver_reddy_id );
+				if ( is_wp_error( $approve_result ) && 'intent_consumed' !== $approve_result->get_error_code() ) {
+					do_action(
+						'mksddn_reddy_auth_failure',
+						array(
+							'stage'      => 'button_callback',
+							'error_code' => (string) $approve_result->get_error_code(),
+						)
+					);
+				}
 			}
 		}
 
@@ -487,9 +509,16 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			return false;
 		}
 
-		$expected = hash( 'sha256', $raw_body . $bot_token );
+		$signature = strtolower( trim( (string) $signature ) );
+		$secret    = $this->get_webhook_secret();
+		$payload   = $raw_body . $bot_token;
+		if ( '' !== $secret ) {
+			$payload .= '.' . $secret;
+		}
 
-		return hash_equals( $expected, strtolower( (string) $signature ) );
+		$expected = hash( 'sha256', $payload );
+
+		return hash_equals( strtolower( $expected ), $signature );
 	}
 
 	/**
@@ -503,6 +532,67 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		}
 
 		return (string) get_option( Mksddn_Reddy_Auth_Reddy_Client::BOT_TOKEN_OPTION_KEY, '' );
+	}
+
+	/**
+	 * Resolve optional webhook secret from plugin settings.
+	 *
+	 * @return string
+	 */
+	private function get_webhook_secret() {
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
+		if ( ! is_array( $settings ) || empty( $settings['webhook_secret'] ) ) {
+			return '';
+		}
+
+		return sanitize_text_field( (string) $settings['webhook_secret'] );
+	}
+
+	/**
+	 * Parse callback data into intent credentials.
+	 *
+	 * @param string $button_data Raw callback data.
+	 * @return array{0: string, 1: string}
+	 */
+	private function parse_button_callback_data( $button_data ) {
+		$button_data = sanitize_text_field( (string) $button_data );
+		if ( '' === $button_data ) {
+			return array( '', '' );
+		}
+
+		$parts = explode( '.', $button_data, 2 );
+		if ( 2 !== count( $parts ) ) {
+			return array( $button_data, '' );
+		}
+
+		return array(
+			sanitize_text_field( (string) $parts[0] ),
+			sanitize_text_field( (string) $parts[1] ),
+		);
+	}
+
+	/**
+	 * Extract Reddy ID from update payload when available.
+	 *
+	 * @param array<string, mixed> $update Update payload.
+	 * @return string
+	 */
+	private function extract_update_reddy_id( array $update ) {
+		if ( ! empty( $update['userKey'] ) ) {
+			return sanitize_text_field( (string) $update['userKey'] );
+		}
+
+		if ( isset( $update['user'] ) && is_array( $update['user'] ) ) {
+			if ( ! empty( $update['user']['userKey'] ) ) {
+				return sanitize_text_field( (string) $update['user']['userKey'] );
+			}
+
+			if ( ! empty( $update['user']['key'] ) ) {
+				return sanitize_text_field( (string) $update['user']['key'] );
+			}
+		}
+
+		return '';
 	}
 
 	/**

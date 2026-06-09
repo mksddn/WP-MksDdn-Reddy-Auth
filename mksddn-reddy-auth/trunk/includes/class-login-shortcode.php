@@ -265,7 +265,11 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 			);
 		}
 
-		$approve_result = $this->login_intent_service->approve( (string) $result['intent_id'] );
+		$approve_result = $this->login_intent_service->approve(
+			(string) $result['intent_id'],
+			'',
+			isset( $result['reddy_id'] ) ? (string) $result['reddy_id'] : ''
+		);
 		if ( is_wp_error( $approve_result ) && 'intent_consumed' !== $approve_result->get_error_code() ) {
 			wp_die(
 				esc_html( $approve_result->get_error_message() ),

@@ -186,6 +186,14 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'mksddn_reddy_auth_one_click_section'
 		);
 
+		add_settings_field(
+			'webhook_secret',
+			__( 'Webhook secret (optional)', 'mksddn-reddy-auth' ),
+			array( $this, 'render_webhook_secret_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_one_click_section'
+		);
+
 		add_settings_section(
 			'mksddn_reddy_auth_limits_section',
 			'',
@@ -768,6 +776,28 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
+	 * Render webhook secret field.
+	 *
+	 * @return void
+	 */
+	public function render_webhook_secret_field() {
+		$settings = $this->get_settings();
+		$value    = isset( $settings['webhook_secret'] ) ? (string) $settings['webhook_secret'] : '';
+		?>
+		<input
+			type="password"
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[webhook_secret]' ); ?>"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="regular-text"
+			autocomplete="off"
+		/>
+		<p class="description">
+			<?php echo esc_html__( 'Must match Secret in BotMother webhook settings. Leave empty to use sha256(body + token) compatibility mode.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
 	 * Render one-click message template field.
 	 *
 	 * @return void
@@ -934,6 +964,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			),
 			'magic_link_ttl_seconds'     => $this->sanitize_int_range( $raw, 'magic_link_ttl_seconds', $defaults['magic_link_ttl_seconds'], 60, 900 ),
 			'one_click_redirect_url'     => isset( $raw['one_click_redirect_url'] ) ? esc_url_raw( (string) $raw['one_click_redirect_url'] ) : '',
+			'webhook_secret'             => isset( $raw['webhook_secret'] ) ? sanitize_text_field( (string) $raw['webhook_secret'] ) : '',
 			'send_rate_limit'            => $this->sanitize_int_range( $raw, 'send_rate_limit', $defaults['send_rate_limit'], 1, 20 ),
 			'login_rate_limit'           => $this->sanitize_int_range( $raw, 'login_rate_limit', $defaults['login_rate_limit'], 1, 30 ),
 			'token_ttl_seconds'          => $this->sanitize_int_range( $raw, 'token_ttl_seconds', $defaults['token_ttl_seconds'], 3600, 7776000 ),
@@ -982,6 +1013,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'one_click_delivery_mode'     => 'otp_plus_link',
 			'magic_link_ttl_seconds'      => 300,
 			'one_click_redirect_url'      => '',
+			'webhook_secret'              => '',
 			'send_rate_limit'             => 5,
 			'login_rate_limit'            => 7,
 			'token_ttl_seconds'           => 2592000,

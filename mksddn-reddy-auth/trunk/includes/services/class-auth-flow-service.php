@@ -95,6 +95,10 @@ class Mksddn_Reddy_Auth_Auth_Flow_Service {
 			$delivery['intent_id'] = (string) $intent_payload['id'];
 		}
 
+		if ( is_array( $intent_payload ) && ! empty( $intent_payload['secret'] ) ) {
+			$delivery['intent_secret'] = (string) $intent_payload['secret'];
+		}
+
 		$otp_result = $this->otp_service->request_code( $reddy_id, $delivery );
 
 		if ( is_wp_error( $otp_result ) ) {

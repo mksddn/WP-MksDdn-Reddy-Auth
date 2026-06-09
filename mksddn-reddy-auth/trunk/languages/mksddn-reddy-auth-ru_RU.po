@@ -453,5 +453,11 @@ msgstr "Ожидаем подтверждение в Reddy. Вы также мо
 msgid "Webhook URL"
 msgstr "URL вебхука"
 
+msgid "Webhook secret (optional)"
+msgstr "Webhook secret (необязательно)"
+
+msgid "Must match Secret in BotMother webhook settings. Leave empty to use sha256(body + token) compatibility mode."
+msgstr "Должен совпадать с Secret в настройках вебхука BotMother. Оставьте пустым, чтобы использовать режим совместимости sha256(body + token)."
+
 msgid "Your verification code: {code}. It expires in {ttl} seconds."
 msgstr "Ваш код подтверждения: {code}. Он истекает через {ttl} сек."

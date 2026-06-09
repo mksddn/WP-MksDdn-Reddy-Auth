@@ -117,6 +117,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 				'timeout' => 8,
 				'headers' => array(
 					'Content-Type' => 'application/json; charset=utf-8',
+					'X-Bot-Token'  => $bot_token,
 				),
 				'body'    => wp_json_encode(
 					array(
@@ -135,14 +136,11 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 		$body_raw    = (string) wp_remote_retrieve_body( $response );
 		$body_json   = json_decode( $body_raw, true );
 
-		if ( $status_code >= 200 && $status_code < 300 ) {
+		if ( $status_code >= 200 && $status_code < 300 && ! $this->is_bot_api_error_payload( $body_json ) ) {
 			return true;
 		}
 
-		$error_message = __( 'Bot API request failed.', 'mksddn-reddy-auth' );
-		if ( is_array( $body_json ) && ! empty( $body_json['message'] ) ) {
-			$error_message = sanitize_text_field( (string) $body_json['message'] );
-		}
+		$error_message = $this->resolve_bot_api_error_message( $body_json, __( 'Bot API request failed.', 'mksddn-reddy-auth' ) );
 
 		return new WP_Error( 'bot_test_failed', $error_message );
 	}
@@ -183,16 +181,18 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 			'userKey' => $reddy_id,
 		);
 
-		$intent_id    = isset( $delivery['intent_id'] ) ? sanitize_text_field( (string) $delivery['intent_id'] ) : '';
-		$button_label = $this->resolve_magic_link_button_label();
+		$intent_id     = isset( $delivery['intent_id'] ) ? sanitize_text_field( (string) $delivery['intent_id'] ) : '';
+		$intent_secret = isset( $delivery['intent_secret'] ) ? sanitize_text_field( (string) $delivery['intent_secret'] ) : '';
+		$button_label  = $this->resolve_magic_link_button_label();
+		$button_data   = $this->build_button_callback_data( $intent_id, $intent_secret );
 
-		if ( '' !== $intent_id && in_array( $delivery_mode, array( 'otp_plus_link', 'link_only' ), true ) ) {
+		if ( '' !== $button_data && in_array( $delivery_mode, array( 'otp_plus_link', 'link_only' ), true ) ) {
 			$payload['keyboard'] = array(
 				array(
 					array(
 						'type'  => 'action',
 						'title' => $button_label,
-						'data'  => $intent_id,
+						'data'  => $button_data,
 					),
 				),
 			);
@@ -215,6 +215,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 					'timeout' => 8,
 					'headers' => array(
 						'Content-Type' => 'application/json; charset=utf-8',
+						'X-Bot-Token'  => $bot_token,
 					),
 					'body'    => wp_json_encode( $payload ),
 				)
@@ -238,14 +239,11 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 			$body_json   = json_decode( $body_raw, true );
 			do_action( 'mksddn_reddy_transport_response', $status_code, $reddy_id );
 
-			if ( $status_code >= 200 && $status_code < 300 ) {
+			if ( $status_code >= 200 && $status_code < 300 && ! $this->is_bot_api_error_payload( $body_json ) ) {
 				return true;
 			}
 
-			$error_message = __( 'Bot API rejected OTP delivery.', 'mksddn-reddy-auth' );
-			if ( is_array( $body_json ) && ! empty( $body_json['message'] ) ) {
-				$error_message = sanitize_text_field( (string) $body_json['message'] );
-			}
+			$error_message = $this->resolve_bot_api_error_message( $body_json, __( 'Bot API rejected OTP delivery.', 'mksddn-reddy-auth' ) );
 
 			$last_error = new WP_Error(
 				'reddy_api_http_error',
@@ -275,6 +273,70 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 		}
 
 		return new WP_Error( 'reddy_transport_failed', __( 'Unable to deliver OTP via bot API.', 'mksddn-reddy-auth' ) );
+	}
+
+	/**
+	 * Resolve user-friendly Bot API error from response payload.
+	 *
+	 * @param mixed  $body_json Parsed JSON response.
+	 * @param string $fallback  Fallback error message.
+	 * @return string
+	 */
+	private function resolve_bot_api_error_message( $body_json, $fallback ) {
+		$fallback = sanitize_text_field( (string) $fallback );
+		if ( ! is_array( $body_json ) ) {
+			return $fallback;
+		}
+
+		if ( isset( $body_json['errorMessage'] ) && '' !== (string) $body_json['errorMessage'] ) {
+			return sanitize_text_field( (string) $body_json['errorMessage'] );
+		}
+
+		if ( isset( $body_json['message'] ) && '' !== (string) $body_json['message'] ) {
+			return sanitize_text_field( (string) $body_json['message'] );
+		}
+
+		if ( isset( $body_json['errorCode'] ) && 0 !== (int) $body_json['errorCode'] ) {
+			return $fallback . ' (' . sanitize_text_field( (string) $body_json['errorCode'] ) . ')';
+		}
+
+		return $fallback;
+	}
+
+	/**
+	 * Check whether API payload reports an application-level error.
+	 *
+	 * @param mixed $body_json Parsed JSON response.
+	 * @return bool
+	 */
+	private function is_bot_api_error_payload( $body_json ) {
+		if ( ! is_array( $body_json ) || ! isset( $body_json['errorCode'] ) ) {
+			return false;
+		}
+
+		return 0 !== (int) $body_json['errorCode'];
+	}
+
+	/**
+	 * Build secure button callback payload.
+	 *
+	 * @param string $intent_id     Intent ID.
+	 * @param string $intent_secret Intent secret.
+	 * @return string
+	 */
+	private function build_button_callback_data( $intent_id, $intent_secret ) {
+		$intent_id     = sanitize_text_field( (string) $intent_id );
+		$intent_secret = sanitize_text_field( (string) $intent_secret );
+
+		if ( '' === $intent_id ) {
+			return '';
+		}
+
+		if ( '' === $intent_secret ) {
+			return $intent_id;
+		}
+
+		return $intent_id . '.' . $intent_secret;
 	}
 
 	/**

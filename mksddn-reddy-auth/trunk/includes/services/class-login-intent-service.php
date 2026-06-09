@@ -137,11 +137,15 @@ class Mksddn_Reddy_Auth_Login_Intent_Service {
 	/**
 	 * Mark intent as approved after magic link click.
 	 *
-	 * @param string $intent_id Intent identifier.
+	 * @param string $intent_id     Intent identifier.
+	 * @param string $intent_secret Optional intent secret for strict approval checks.
+	 * @param string $reddy_id      Optional Reddy ID asserted by webhook payload.
 	 * @return true|WP_Error
 	 */
-	public function approve( $intent_id ) {
-		$intent_id = sanitize_text_field( (string) $intent_id );
+	public function approve( $intent_id, $intent_secret = '', $reddy_id = '' ) {
+		$intent_id     = sanitize_text_field( (string) $intent_id );
+		$intent_secret = sanitize_text_field( (string) $intent_secret );
+		$reddy_id      = sanitize_text_field( (string) $reddy_id );
 		$state     = get_transient( $this->get_storage_key( $intent_id ) );
 
 		if ( ! is_array( $state ) || empty( $state['reddy_id'] ) ) {
@@ -156,6 +160,16 @@ class Mksddn_Reddy_Auth_Login_Intent_Service {
 
 		if ( self::STATUS_CONSUMED === (string) $state['status'] ) {
 			return new WP_Error( 'intent_consumed', __( 'Authorization request was already completed.', 'mksddn-reddy-auth' ) );
+		}
+
+		if ( '' !== $intent_secret ) {
+			if ( ! hash_equals( (string) $state['secret_hash'], $this->hash_secret( $intent_secret ) ) ) {
+				return new WP_Error( 'invalid_intent', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
+			}
+		}
+
+		if ( '' !== $reddy_id && ! hash_equals( sanitize_text_field( (string) $state['reddy_id'] ), $reddy_id ) ) {
+			return new WP_Error( 'invalid_intent', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
 		}
 
 		$state['status'] = self::STATUS_APPROVED;

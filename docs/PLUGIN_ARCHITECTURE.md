@@ -39,8 +39,8 @@ The messenger button uses `type: action` — pressing it sends a `buttonAction` 
 
 - Button event receiver: `POST /mksddn-reddy-auth/v1/auth/button-callback`
   - Called by Reddy bot when user presses the authorize button in messenger.
-  - Verifies `X-BotAPI-Sign` header signature (`sha256(body + bot_token)`).
-  - Extracts `button.data` = `intent_id`, calls `Login_Intent_Service::approve()`.
+  - Verifies `X-BotAPI-Sign` header signature (`sha256(body + bot_token + '.' + webhook_secret)` when secret is configured, otherwise `sha256(body + bot_token)`).
+  - Extracts `button.data` as `intent_id.intent_secret` and calls `Login_Intent_Service::approve()` with strict secret validation.
   - Returns `{ "success": true }`.
   - **Must be configured as webhook URL in Reddy bot (BotMother) settings.** The URL is shown in plugin settings under One-Click Authorization.
 - Intent polling: `GET /mksddn-reddy-auth/v1/auth/intent-status`
@@ -183,6 +183,7 @@ The messenger button uses `type: action` — pressing it sends a `buttonAction` 
   - `one_click_delivery_mode` — `otp_only` (disabled), `otp_plus_link`, `link_only`.
   - `magic_link_ttl_seconds` — magic link and intent TTL.
   - `one_click_redirect_url` — optional redirect after one-click login.
+  - `webhook_secret` — optional BotMother webhook Secret used to verify `X-BotAPI-Sign`.
 - Extension filters (applied after admin template resolution for OTP):
   - `mksddn_reddy_otp_message` (string `$message`, string `$reddy_id`, int `$ttl_seconds`)
   - `mksddn_reddy_magic_link_url` (string `$url`, string `$reddy_id`, string `$intent_id`)
