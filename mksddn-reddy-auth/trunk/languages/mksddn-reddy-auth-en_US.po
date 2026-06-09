@@ -12,6 +12,12 @@ msgstr ""
 msgid "-- Select page --"
 msgstr "-- Select page --"
 
+msgid "Access Control"
+msgstr "Access Control"
+
+msgid "Add to your login page. Two-step flow: enter Reddy ID → receive OTP in messenger → enter code."
+msgstr "Add to your login page. Two-step flow: enter Reddy ID → receive OTP in messenger → enter code."
+
 msgid "API Contracts"
 msgstr "API Contracts"
 
@@ -60,6 +66,12 @@ msgstr "Authorize button label"
 msgid "Authorize button only"
 msgstr "Authorize button only"
 
+msgid "Base URL:"
+msgstr "Base URL:"
+
+msgid "Bearer token"
+msgstr "Bearer token"
+
 msgid "Bearer token TTL (seconds)"
 msgstr "Bearer token TTL (seconds)"
 
@@ -87,11 +99,23 @@ msgstr "Bot token (dev fallback)"
 msgid "Bot token is not configured."
 msgstr "Bot token is not configured."
 
+msgid "CSS classes"
+msgstr "CSS classes"
+
 msgid "Configure required authentication settings first, then move to one-click and security limits."
 msgstr "Configure required authentication settings first, then move to one-click and security limits."
 
+msgid "Configure which Reddy IDs and request sources are allowed, then enable content protection."
+msgstr "Configure which Reddy IDs and request sources are allowed, then enable content protection."
+
 msgid "Configure your bot token, create a login page with [mksddn_reddy_login], then optionally enable site or REST protection."
 msgstr "Configure your bot token, create a login page with [mksddn_reddy_login], then optionally enable site or REST protection."
+
+msgid "Connection"
+msgstr "Connection"
+
+msgid "Cookie session (monolith mode)"
+msgstr "Cookie session (monolith mode)"
 
 msgid "Connection test message"
 msgstr "Connection test message"
@@ -102,6 +126,12 @@ msgstr "Core Authentication"
 msgid "Customize texts sent by the Reddy bot. OTP template supports {code}, {ttl}, and {link}. One-click template is used when delivery mode is link only."
 msgstr "Customize texts sent by the Reddy bot. OTP template supports {code}, {ttl}, and {link}. One-click template is used when delivery mode is link only."
 
+msgid "Description"
+msgstr "Description"
+
+msgid "Developer"
+msgstr "Developer"
+
 msgid "Developer Resources"
 msgstr "Developer Resources"
 
@@ -110,6 +140,12 @@ msgstr "Development fallback. In production prefer MKSDDN_REDDY_BOT_TOKEN in wp-
 
 msgid "Dismiss"
 msgstr "Dismiss"
+
+msgid "Endpoint"
+msgstr "Endpoint"
+
+msgid "Enter your bot token and verify the connection before enabling any protection."
+msgstr "Enter your bot token and verify the connection before enabling any protection."
 
 msgid "Download OpenAPI"
 msgstr "Download OpenAPI"
@@ -123,8 +159,17 @@ msgstr "Enable when your API must be private. Public endpoints from other plugin
 msgid "Export current REST contracts for API clients and tests."
 msgstr "Export current REST contracts for API clients and tests."
 
+msgid "Finalize a one-click login intent."
+msgstr "Finalize a one-click login intent."
+
 msgid "For monolith WordPress site mode, create a login page and add shortcode:"
 msgstr "For monolith WordPress site mode, create a login page and add shortcode:"
+
+msgid "Frontend Setup"
+msgstr "Frontend Setup"
+
+msgid "Frontend Setup Guide"
+msgstr "Frontend Setup Guide"
 
 msgid "How long API Bearer tokens remain valid before users must log in again."
 msgstr "How long API Bearer tokens remain valid before users must log in again."
@@ -132,8 +177,14 @@ msgstr "How long API Bearer tokens remain valid before users must log in again."
 msgid "How long an OTP code stays valid after it is sent."
 msgstr "How long an OTP code stays valid after it is sent."
 
+msgid "If the allowlist is configured, browser requests must send a matching Origin or Referer. Server-side clients (curl, backend) should leave the list empty or use the mksddn_reddy_is_request_url_allowed filter."
+msgstr "If the allowlist is configured, browser requests must send a matching Origin or Referer. Server-side clients (curl, backend) should leave the list empty or use the mksddn_reddy_is_request_url_allowed filter."
+
 msgid "In Reddy, message Bot Mother (72220000000) to create your bot."
 msgstr "In Reddy, message Bot Mother (72220000000) to create your bot."
+
+msgid "Include in subsequent API requests:"
+msgstr "Include in subsequent API requests:"
 
 msgid "Insufficient permissions."
 msgstr "Insufficient permissions."
@@ -149,6 +200,9 @@ msgstr "Invalid token."
 
 msgid "Lifetime of the authorize button link and login intent."
 msgstr "Lifetime of the authorize button link and login intent."
+
+msgid "Limits"
+msgstr "Limits"
 
 msgid "Locks public pages for non-authenticated visitors. Keep the selected login page accessible so users can sign in."
 msgstr "Locks public pages for non-authenticated visitors. Keep the selected login page accessible so users can sign in."
@@ -171,11 +225,26 @@ msgstr "Max OTP send requests per Reddy ID and client IP within a fixed 5-minute
 msgid "Max login attempts per Reddy ID and client IP within a fixed 10-minute window."
 msgstr "Max login attempts per Reddy ID and client IP within a fixed 10-minute window."
 
+msgid "Messages"
+msgstr "Messages"
+
 msgid "Messenger delivery mode"
 msgstr "Messenger delivery mode"
 
+msgid "Method"
+msgstr "Method"
+
+msgid "One-Click"
+msgstr "One-Click"
+
+msgid "One-click flow"
+msgstr "One-click flow"
+
 msgid "OTP + authorize button"
 msgstr "OTP + authorize button"
+
+msgid "OTP flow"
+msgstr "OTP flow"
 
 msgid "OTP TTL (seconds)"
 msgstr "OTP TTL (seconds)"
@@ -225,8 +294,14 @@ msgstr "Open settings"
 msgid "Optional. Redirect target after successful one-click login. Defaults to home or login page."
 msgstr "Optional. Redirect target after successful one-click login. Defaults to home or login page."
 
+msgid "Pass issue_session: true in login or complete-intent to set a WordPress auth cookie."
+msgstr "Pass issue_session: true in login or complete-intent to set a WordPress auth cookie."
+
 msgid "Paste your bot token here to connect WordPress with Reddy."
 msgstr "Paste your bot token here to connect WordPress with Reddy."
+
+msgid "Poll one-click login intent status."
+msgstr "Poll one-click login intent status."
 
 msgid "Please sign in with Reddy to access site content."
 msgstr "Please sign in with Reddy to access site content."
@@ -239,6 +314,15 @@ msgstr "Protect site content"
 
 msgid "Quick Start"
 msgstr "Quick Start"
+
+msgid "REST API (headless / SPA)"
+msgstr "REST API (headless / SPA)"
+
+msgid "Return the authenticated user."
+msgstr "Return the authenticated user."
+
+msgid "Revoke session or Bearer token."
+msgstr "Revoke session or Bearer token."
 
 msgid "Recommended: OTP + authorize button. Select OTP only to disable one-click authorization."
 msgstr "Recommended: OTP + authorize button. Select OTP only to disable one-click authorization."
@@ -276,8 +360,14 @@ msgstr "Security Limits"
 msgid "Select page where [mksddn_reddy_login] shortcode is placed."
 msgstr "Select page where [mksddn_reddy_login] shortcode is placed."
 
+msgid "Send OTP to a Reddy user."
+msgstr "Send OTP to a Reddy user."
+
 msgid "Send code"
 msgstr "Send code"
+
+msgid "Shortcode (monolith mode)"
+msgstr "Shortcode (monolith mode)"
 
 msgid "Send-code limit (per 5 minutes)"
 msgstr "Send-code limit (per 5 minutes)"
@@ -290,6 +380,9 @@ msgstr "Sent when an administrator runs Bot connection test."
 
 msgid "Settings"
 msgstr "Settings"
+
+msgid "Target these classes to style the shortcode form:"
+msgstr "Target these classes to style the shortcode form:"
 
 msgid "Short label shown on messenger button (for example: Authorize, Log in)."
 msgstr "Short label shown on messenger button (for example: Authorize, Log in)."
@@ -338,6 +431,9 @@ msgstr "Used when delivery mode is authorize button only. Placeholders: {link}, 
 
 msgid "Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events."
 msgstr "Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events."
+
+msgid "Verify OTP and issue token or session."
+msgstr "Verify OTP and issue token or session."
 
 msgid "Waiting for authorization in Reddy. You can also enter the code below."
 msgstr "Waiting for authorization in Reddy. You can also enter the code below."

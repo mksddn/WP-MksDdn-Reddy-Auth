@@ -87,9 +87,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		);
 
 		add_settings_section(
-			'mksddn_reddy_auth_main_section',
-			__( 'Core Authentication', 'mksddn-reddy-auth' ),
-			array( $this, 'render_section_description' ),
+			'mksddn_reddy_auth_connection_section',
+			'',
+			'__return_empty_string',
 			self::PAGE_SLUG
 		);
 
@@ -98,7 +98,14 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Bot token (dev fallback)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_bot_token_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_connection_section'
+		);
+
+		add_settings_section(
+			'mksddn_reddy_auth_access_section',
+			'',
+			'__return_empty_string',
+			self::PAGE_SLUG
 		);
 
 		add_settings_field(
@@ -106,7 +113,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Allowed request sources', 'mksddn-reddy-auth' ),
 			array( $this, 'render_allowed_urls_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_field(
@@ -114,7 +121,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Allowed Reddy IDs', 'mksddn-reddy-auth' ),
 			array( $this, 'render_allowed_reddy_ids_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_field(
@@ -122,7 +129,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Protect all REST API content', 'mksddn-reddy-auth' ),
 			array( $this, 'render_api_lock_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_field(
@@ -130,7 +137,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Protect site content', 'mksddn-reddy-auth' ),
 			array( $this, 'render_monolith_lock_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_field(
@@ -138,13 +145,13 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Login page', 'mksddn-reddy-auth' ),
 			array( $this, 'render_login_page_select_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_section(
 			'mksddn_reddy_auth_one_click_section',
-			__( 'One-Click Authorization', 'mksddn-reddy-auth' ),
-			array( $this, 'render_one_click_section_description' ),
+			'',
+			'__return_empty_string',
 			self::PAGE_SLUG
 		);
 
@@ -181,8 +188,8 @@ class Mksddn_Reddy_Auth_Settings_Page {
 
 		add_settings_section(
 			'mksddn_reddy_auth_limits_section',
-			__( 'Security Limits', 'mksddn-reddy-auth' ),
-			array( $this, 'render_limits_section_description' ),
+			'',
+			'__return_empty_string',
 			self::PAGE_SLUG
 		);
 
@@ -248,8 +255,8 @@ class Mksddn_Reddy_Auth_Settings_Page {
 
 		add_settings_section(
 			'mksddn_reddy_auth_messages_section',
-			__( 'Bot Messages', 'mksddn-reddy-auth' ),
-			array( $this, 'render_messages_section_description' ),
+			'',
+			'__return_empty_string',
 			self::PAGE_SLUG
 		);
 
@@ -287,7 +294,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 
 		add_settings_section(
 			'mksddn_reddy_auth_dev_section',
-			__( 'Developer Resources', 'mksddn-reddy-auth' ),
+			'',
 			'__return_empty_string',
 			self::PAGE_SLUG
 		);
@@ -310,7 +317,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
-	 * Render settings page.
+	 * Render settings page with tabbed navigation.
 	 *
 	 * @return void
 	 */
@@ -318,52 +325,115 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+
+		$tabs = array(
+			'connection' => __( 'Connection', 'mksddn-reddy-auth' ),
+			'access'     => __( 'Access Control', 'mksddn-reddy-auth' ),
+			'one-click'  => __( 'One-Click', 'mksddn-reddy-auth' ),
+			'limits'     => __( 'Limits', 'mksddn-reddy-auth' ),
+			'messages'   => __( 'Messages', 'mksddn-reddy-auth' ),
+			'developer'  => __( 'Developer', 'mksddn-reddy-auth' ),
+			'frontend'   => __( 'Frontend Setup', 'mksddn-reddy-auth' ),
+		);
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'Reddy Auth Settings', 'mksddn-reddy-auth' ); ?></h1>
-			<div class="notice notice-info inline" style="padding:12px 16px;">
-				<p style="margin:0 0 8px;">
-					<strong><?php echo esc_html__( 'Quick Start', 'mksddn-reddy-auth' ); ?></strong>
-				</p>
-				<ol style="margin:0 0 8px 20px; padding:0;">
-					<li style="margin:0 0 6px;">
-						<?php echo esc_html__( 'In Reddy, message Bot Mother (72220000000) to create your bot.', 'mksddn-reddy-auth' ); ?>
-					</li>
-					<li style="margin:0 0 6px;">
-						<?php echo esc_html__( 'Paste your bot token here to connect WordPress with Reddy.', 'mksddn-reddy-auth' ); ?>
-					</li>
-					<li style="margin:0 0 6px;">
-						<?php echo esc_html__( 'For monolith WordPress site mode, create a login page and add shortcode:', 'mksddn-reddy-auth' ); ?>
-						<code>[mksddn_reddy_login]</code>.
-					</li>
-					<li style="margin:0 0 6px;">
-						<?php echo esc_html__( 'After a successful login test, enable protection.', 'mksddn-reddy-auth' ); ?>
-					</li>
-				</ol>
-			</div>
 			<?php $this->render_bot_test_notice(); ?>
+			<nav class="nav-tab-wrapper mksddn-reddy-nav">
+				<?php foreach ( $tabs as $tab_id => $tab_label ) : ?>
+				<a href="#" class="nav-tab" data-tab="<?php echo esc_attr( $tab_id ); ?>">
+					<?php echo esc_html( $tab_label ); ?>
+				</a>
+				<?php endforeach; ?>
+			</nav>
 			<form method="post" action="options.php">
-				<?php
-				settings_fields( 'mksddn_reddy_auth_settings_group' );
-				do_settings_sections( self::PAGE_SLUG );
-				submit_button();
-				?>
+				<?php settings_fields( 'mksddn_reddy_auth_settings_group' ); ?>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="connection" style="display:none">
+					<div class="notice notice-info inline" style="padding:12px 16px;margin-top:12px">
+						<p style="margin:0 0 8px"><strong><?php echo esc_html__( 'Quick Start', 'mksddn-reddy-auth' ); ?></strong></p>
+						<ol style="margin:0 0 8px 20px;padding:0">
+							<li style="margin:0 0 6px"><?php echo esc_html__( 'In Reddy, message Bot Mother (72220000000) to create your bot.', 'mksddn-reddy-auth' ); ?></li>
+							<li style="margin:0 0 6px"><?php echo esc_html__( 'Paste your bot token here to connect WordPress with Reddy.', 'mksddn-reddy-auth' ); ?></li>
+							<li style="margin:0 0 6px">
+								<?php echo esc_html__( 'For monolith WordPress site mode, create a login page and add shortcode:', 'mksddn-reddy-auth' ); ?>
+								<code>[mksddn_reddy_login]</code>.
+							</li>
+							<li style="margin:0 0 6px"><?php echo esc_html__( 'After a successful login test, enable protection.', 'mksddn-reddy-auth' ); ?></li>
+						</ol>
+					</div>
+					<?php $this->render_connection_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_connection_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="access" style="display:none">
+					<?php $this->render_access_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_access_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="one-click" style="display:none">
+					<?php $this->render_one_click_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_one_click_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="limits" style="display:none">
+					<?php $this->render_limits_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_limits_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="messages" style="display:none">
+					<?php $this->render_messages_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_messages_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="developer" style="display:none">
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_dev_section' ); ?>
+					</table>
+				</div>
+
+				<div id="mksddn-reddy-form-footer">
+					<?php submit_button(); ?>
+				</div>
 			</form>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="mksddn-reddy-bot-test-form">
 				<input type="hidden" name="action" value="mksddn_reddy_test_bot_connection" />
 				<?php wp_nonce_field( 'mksddn_reddy_test_bot_connection' ); ?>
 			</form>
+			<div class="mksddn-reddy-tab-panel" data-panel="frontend" style="display:none">
+				<?php $this->render_frontend_guide(); ?>
+			</div>
 		</div>
+		<?php $this->render_tab_js( array_keys( $tabs ) ); ?>
 		<?php
 	}
 
 	/**
-	 * Render section description.
+	 * Render connection section description.
 	 *
 	 * @return void
 	 */
-	public function render_section_description() {
-		echo '<p>' . esc_html__( 'Configure required authentication settings first, then move to one-click and security limits.', 'mksddn-reddy-auth' ) . '</p>';
+	public function render_connection_section_description() {
+		echo '<p>' . esc_html__( 'Enter your bot token and verify the connection before enabling any protection.', 'mksddn-reddy-auth' ) . '</p>';
+	}
+
+	/**
+	 * Render access control section description.
+	 *
+	 * @return void
+	 */
+	public function render_access_section_description() {
+		echo '<p>' . esc_html__( 'Configure which Reddy IDs and request sources are allowed, then enable content protection.', 'mksddn-reddy-auth' ) . '</p>';
 	}
 
 	/**
@@ -1428,6 +1498,153 @@ class Mksddn_Reddy_Auth_Settings_Page {
 				$this->build_postman_item( 'Logout', 'POST', '{{baseUrl}}/auth/logout', null, true ),
 			),
 		);
+	}
+
+	/**
+	 * Render frontend integration guide (static HTML, no form).
+	 *
+	 * @return void
+	 */
+	private function render_frontend_guide() {
+		?>
+		<div style="max-width:860px;margin-top:20px">
+			<h2><?php echo esc_html__( 'Frontend Setup Guide', 'mksddn-reddy-auth' ); ?></h2>
+
+			<h3><?php echo esc_html__( 'Shortcode (monolith mode)', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Add to your login page. Two-step flow: enter Reddy ID → receive OTP in messenger → enter code.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>[mksddn_reddy_login]</code></pre>
+
+			<h3><?php echo esc_html__( 'CSS classes', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Target these classes to style the shortcode form:', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>.mksddn-reddy-auth-form          /* outer wrapper */
+.mksddn-reddy-auth-send-form     /* step 1: enter Reddy ID */
+.mksddn-reddy-auth-login-form    /* step 2: enter OTP code */
+.mksddn-reddy-auth-waiting       /* one-click: waiting for approval */
+.mksddn-reddy-auth-message       /* status / error message */</code></pre>
+
+			<h3><?php echo esc_html__( 'REST API (headless / SPA)', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php esc_html_e( 'Base URL:', 'mksddn-reddy-auth' ); ?> <code><?php echo esc_html( rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE ) ); ?></code></p>
+			<table class="widefat striped" style="margin-bottom:20px">
+				<thead>
+					<tr>
+						<th><?php echo esc_html__( 'Method', 'mksddn-reddy-auth' ); ?></th>
+						<th><?php echo esc_html__( 'Endpoint', 'mksddn-reddy-auth' ); ?></th>
+						<th><?php echo esc_html__( 'Description', 'mksddn-reddy-auth' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/send-code</code></td>
+						<td><?php echo esc_html__( 'Send OTP to a Reddy user.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/login</code></td>
+						<td><?php echo esc_html__( 'Verify OTP and issue token or session.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>GET</code></td>
+						<td><code>/auth/intent-status</code></td>
+						<td><?php echo esc_html__( 'Poll one-click login intent status.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/complete-intent</code></td>
+						<td><?php echo esc_html__( 'Finalize a one-click login intent.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>GET</code></td>
+						<td><code>/auth/me</code></td>
+						<td><?php echo esc_html__( 'Return the authenticated user.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/logout</code></td>
+						<td><?php echo esc_html__( 'Revoke session or Bearer token.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3><?php echo esc_html__( 'OTP flow', 'mksddn-reddy-auth' ); ?></h3>
+			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>// 1. Request OTP
+POST /auth/send-code
+{ "reddy_id": "123456" }
+
+// 2. Verify and get Bearer token
+POST /auth/login
+{ "reddy_id": "123456", "code": "654321", "issue_token": true }
+// → { "token": "...", "user": { "id": 1, "email": "..." } }</code></pre>
+
+			<h3><?php echo esc_html__( 'One-click flow', 'mksddn-reddy-auth' ); ?></h3>
+			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>// 1. Send code — response includes intent_id + intent_secret
+POST /auth/send-code  { "reddy_id": "123456" }
+
+// 2. Poll until user taps Authorize in Reddy
+GET /auth/intent-status?intent_id=...&intent_secret=...
+// → { "status": "approved" }
+
+// 3. Complete login
+POST /auth/complete-intent
+{ "intent_id": "...", "intent_secret": "...", "issue_token": true }
+// → { "token": "...", "user": { ... } }</code></pre>
+
+			<h3><?php echo esc_html__( 'Bearer token', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Include in subsequent API requests:', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>Authorization: Bearer {token}</code></pre>
+
+			<h3><?php echo esc_html__( 'Cookie session (monolith mode)', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Pass issue_session: true in login or complete-intent to set a WordPress auth cookie.', 'mksddn-reddy-auth' ); ?></p>
+
+			<h3><?php echo esc_html__( 'Allowed request sources', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'If the allowlist is configured, browser requests must send a matching Origin or Referer. Server-side clients (curl, backend) should leave the list empty or use the mksddn_reddy_is_request_url_allowed filter.', 'mksddn-reddy-auth' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render inline tab switching script.
+	 *
+	 * @param string[] $tab_ids Ordered tab IDs.
+	 * @return void
+	 */
+	private function render_tab_js( array $tab_ids ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- $tab_ids reserved for future server-side use.
+		?>
+		<script>
+		(function () {
+			var KEY = 'mksddn_reddy_active_tab';
+			var nav = document.querySelector('.mksddn-reddy-nav');
+			var links = nav ? Array.from(nav.querySelectorAll('[data-tab]')) : [];
+			var panels = Array.from(document.querySelectorAll('[data-panel]'));
+			var footer = document.getElementById('mksddn-reddy-form-footer');
+
+			function activate(tabId) {
+				links.forEach(function (a) {
+					a.classList.toggle('nav-tab-active', a.getAttribute('data-tab') === tabId);
+				});
+				panels.forEach(function (p) {
+					p.style.display = p.getAttribute('data-panel') === tabId ? '' : 'none';
+				});
+				if (footer) {
+					footer.style.display = tabId === 'frontend' ? 'none' : '';
+				}
+				try { localStorage.setItem(KEY, tabId); } catch (e) {}
+			}
+
+			links.forEach(function (a) {
+				a.addEventListener('click', function (e) {
+					e.preventDefault();
+					activate(a.getAttribute('data-tab'));
+				});
+			});
+
+			var saved = '';
+			try { saved = localStorage.getItem(KEY) || ''; } catch (e) {}
+			var ids = links.map(function (a) { return a.getAttribute('data-tab'); });
+			activate(ids.indexOf(saved) > -1 ? saved : (ids[0] || ''));
+		}());
+		</script>
+		<?php
 	}
 
 	/**
