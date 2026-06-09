@@ -80,20 +80,27 @@ class Mksddn_Reddy_Auth_Otp_Service {
 		$reddy_id = $this->normalize_reddy_id( $reddy_id );
 
 		if ( '' === $reddy_id ) {
-			return new WP_Error( 'invalid_request', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'invalid_request', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'otp_send', $reddy_id, $error );
+
+			return $error;
 		}
 
 		$ip                = $this->get_request_ip();
 		$rate_limit_result = $this->assert_rate_limit( 'send', $reddy_id, $ip, $this->send_limit, $this->send_window_seconds );
 
 		if ( is_wp_error( $rate_limit_result ) ) {
+			$this->emit_auth_failure( 'otp_send', $reddy_id, $rate_limit_result );
 			return $rate_limit_result;
 		}
 
 		try {
 			$code = (string) random_int( 100000, 999999 );
 		} catch ( Exception $exception ) {
-			return new WP_Error( 'otp_generation_failed', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'otp_generation_failed', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'otp_send', $reddy_id, $error );
+
+			return $error;
 		}
 
 		$code_hash = $this->hash_secret( $code );
@@ -110,13 +117,17 @@ class Mksddn_Reddy_Auth_Otp_Service {
 		);
 
 		if ( ! $stored ) {
-			return new WP_Error( 'otp_storage_failed', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'otp_storage_failed', __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'otp_send', $reddy_id, $error );
+
+			return $error;
 		}
 
 		$send_result = $this->reddy_client->send_otp_code( $reddy_id, $code, $this->ttl_seconds, $delivery );
 
 		if ( is_wp_error( $send_result ) ) {
 			delete_transient( $this->get_otp_key( $reddy_id ) );
+			$this->emit_auth_failure( 'otp_send', $reddy_id, $send_result );
 
 			return $send_result;
 		}
@@ -136,32 +147,45 @@ class Mksddn_Reddy_Auth_Otp_Service {
 		$code     = sanitize_text_field( (string) $code );
 
 		if ( '' === $reddy_id || ! preg_match( '/^\d{6}$/', $code ) ) {
-			return new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'otp_verify', $reddy_id, $error );
+
+			return $error;
 		}
 
 		$ip                = $this->get_request_ip();
 		$rate_limit_result = $this->assert_rate_limit( 'login', $reddy_id, $ip, $this->login_limit, $this->login_window_seconds );
 
 		if ( is_wp_error( $rate_limit_result ) ) {
+			$this->emit_auth_failure( 'otp_verify', $reddy_id, $rate_limit_result );
 			return $rate_limit_result;
 		}
 
 		$otp_state = get_transient( $this->get_otp_key( $reddy_id ) );
 
 		if ( ! is_array( $otp_state ) || empty( $otp_state['code_hash'] ) || empty( $otp_state['expires_at'] ) ) {
-			return new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'otp_verify', $reddy_id, $error );
+
+			return $error;
 		}
 
 		if ( time() > (int) $otp_state['expires_at'] ) {
 			delete_transient( $this->get_otp_key( $reddy_id ) );
 
-			return new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'otp_verify', $reddy_id, $error );
+
+			return $error;
 		}
 
 		$input_hash = $this->hash_secret( $code );
 
 		if ( ! hash_equals( (string) $otp_state['code_hash'], $input_hash ) ) {
-			return new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'invalid_credentials', __( 'Invalid credentials.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'otp_verify', $reddy_id, $error );
+
+			return $error;
 		}
 
 		// One-time code: remove immediately after successful verification.
@@ -295,10 +319,28 @@ class Mksddn_Reddy_Auth_Otp_Service {
 	 * @return void
 	 */
 	private function bootstrap_from_settings() {
-		$settings          = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings          = is_array( $settings ) ? $settings : array();
+		$settings          = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$this->ttl_seconds = isset( $settings['otp_ttl_seconds'] ) ? max( 60, min( 900, (int) $settings['otp_ttl_seconds'] ) ) : $this->ttl_seconds;
 		$this->send_limit  = isset( $settings['send_rate_limit'] ) ? max( 1, min( 20, (int) $settings['send_rate_limit'] ) ) : $this->send_limit;
 		$this->login_limit = isset( $settings['login_rate_limit'] ) ? max( 1, min( 30, (int) $settings['login_rate_limit'] ) ) : $this->login_limit;
+	}
+
+	/**
+	 * Emit lightweight observability event for auth failures.
+	 *
+	 * @param string   $stage Auth stage key.
+	 * @param string   $reddy_id Reddy ID context.
+	 * @param WP_Error $error Error object.
+	 * @return void
+	 */
+	private function emit_auth_failure( $stage, $reddy_id, WP_Error $error ) {
+		do_action(
+			'mksddn_reddy_auth_failure',
+			array(
+				'stage'      => sanitize_key( (string) $stage ),
+				'reddy_id'   => sanitize_text_field( (string) $reddy_id ),
+				'error_code' => (string) $error->get_error_code(),
+			)
+		);
 	}
 }

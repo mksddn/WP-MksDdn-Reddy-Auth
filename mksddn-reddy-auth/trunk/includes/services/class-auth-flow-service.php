@@ -162,9 +162,6 @@ class Mksddn_Reddy_Auth_Auth_Flow_Service {
 	 * @return array<string, mixed>
 	 */
 	private function get_settings() {
-		$raw = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$raw = is_array( $raw ) ? $raw : array();
-
-		return wp_parse_args( $raw, Mksddn_Reddy_Auth_Settings_Page::get_install_defaults() );
+		return Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 	}
 }

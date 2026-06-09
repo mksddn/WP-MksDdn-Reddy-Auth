@@ -219,6 +219,14 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 			);
 
 			if ( is_wp_error( $response ) ) {
+				do_action(
+					'mksddn_reddy_transport_failed',
+					array(
+						'reddy_id'   => $reddy_id,
+						'error_code' => (string) $response->get_error_code(),
+						'attempt'    => $attempt + 1,
+					)
+				);
 				$last_error = $response;
 				continue;
 			}
@@ -226,6 +234,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 			$status_code = (int) wp_remote_retrieve_response_code( $response );
 			$body_raw    = (string) wp_remote_retrieve_body( $response );
 			$body_json   = json_decode( $body_raw, true );
+			do_action( 'mksddn_reddy_transport_response', $status_code, $reddy_id );
 
 			if ( $status_code >= 200 && $status_code < 300 ) {
 				return true;
@@ -243,6 +252,20 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 					'status_code' => $status_code,
 				)
 			);
+
+			do_action(
+				'mksddn_reddy_transport_failed',
+				array(
+					'reddy_id'    => $reddy_id,
+					'error_code'  => 'reddy_api_http_error',
+					'status_code' => $status_code,
+					'attempt'     => $attempt + 1,
+				)
+			);
+
+			if ( $status_code < 500 ) {
+				break;
+			}
 		}
 
 		if ( is_wp_error( $last_error ) ) {
@@ -306,8 +329,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	 * @return string
 	 */
 	private function resolve_otp_message_template( $delivery_mode = 'otp_only' ) {
-		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
 
 		if ( 'link_only' === $delivery_mode ) {
@@ -334,8 +356,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	 * @return string
 	 */
 	private function resolve_magic_link_button_label() {
-		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
 		$label    = isset( $settings['magic_link_button_label'] ) ? trim( (string) $settings['magic_link_button_label'] ) : '';
 
@@ -352,8 +373,7 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 	 * @return string
 	 */
 	private function resolve_bot_test_message() {
-		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
 		$message  = isset( $settings['bot_test_message'] ) ? trim( (string) $settings['bot_test_message'] ) : '';
 

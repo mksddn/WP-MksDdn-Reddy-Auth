@@ -16,8 +16,7 @@ class Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service {
 	 * @return array<int, string>
 	 */
 	public static function get_allowed_reddy_ids() {
-		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$allowed  = isset( $settings['allowed_reddy_ids'] ) ? $settings['allowed_reddy_ids'] : array();
 
 		if ( is_string( $allowed ) ) {

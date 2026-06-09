@@ -226,8 +226,7 @@ class Mksddn_Reddy_Auth_Magic_Link_Service {
 	 * @return void
 	 */
 	private function bootstrap_from_settings() {
-		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( isset( $settings['magic_link_ttl_seconds'] ) ) {
 			$this->ttl_seconds = max( 60, min( 900, (int) $settings['magic_link_ttl_seconds'] ) );

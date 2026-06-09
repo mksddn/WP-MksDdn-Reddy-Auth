@@ -57,18 +57,25 @@ class Mksddn_Reddy_Auth_Auth_Finalizer_Service {
 		$issue_token   = ! empty( $options['issue_token'] );
 
 		if ( ! Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::is_allowed( $reddy_id ) ) {
-			return Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::not_allowed_error();
+			$error = Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::not_allowed_error();
+			$this->emit_auth_failure( 'finalize_whitelist', $reddy_id, $error );
+
+			return $error;
 		}
 
 		$user = $this->identity_service->resolve_or_create_user( $reddy_id );
 		if ( is_wp_error( $user ) ) {
+			$this->emit_auth_failure( 'finalize_identity', $reddy_id, $user );
 			return $user;
 		}
 
 		if ( $issue_session ) {
 			$session_result = $this->session_service->login( $user );
 			if ( is_wp_error( $session_result ) ) {
-				return new WP_Error( 'session_failed', __( 'Unable to create session.', 'mksddn-reddy-auth' ) );
+				$error = new WP_Error( 'session_failed', __( 'Unable to create session.', 'mksddn-reddy-auth' ) );
+				$this->emit_auth_failure( 'finalize_session', $reddy_id, $error );
+
+				return $error;
 			}
 		}
 
@@ -81,13 +88,35 @@ class Mksddn_Reddy_Auth_Auth_Finalizer_Service {
 		if ( $issue_token ) {
 			$token_result = $this->token_service->issue_token( (int) $user->ID );
 			if ( is_wp_error( $token_result ) ) {
-				return new WP_Error( 'token_failed', __( 'Unable to issue token.', 'mksddn-reddy-auth' ) );
+				$error = new WP_Error( 'token_failed', __( 'Unable to issue token.', 'mksddn-reddy-auth' ) );
+				$this->emit_auth_failure( 'finalize_token', $reddy_id, $error );
+
+				return $error;
 			}
 
 			$response['token'] = $token_result;
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Emit lightweight observability event for auth failures.
+	 *
+	 * @param string   $stage Auth stage key.
+	 * @param string   $reddy_id Reddy ID context.
+	 * @param WP_Error $error Error object.
+	 * @return void
+	 */
+	private function emit_auth_failure( $stage, $reddy_id, WP_Error $error ) {
+		do_action(
+			'mksddn_reddy_auth_failure',
+			array(
+				'stage'      => sanitize_key( (string) $stage ),
+				'reddy_id'   => sanitize_text_field( (string) $reddy_id ),
+				'error_code' => (string) $error->get_error_code(),
+			)
+		);
 	}
 
 	/**

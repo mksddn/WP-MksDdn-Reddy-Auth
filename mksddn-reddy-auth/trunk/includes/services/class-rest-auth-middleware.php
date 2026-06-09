@@ -145,8 +145,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return bool
 	 */
 	private function is_api_lock_enabled() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( ! isset( $settings['api_lock_enabled'] ) ) {
 			return false;
@@ -161,8 +160,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return bool
 	 */
 	private function is_monolith_lock_enabled() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( ! isset( $settings['monolith_lock_enabled'] ) ) {
 			return false;
@@ -318,8 +316,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return true;
 		}
 
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
 
 		if ( $page_id > 0 && is_page( $page_id ) ) {
@@ -335,8 +332,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return string
 	 */
 	private function resolve_login_url() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
 		$url      = isset( $settings['login_page_url'] ) ? esc_url_raw( (string) $settings['login_page_url'] ) : '';
 

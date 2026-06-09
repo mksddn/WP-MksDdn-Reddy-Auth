@@ -11,6 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Mksddn_Reddy_Auth_Settings_Page {
 	/**
+	 * Request-scoped cache for merged plugin settings.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	private static $runtime_settings_cache = null;
+
+	/**
 	 * Settings option key.
 	 *
 	 * @var string
@@ -881,13 +888,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return array<string, mixed>
 	 */
 	private function get_settings() {
-		$raw = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$raw = is_array( $raw ) ? $raw : array();
-		if ( array_key_exists( 'one_click_enabled', $raw ) && empty( $raw['one_click_enabled'] ) ) {
-			$raw['one_click_delivery_mode'] = 'otp_only';
-		}
-
-		return wp_parse_args( $raw, $this->get_default_settings() );
+		return self::get_runtime_settings();
 	}
 
 	/**
@@ -915,6 +916,27 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'magic_link_button_label'     => self::get_default_magic_link_button_label(),
 			'bot_test_message'            => self::get_default_bot_test_message(),
 		);
+	}
+
+	/**
+	 * Return merged plugin settings with request-scoped cache.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function get_runtime_settings() {
+		if ( is_array( self::$runtime_settings_cache ) ) {
+			return self::$runtime_settings_cache;
+		}
+
+		$raw = get_option( self::SETTINGS_OPTION_KEY, array() );
+		$raw = is_array( $raw ) ? $raw : array();
+		if ( array_key_exists( 'one_click_enabled', $raw ) && empty( $raw['one_click_enabled'] ) ) {
+			$raw['one_click_delivery_mode'] = 'otp_only';
+		}
+
+		self::$runtime_settings_cache = wp_parse_args( $raw, self::get_install_defaults() );
+
+		return self::$runtime_settings_cache;
 	}
 
 	/**
@@ -1179,6 +1201,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 								'description' => 'OTP request accepted. May include intent_id and intent_secret when one-click auth is enabled.',
 							),
 							'400' => array( 'description' => 'Validation or auth flow error' ),
+							'429' => array( 'description' => 'Rate limited' ),
 							'403' => array( 'description' => 'Request source not allowed (allowed_urls setting)' ),
 						),
 					),
@@ -1221,6 +1244,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						'responses'   => array(
 							'200' => array( 'description' => 'Authenticated' ),
 							'400' => array( 'description' => 'Invalid credentials' ),
+							'429' => array( 'description' => 'Rate limited' ),
 							'403' => array( 'description' => 'Request source not allowed (allowed_urls setting)' ),
 							'500' => array( 'description' => 'Session or token issue error' ),
 						),
@@ -1247,6 +1271,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						'responses'   => array(
 							'200' => array( 'description' => 'Intent status returned' ),
 							'400' => array( 'description' => 'Invalid intent' ),
+							'429' => array( 'description' => 'Rate limited' ),
 						),
 					),
 				),
@@ -1274,6 +1299,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						'responses'   => array(
 							'200' => array( 'description' => 'Authenticated' ),
 							'400' => array( 'description' => 'Invalid intent' ),
+							'429' => array( 'description' => 'Rate limited' ),
 							'409' => array( 'description' => 'Intent not approved yet' ),
 						),
 					),

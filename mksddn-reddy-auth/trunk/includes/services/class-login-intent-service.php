@@ -11,6 +11,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Mksddn_Reddy_Auth_Login_Intent_Service {
 	/**
+	 * Poll rate limit max requests per window.
+	 *
+	 * @var int
+	 */
+	private $poll_limit = 60;
+
+	/**
+	 * Poll rate limit window in seconds.
+	 *
+	 * @var int
+	 */
+	private $poll_window_seconds = 600;
+
+	/**
+	 * Complete-intent rate limit max requests per window.
+	 *
+	 * @var int
+	 */
+	private $consume_limit = 20;
+
+	/**
+	 * Complete-intent rate limit window in seconds.
+	 *
+	 * @var int
+	 */
+	private $consume_window_seconds = 600;
+
+	/**
 	 * Intent status: waiting for messenger approval.
 	 *
 	 * @var string
@@ -89,6 +117,12 @@ class Mksddn_Reddy_Auth_Login_Intent_Service {
 	 * @return array{status: string, reddy_id: string}|WP_Error
 	 */
 	public function get_status( $intent_id, $intent_secret ) {
+		$intent_id = sanitize_text_field( (string) $intent_id );
+		$limit     = $this->assert_rate_limit( 'poll', $intent_id, $this->get_request_ip(), $this->poll_limit, $this->poll_window_seconds );
+		if ( is_wp_error( $limit ) ) {
+			return $limit;
+		}
+
 		$state = $this->get_validated_state( $intent_id, $intent_secret );
 		if ( is_wp_error( $state ) ) {
 			return $state;
@@ -138,6 +172,12 @@ class Mksddn_Reddy_Auth_Login_Intent_Service {
 	 * @return string|WP_Error
 	 */
 	public function consume_approved( $intent_id, $intent_secret ) {
+		$intent_id = sanitize_text_field( (string) $intent_id );
+		$limit     = $this->assert_rate_limit( 'consume', $intent_id, $this->get_request_ip(), $this->consume_limit, $this->consume_window_seconds );
+		if ( is_wp_error( $limit ) ) {
+			return $limit;
+		}
+
 		$state = $this->get_validated_state( $intent_id, $intent_secret );
 		if ( is_wp_error( $state ) ) {
 			return $state;
@@ -206,13 +246,77 @@ class Mksddn_Reddy_Auth_Login_Intent_Service {
 	}
 
 	/**
+	 * Return request IP address.
+	 *
+	 * @return string
+	 */
+	private function get_request_ip() {
+		$keys = array(
+			'HTTP_CF_CONNECTING_IP',
+			'HTTP_X_FORWARDED_FOR',
+			'REMOTE_ADDR',
+		);
+
+		foreach ( $keys as $key ) {
+			if ( ! empty( $_SERVER[ $key ] ) ) {
+				$value = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
+
+				if ( 'HTTP_X_FORWARDED_FOR' === $key ) {
+					$parts = explode( ',', $value );
+					$value = trim( (string) $parts[0] );
+				}
+
+				return $value;
+			}
+		}
+
+		return '0.0.0.0';
+	}
+
+	/**
+	 * Enforce request limits for intent polling and completion.
+	 *
+	 * @param string $action Action key.
+	 * @param string $intent_id Intent identifier.
+	 * @param string $ip Client IP.
+	 * @param int    $limit Allowed requests per window.
+	 * @param int    $window_seconds Window size in seconds.
+	 * @return true|WP_Error
+	 */
+	private function assert_rate_limit( $action, $intent_id, $ip, $limit, $window_seconds ) {
+		if ( '' === $intent_id ) {
+			return true;
+		}
+
+		$identity_hash = md5( $action . '|' . $intent_id . '|' . $ip );
+		$count_key     = 'mksddn_reddy_intent_rate_count_' . $identity_hash;
+		$blocked_key   = 'mksddn_reddy_intent_rate_block_' . $identity_hash;
+		$current_time  = time();
+		$blocked_until = (int) get_transient( $blocked_key );
+
+		if ( $blocked_until > $current_time ) {
+			return new WP_Error( 'rate_limited', __( 'Too many requests. Try again later.', 'mksddn-reddy-auth' ) );
+		}
+
+		$count = (int) get_transient( $count_key );
+		if ( $count >= $limit ) {
+			set_transient( $blocked_key, $current_time + 300, 300 );
+
+			return new WP_Error( 'rate_limited', __( 'Too many requests. Try again later.', 'mksddn-reddy-auth' ) );
+		}
+
+		set_transient( $count_key, $count + 1, $window_seconds );
+
+		return true;
+	}
+
+	/**
 	 * Load configurable values from settings.
 	 *
 	 * @return void
 	 */
 	private function bootstrap_from_settings() {
-		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( isset( $settings['magic_link_ttl_seconds'] ) ) {
 			$this->ttl_seconds = max( 60, min( 900, (int) $settings['magic_link_ttl_seconds'] ) );

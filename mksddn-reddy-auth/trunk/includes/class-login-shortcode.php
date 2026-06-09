@@ -131,12 +131,13 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		$polling_context = $this->get_polling_context_from_cookie();
 		$intent_id       = isset( $polling_context['intent_id'] ) ? (string) $polling_context['intent_id'] : '';
 		$intent_secret   = isset( $polling_context['intent_secret'] ) ? (string) $polling_context['intent_secret'] : '';
+		$expires_at      = isset( $polling_context['expires_at'] ) ? (int) $polling_context['expires_at'] : 0;
 		$login_reddy_id  = $this->get_login_reddy_id_from_cookie();
 		$delivery_mode   = $this->auth_flow_service->get_delivery_mode();
 		$show_code_step  = ( $is_code_step && '' !== $login_reddy_id && 'link_only' !== $delivery_mode );
 		$awaiting_approval = ( 'code_sent' === $status && '' !== $intent_id && '' !== $intent_secret && $this->auth_flow_service->is_one_click_enabled() );
 
-		$this->enqueue_assets( $awaiting_approval, $intent_id, $intent_secret );
+		$this->enqueue_assets( $awaiting_approval, $intent_id, $intent_secret, $expires_at );
 
 		ob_start();
 		?>
@@ -196,7 +197,7 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 
 		if ( is_wp_error( $result ) ) {
 			$this->clear_login_context_cookie();
-			$this->redirect_with_status( 'error', $result->get_error_message() );
+			$this->redirect_with_status( 'error', $this->public_message_from_error( $result ) );
 		}
 
 		$this->set_login_context_cookie( $reddy_id );
@@ -313,10 +314,7 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	 * @return string
 	 */
 	private function resolve_post_login_redirect_url() {
-		$settings = get_option( Mksddn_Reddy_Auth_Settings_Page::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
-		$defaults = Mksddn_Reddy_Auth_Settings_Page::get_install_defaults();
-		$settings = wp_parse_args( $settings, $defaults );
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( ! empty( $settings['one_click_redirect_url'] ) ) {
 			return esc_url_raw( (string) $settings['one_click_redirect_url'] );
@@ -360,14 +358,35 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	}
 
 	/**
+	 * Map internal errors to safe user-facing text.
+	 *
+	 * @param WP_Error $error Error object.
+	 * @return string
+	 */
+	private function public_message_from_error( WP_Error $error ) {
+		$code = (string) $error->get_error_code();
+
+		if ( 'rate_limited' === $code ) {
+			return __( 'Too many requests. Try again later.', 'mksddn-reddy-auth' );
+		}
+
+		if ( 'reddy_id_not_allowed' === $code ) {
+			return __( 'Unable to process authentication request.', 'mksddn-reddy-auth' );
+		}
+
+		return __( 'Unable to process authentication request.', 'mksddn-reddy-auth' );
+	}
+
+	/**
 	 * Enqueue shortcode assets.
 	 *
 	 * @param bool   $enable_polling Whether intent polling should run.
 	 * @param string $intent_id Intent identifier.
 	 * @param string $intent_secret Intent secret.
+	 * @param int    $expires_at Polling expiration timestamp.
 	 * @return void
 	 */
-	private function enqueue_assets( $enable_polling, $intent_id, $intent_secret ) {
+	private function enqueue_assets( $enable_polling, $intent_id, $intent_secret, $expires_at ) {
 		wp_enqueue_style(
 			'mksddn-reddy-auth-login-shortcode',
 			plugins_url( 'assets/css/login-shortcode.css', MKSDDN_REDDY_AUTH_FILE ),
@@ -395,9 +414,13 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 				'completeIntentUrl' => rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/complete-intent' ),
 				'intentId'          => $intent_id,
 				'intentSecret'      => $intent_secret,
-				'pollIntervalMs'    => 3000,
+				'pollIntervalMs'    => max( 1000, (int) apply_filters( 'mksddn_reddy_intent_poll_interval_ms', 3000 ) ),
+				'maxPollIntervalMs' => max( 1000, (int) apply_filters( 'mksddn_reddy_intent_poll_max_interval_ms', 15000 ) ),
+				'pollBackoffFactor' => max( 1, (int) apply_filters( 'mksddn_reddy_intent_poll_backoff_factor', 2 ) ),
+				'expiresAt'         => max( 0, (int) $expires_at ),
 				'redirectUrl'       => $this->resolve_post_login_redirect_url(),
 				'redirectingText'   => esc_html__( 'Authorization confirmed. Redirecting...', 'mksddn-reddy-auth' ),
+				'errorText'         => esc_html__( 'Unable to process authentication request.', 'mksddn-reddy-auth' ),
 			)
 		);
 	}
@@ -441,7 +464,7 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	/**
 	 * Read and validate one-click polling context from cookie.
 	 *
-	 * @return array<string, string>
+	 * @return array<string, mixed>
 	 */
 	private function get_polling_context_from_cookie() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only cookie access.
@@ -480,6 +503,7 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		return array(
 			'intent_id'     => sanitize_text_field( (string) $payload['intent_id'] ),
 			'intent_secret' => sanitize_text_field( (string) $payload['intent_secret'] ),
+			'expires_at'    => (int) $payload['expires_at'],
 		);
 	}
 

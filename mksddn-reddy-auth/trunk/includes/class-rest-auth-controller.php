@@ -254,16 +254,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		$result = $this->auth_flow_service->request_login( (string) $request->get_param( 'reddy_id' ) );
 
 		if ( is_wp_error( $result ) ) {
-			$status = 'rate_limited' === $result->get_error_code() ? 429 : 400;
-
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => $result->get_error_message(),
-					'code'    => $result->get_error_code(),
-				),
-				$status
-			);
+			return $this->error_response_from_wp_error( $result );
 		}
 
 		$response = array(
@@ -334,14 +325,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		);
 
 		if ( is_wp_error( $result ) ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => $result->get_error_message(),
-					'code'    => $result->get_error_code(),
-				),
-				400
-			);
+			return $this->error_response_from_wp_error( $result );
 		}
 
 		return new WP_REST_Response(
@@ -366,16 +350,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		);
 
 		if ( is_wp_error( $reddy_id ) ) {
-			$status = 'intent_not_approved' === $reddy_id->get_error_code() ? 409 : 400;
-
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => $reddy_id->get_error_message(),
-					'code'    => $reddy_id->get_error_code(),
-				),
-				$status
-			);
+			return $this->error_response_from_wp_error( $reddy_id );
 		}
 
 		$finalize = $this->auth_finalizer_service->finalize(
@@ -467,18 +442,23 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	private function error_response_from_wp_error( WP_Error $error ) {
 		$code    = (string) $error->get_error_code();
 		$status  = 400;
-		$message = __( 'Invalid credentials.', 'mksddn-reddy-auth' );
+		$message = __( 'Unable to process authentication request.', 'mksddn-reddy-auth' );
 
 		if ( 'rate_limited' === $code ) {
 			$status  = 429;
-			$message = $error->get_error_message();
+			$message = __( 'Too many requests. Try again later.', 'mksddn-reddy-auth' );
 		} elseif ( 'reddy_id_not_allowed' === $code ) {
 			$status  = 403;
 			$message = $error->get_error_message();
+		} elseif ( 'intent_not_approved' === $code ) {
+			$status  = 409;
+			$message = __( 'Authorization is not confirmed yet.', 'mksddn-reddy-auth' );
 		} elseif ( in_array( $code, array( 'identity_create_failed', 'invalid_identity' ), true ) ) {
 			$message = __( 'Unable to create or resolve account. Contact the site administrator.', 'mksddn-reddy-auth' );
 		} elseif ( in_array( $code, array( 'invalid_credentials', 'invalid_request' ), true ) ) {
 			$message = __( 'OTP is invalid or expired. Request a new code and try again.', 'mksddn-reddy-auth' );
+		} elseif ( in_array( $code, array( 'invalid_intent', 'magic_link_storage_failed', 'intent_storage_failed', 'otp_generation_failed', 'otp_storage_failed' ), true ) ) {
+			$message = __( 'Unable to process authentication request.', 'mksddn-reddy-auth' );
 		}
 
 		return new WP_REST_Response(
@@ -526,7 +506,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			array(
 				'success' => false,
 				'code'    => $code,
-				'message' => $error->get_error_message(),
+				'message' => __( 'Unable to process authentication request.', 'mksddn-reddy-auth' ),
 			),
 			500
 		);

@@ -14,6 +14,10 @@
 
 	var pollTimer = null;
 	var completing = false;
+	var currentInterval = Number(config.pollIntervalMs) || 3000;
+	var maxInterval = Number(config.maxPollIntervalMs) || 15000;
+	var backoffFactor = Number(config.pollBackoffFactor) || 2;
+	var expiresAt = Number(config.expiresAt) || 0;
 
 	function buildQuery(params) {
 		return Object.keys(params)
@@ -39,6 +43,41 @@
 		if (waiting) {
 			waiting.textContent = config.redirectingText || 'Authorization confirmed. Redirecting...';
 		}
+	}
+
+	function showMessage(text) {
+		if (!text) {
+			return;
+		}
+
+		var message = formRoot.querySelector('.mksddn-reddy-auth-message');
+		if (!message) {
+			message = document.createElement('p');
+			message.className = 'mksddn-reddy-auth-message';
+			formRoot.insertBefore(message, formRoot.firstChild);
+		}
+
+		message.textContent = text;
+	}
+
+	function stopPolling() {
+		if (pollTimer) {
+			window.clearTimeout(pollTimer);
+			pollTimer = null;
+		}
+	}
+
+	function schedulePoll(delayMs) {
+		stopPolling();
+		pollTimer = window.setTimeout(pollIntentStatus, delayMs);
+	}
+
+	function hasExpired() {
+		if (!expiresAt) {
+			return false;
+		}
+
+		return Math.floor(Date.now() / 1000) >= expiresAt;
 	}
 
 	function completeIntent() {
@@ -71,22 +110,30 @@
 			.then(function (result) {
 				if (!result.ok || !result.payload || !result.payload.success) {
 					completing = false;
+					showMessage(config.errorText || 'Unable to process authentication request.');
+					schedulePoll(currentInterval);
 					return;
 				}
 
-				if (pollTimer) {
-					window.clearInterval(pollTimer);
-				}
+				stopPolling();
 
 				hideForms();
 				window.location.href = config.redirectUrl || window.location.href;
 			})
 			.catch(function () {
 				completing = false;
+				showMessage(config.errorText || 'Unable to process authentication request.');
+				schedulePoll(currentInterval);
 			});
 	}
 
 	function pollIntentStatus() {
+		if (hasExpired()) {
+			showMessage(config.errorText || 'Unable to process authentication request.');
+			stopPolling();
+			return;
+		}
+
 		var url = config.intentStatusUrl + '?' + buildQuery({
 			intent_id: config.intentId,
 			intent_secret: config.intentSecret
@@ -101,18 +148,24 @@
 			})
 			.then(function (payload) {
 				if (!payload || !payload.success) {
+					currentInterval = Math.min(maxInterval, currentInterval * backoffFactor);
+					schedulePoll(currentInterval);
 					return;
 				}
 
 				if (payload.status === 'approved') {
 					completeIntent();
+					return;
 				}
+
+				currentInterval = Number(config.pollIntervalMs) || 3000;
+				schedulePoll(currentInterval);
 			})
 			.catch(function () {
-				// Keep polling on transient network errors.
+				currentInterval = Math.min(maxInterval, currentInterval * backoffFactor);
+				schedulePoll(currentInterval);
 			});
 	}
 
 	pollIntentStatus();
-	pollTimer = window.setInterval(pollIntentStatus, config.pollIntervalMs || 3000);
 })();
