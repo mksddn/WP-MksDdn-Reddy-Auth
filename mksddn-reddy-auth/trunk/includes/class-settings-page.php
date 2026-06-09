@@ -1063,7 +1063,18 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			return $text;
 		}
 
-		return __( $text, 'mksddn-reddy-auth' );
+		switch ( $text ) {
+			case 'Your verification code: {code}. It expires in {ttl} seconds.':
+				return __( 'Your verification code: {code}. It expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+			case 'Reddy bot connection test from WordPress plugin.':
+				return __( 'Reddy bot connection test from WordPress plugin.', 'mksddn-reddy-auth' );
+			case 'Tap Authorize to sign in. The link expires in {ttl} seconds.':
+				return __( 'Tap Authorize to sign in. The link expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+			case 'Authorize':
+				return __( 'Authorize', 'mksddn-reddy-auth' );
+			default:
+				return $text;
+		}
 	}
 
 	/**

@@ -471,7 +471,7 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only cookie access.
-		$raw   = (string) wp_unslash( $_COOKIE[ self::POLLING_COOKIE_NAME ] );
+		$raw   = sanitize_text_field( (string) wp_unslash( $_COOKIE[ self::POLLING_COOKIE_NAME ] ) );
 		$parts = explode( '.', $raw, 2 );
 		if ( 2 !== count( $parts ) ) {
 			return array();
@@ -566,7 +566,7 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only cookie access.
-		$raw   = (string) wp_unslash( $_COOKIE[ self::LOGIN_CONTEXT_COOKIE_NAME ] );
+		$raw   = sanitize_text_field( (string) wp_unslash( $_COOKIE[ self::LOGIN_CONTEXT_COOKIE_NAME ] ) );
 		$parts = explode( '.', $raw, 2 );
 		if ( 2 !== count( $parts ) ) {
 			return '';
