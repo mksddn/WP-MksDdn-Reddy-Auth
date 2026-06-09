@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta name="generator" content="Hugo 0.152.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Messenger BotAPI</title>
+    <link rel="canonical" href="https://bot.doc.bknd.wtf/" />
+    
+    
+    
+    
+    <link rel="stylesheet" href="https://bot.doc.bknd.wtf/styles.min.b28135ab3542c4c615dc034804d3f2dcead0f4fbfcbc35200a482274252828c8.css" />
+    <link data-prism-theme="light" rel="stylesheet" href="https://cdn.jsdelivr.net/gh/katorlys/prism-theme-github/themes/prism-theme-github-light.css">
+  </head>
+  <body>
+    <header>
+      <h1 id="title">
+        Messenger BotAPI 
+      </h1>
+      <p id="lastmod">Обновлено<time data-unix="1780574506"></time></p>
+    </header>
+
+
+    <div class="documentation-layout">
+      <div class="sidebar-menu">
+        <div class="sidebar-menu-inner">
+          <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Введение в BotAPI</a>
+      <ul>
+        <li><a href="#overview">Обзор возможностей</a></li>
+        <li><a href="#bot-creation">Создание бота</a></li>
+        <li><a href="#bot-owner-change">Смена владельца бота</a></li>
+      </ul>
+    </li>
+    <li><a href="#best-practices">Рекомендации и ограничения</a>
+      <ul>
+        <li><a href="#technical-limits">Технические ограничения</a></li>
+        <li><a href="#development-recommendations">Рекомендации по разработке</a></li>
+      </ul>
+    </li>
+    <li><a href="#api-basics">Основы API</a>
+      <ul>
+        <li><a href="#request-formats">Форматы запросов и ответов</a></li>
+        <li><a href="#protocol-versions">Версии протокола</a></li>
+        <li><a href="#authorization">Авторизация</a></li>
+      </ul>
+    </li>
+    <li><a href="#receiving-updates">Получение обновлений</a>
+      <ul>
+        <li><a href="#long-polling">Long Polling</a></li>
+        <li><a href="#webhooks">WebHooks</a></li>
+      </ul>
+    </li>
+    <li><a href="#incoming-data-types">Типы получаемых данных</a>
+      <ul>
+        <li><a href="#update-types">Основные типы обновлений</a></li>
+        <li><a href="#data-structures">Структуры данных</a></li>
+        <li><a href="#group-chat-updates">Получение обновлений из группового чата</a></li>
+        <li><a href="#text-formatting">Форматирование текста (entity)</a></li>
+        <li><a href="#files-media-structure">Файлы и медиа</a></li>
+        <li><a href="#stickers-structure">Стикеры</a></li>
+        <li><a href="#reply-messages-structure">Ответы на сообщения</a></li>
+        <li><a href="#forwarded-messages-structure">Пересланные сообщения</a></li>
+        <li><a href="#edited-messages-structure">Отредактированные сообщения</a></li>
+        <li><a href="#inline-requests-structure">Инлайн-запросы</a></li>
+        <li><a href="#inline-choice-structure">Выбор инлайн-результата</a></li>
+        <li><a href="#button-action-structure">Нажатие на кнопку</a></li>
+      </ul>
+    </li>
+    <li><a href="#sending-messages">Отправка и управление сообщениями</a>
+      <ul>
+        <li><a href="#text-messages">Отправка текстовых сообщений</a></li>
+        <li><a href="#editing-messages">Редактирование сообщений</a></li>
+        <li><a href="#formatting">Форматирование текста</a></li>
+        <li><a href="#user-mentions">Упоминание пользователя</a></li>
+        <li><a href="#chatgroup-mentions">Упоминание групп пользователей</a></li>
+        <li><a href="#deleting-messages">Удаление сообщений</a></li>
+        <li><a href="#добавление-реакций">Добавление реакций</a></li>
+        <li><a href="#удаление-реакций">Удаление реакций</a></li>
+      </ul>
+    </li>
+    <li><a href="#media-files">Работа с медиа и файлами</a>
+      <ul>
+        <li><a href="#file-upload">Загрузка файлов</a></li>
+        <li><a href="#sending-media">Отправка медиа</a></li>
+        <li><a href="#albums">Работа с альбомами</a></li>
+        <li><a href="#sending-contacts">Отправка контактов</a></li>
+        <li><a href="#finduser">Поиск пользователя</a></li>
+      </ul>
+    </li>
+    <li><a href="#interactive-elements">Интерактивные элементы</a>
+      <ul>
+        <li><a href="#buttons">Кнопки</a></li>
+        <li><a href="#inline-mode">Inline-режим</a></li>
+        <li><a href="#polls">Голосования</a></li>
+      </ul>
+    </li>
+    <li><a href="#chats">Работа с чатами</a>
+      <ul>
+        <li><a href="#creating-chats">Создание чата</a></li>
+        <li><a href="#добавление-участников-в-чат">Добавление участников в чат</a></li>
+        <li><a href="#удаление-участников-из-чата">Удаление участников из чата</a></li>
+      </ul>
+    </li>
+    <li><a href="#изменение-прав-участников-в-чате">Изменение прав участников в чате</a></li>
+    <li><a href="#получение-информации-о-чате">Получение информации о чате</a>
+      <ul>
+        <li><a href="#роспуск-чата">Роспуск чата</a></li>
+        <li><a href="#chat-users">Получение списка пользователей чата</a></li>
+      </ul>
+    </li>
+    <li><a href="#bot-whois">Информация о боте</a></li>
+    <li><a href="#error-codes">Коды ошибок</a></li>
+  </ul>
+</nav>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <h2 id="introduction">Введение в BotAPI</h2>
+<h3 id="overview">Обзор возможностей</h3>
+<p>BotAPI — это программный интерфейс для создания и управления ботами в мессенджере. Боты позволяют автоматизировать различные задачи и взаимодействовать с пользователями. С помощью BotAPI разработчики могут:</p>
+<ul>
+<li>Получать и отправлять текстовые сообщения</li>
+<li>Работать с медиафайлами (изображения, документы, видео)</li>
+<li>Создавать интерактивные элементы (кнопки, голосования)</li>
+<li>Форматировать сообщения с помощью BBCode</li>
+<li>Управлять чатами и контактами</li>
+<li>Обрабатывать инлайн-запросы и команды</li>
+</ul>
+<p>Взаимодействие происходит через HTTP-запросы с возвращаемыми данными в формате JSON.</p>
+<h3 id="bot-creation">Создание бота</h3>
+<p>Для создания бота необходимо выполнить следующие шаги:</p>
+<ol>
+<li>Добавить в контакты BotMother с идентификатором <code>72220000000</code></li>
+<li>Отправить этому боту команду <code>/new</code></li>
+<li>Следовать инструкциям, которые предоставит бот</li>
+<li>После завершения процесса вы получите уникальный токен доступа к API</li>
+</ol>
+<p>Важные особенности при создании бота:</p>
+<ul>
+<li>Назначенный боту ник (username) является уникальным и <strong>не может быть изменен</strong> после создания</li>
+<li>Аватар бота можно изменить после создания с помощью команды <code>/edit</code>, которую нужно отправить боту-менеджеру</li>
+<li>Каждый бот имеет свой токен, который используется для авторизации запросов к API</li>
+</ul>
+<p>Базовый URL для запросов к API имеет следующий формат:</p>
+<pre tabindex="0"><code>https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/&lt;метод&gt;
+</code></pre><p>где:</p>
+<ul>
+<li><code>&lt;BOT_DOMAIN&gt;</code> — домен API бота</li>
+<li><code>&lt;BOTTOKEN&gt;</code> — полученный при создании токен</li>
+<li><code>&lt;метод&gt;</code> — название метода API (например, <code>send</code>, <code>getupdate</code>, <code>createchat</code> и т.д.)</li>
+</ul>
+<h3 id="bot-owner-change">Смена владельца бота</h3>
+<p>Действующий владелец бота или руководитель его отдела имеет возможность передать права управления ботом другому разработчику. Процесс смены владельца происходит через обращение в службу поддержки (Support).</p>
+<p>Для этого необходимо:</p>
+<ol>
+<li>Обратиться в Support с запросом на передачу прав</li>
+<li>В обращении указать:
+<ul>
+<li>Причину передачи прав на бота</li>
+<li>Контактные данные разработчика, которому необходимо передать права</li>
+</ul>
+</li>
+</ol>
+<p>После отправки обращения следует руководствоваться дальнейшими инструкциями от службы поддержки для завершения процесса передачи прав.</p>
+<h2 id="best-practices">Рекомендации и ограничения</h2>
+<p>Эффективная разработка ботов требует понимания технических ограничений и следования рекомендациям по созданию удобного пользовательского опыта. В этом разделе описаны ключевые моменты, которые необходимо учитывать при разработке ботов с использованием BotAPI.</p>
+<h3 id="technical-limits">Технические ограничения</h3>
+<h4 id="message-limits">Ограничения сообщений</h4>
+<ul>
+<li><strong>Частота отправки</strong>: не более 10 сообщений в секунду от одного бота</li>
+<li><strong>Частота в один чат</strong>: не более 1 сообщения в секунду в один чат</li>
+<li><strong>Размер текста</strong>: максимальный размер текстового сообщения — 4000 символов</li>
+<li><strong>Форматирование</strong>: поддерживается BBCode, но не более 100 элементов форматирования в одном сообщении</li>
+<li><strong>Количество чатов</strong>: не рекомендуется добавлять бота более чем в 2000 чатов</li>
+<li><strong>Ограничение скорости отправки сообщений</strong>: для предотвращения спама и перегрузки мессенджера, разработчики должны ограничивать скорость отправки сообщений своим ботом. Рекомендуется устанавливать разумное время между отправкой каждого сообщения в один чат: не более 1 сообщения в секунду или не более 10 сообщений в минуту. Общее ограничение на количество сообщений от бота составляет 10 сообщений в секунду.</li>
+<li><strong>Сбор логов</strong>: не отправлять логи и стектрейсы, для их обработки и анализа существуют специализированные системы, которые обеспечивают более безопасное и эффективное управление данными.</li>
+</ul>
+<h4 id="media-limits">Ограничения медиаконтента</h4>
+<ul>
+<li><strong>Файлы к сообщению</strong>: к одному сообщению можно прикрепить не более 1 файла</li>
+<li><strong>Альбомы</strong>: в один альбом можно добавить до 10 изображений</li>
+<li><strong>Размер файлов</strong>: максимальный размер загружаемого файла — 20 МБ</li>
+<li><strong>Форматы</strong>: поддерживаются основные форматы изображений (JPEG, PNG, GIF), видео, аудио и документов</li>
+</ul>
+<h3 id="development-recommendations">Рекомендации по разработке</h3>
+<h4 id="security">Безопасность и приватность</h4>
+<ul>
+<li><strong>Конфиденциальные данные</strong>: обеспечивайте защиту пользовательских данных, не храните их в незашифрованном виде</li>
+<li><strong>Логирование</strong>: не сохраняйте в логах личные данные пользователей</li>
+<li><strong>Аутентификация</strong>: используйте авторизацию через токен для всех запросов к API</li>
+<li><strong>WebHooks</strong>: применяйте проверку подписи с помощью секретного ключа для защиты от подделки запросов</li>
+</ul>
+<h4 id="performance">Производительность</h4>
+<ul>
+<li><strong>Кэширование</strong>: используйте кэширование для снижения количества запросов к API</li>
+<li><strong>Пакетная обработка</strong>: обрабатывайте обновления порциями, а не по одному</li>
+<li><strong>Асинхронность</strong>: используйте асинхронные методы для работы с API, чтобы избежать блокировки основного потока</li>
+<li><strong>Очередь запросов</strong>: реализуйте очередь для соблюдения лимитов на частоту отправки сообщений</li>
+</ul>
+<h4 id="user-experience">Удобство использования</h4>
+<ul>
+<li><strong>Интерфейс</strong>: создавайте интуитивно понятный интерфейс с ясными инструкциями</li>
+<li><strong>Естественный язык</strong>: используйте естественный язык в сообщениях бота</li>
+<li><strong>Ответ на действия</strong>: всегда подтверждайте получение команд и действий пользователя</li>
+<li><strong>Обработка ошибок</strong>: предусматривайте обработку некорректного ввода пользователя</li>
+<li><strong>Помощь</strong>: предоставляйте команду <code>/help</code> или другие способы получения справки</li>
+<li><strong>Состояние диалога</strong>: сохраняйте контекст беседы для более естественного взаимодействия</li>
+</ul>
+<h4 id="organizational-recommendations">Организационные рекомендации</h4>
+<ul>
+<li><strong>Один бот на команду</strong>: не добавляйте в чат более одного бота от каждой команды разработчиков</li>
+<li><strong>Тестирование</strong>: тестируйте бота в различных сценариях перед публикацией</li>
+<li><strong>Мониторинг</strong>: следите за работой бота и собирайте метрики использования</li>
+<li><strong>Обновления</strong>: регулярно обновляйте функциональность бота в соответствии с потребностями пользователей</li>
+<li><strong>Документирование</strong>: поддерживайте документацию по использованию бота для пользователей</li>
+</ul>
+<h4 id="incoming-data-handling">Обработка входящих данных</h4>
+<ul>
+<li><strong>Проверка типа</strong>: проверяйте тип входящего сообщения (<code>message</code>, <code>inlineRequest</code>, <code>inlineChoice</code>, <code>buttonAction</code>)</li>
+<li><strong>Валидация</strong>: всегда проверяйте входящие данные перед их использованием</li>
+<li><strong>Контроль редактирований</strong>: учитывайте возможность редактирования сообщений пользователями, проверяйте поле <code>edited</code></li>
+<li><strong>Форматирование</strong>: корректно обрабатывайте entity-элементы в сообщениях (форматирование, упоминания, ссылки)</li>
+</ul>
+<p>Соблюдение рекомендаций и ограничений поможет создать надежного и удобного бота, который будет эффективно взаимодействовать с пользователями и соответствовать требованиям BotAPI.</p>
+<h2 id="api-basics">Основы API</h2>
+<h3 id="request-formats">Форматы запросов и ответов</h3>
+<p>API поддерживает HTTP методы GET и POST. Ответы возвращаются в формате JSON.</p>
+<p>Базовый URL для запросов:</p>
+<pre tabindex="0"><code>https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/&lt;метод&gt;
+</code></pre><p>где:</p>
+<ul>
+<li><code>&lt;BOT_DOMAIN&gt;</code> — домен API бота</li>
+<li><code>&lt;BOTTOKEN&gt;</code> — токен вашего бота</li>
+<li><code>&lt;метод&gt;</code> — название метода API</li>
+</ul>
+<h3 id="protocol-versions">Версии протокола</h3>
+<p>В настоящее время поддерживаются две версии протокола:</p>
+<ol>
+<li><strong>Версия 1</strong>: (устарела) использует префикс <code>/bot&lt;BOTTOKEN&gt;/</code></li>
+<li><strong>Версия 2</strong>: (текущая) использует префикс <code>/v2&lt;BOTTOKEN&gt;/</code></li>
+</ol>
+<p>Рекомендуется использовать версию 2 протокола для новых разработок. Версия 1 является устаревшей и может быть удалена в будущем.</p>
+<h3 id="authorization">Авторизация</h3>
+<p>Авторизация осуществляется с помощью токена бота, который передаётся в URL запроса или в HTTP-заголовке <code>X-Bot-Token</code>.</p>
+<h4 id="url-authorization">Авторизация через URL</h4>
+<p>При этом способе токен непосредственно включается в URL запроса:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Запрос на получение обновлений с токеном в URL</span>
+</span></span><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://bot.example.com/v2aabbccddeeff/getupdate&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Отправка сообщения с токеном в URL</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://bot.example.com/v2aabbccddeeff/send&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -d <span style="color:#e6db74">&#39;{&#34;chat&#34;: 123, &#34;msg&#34;: &#34;Привет, мир!&#34;}&#39;</span>
+</span></span></code></pre></div><h4 id="header-authorization">Авторизация через заголовок</h4>
+<p>При этом способе токен передается в HTTP-заголовке <code>X-Bot-Token</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Запрос на получение обновлений с токеном в заголовке</span>
+</span></span><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://bot.example.com/v2/getupdate&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -H <span style="color:#e6db74">&#34;X-Bot-Token: aabbccddeeff&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Отправка сообщения с токеном в заголовке</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://bot.example.com/v2/send&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -H <span style="color:#e6db74">&#34;X-Bot-Token: aabbccddeeff&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -d <span style="color:#e6db74">&#39;{&#34;chat&#34;: 123, &#34;msg&#34;: &#34;Привет, мир!&#34;}&#39;</span>
+</span></span></code></pre></div><p>Первый способ проще в использовании, второй более безопасен, так как токен не отображается в логах серверов.</p>
+<h2 id="receiving-updates">Получение обновлений</h2>
+<h3 id="long-polling">Long Polling</h3>
+<p>Long Polling — технология получения данных о новых событиях с помощью &ldquo;длинных запросов&rdquo;. Сервер отправляет ответ только когда произойдет событие или истечет время ожидания.</p>
+<p>Для приема сообщений используйте:</p>
+<pre tabindex="0"><code>GET https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/getupdate
+</code></pre><p><a href="#incoming-data-types">Подробнее о форматах входящих сообщений</a></p>
+<h3 id="webhooks">WebHooks</h3>
+<p>WebHooks — это механизм доставки обновлений от бота напрямую на указанный вами URL-адрес, альтернатива методу Long Polling. Вместо периодических запросов к серверу для получения обновлений, сервер сам отправляет обновления на ваш сервер, как только они появляются.</p>
+<h4 id="webhook-setup">Настройка WebHooks</h4>
+<p>Настройка WebHooks производится через ботменеджера BotMother. Доступны следующие параметры конфигурации:</p>
+<ul>
+<li><strong>URL</strong> — адрес, на который будут отправляться обновления</li>
+<li><strong>Retries</strong> — количество попыток отправки в случае неудачи (максимум 4 попытки)</li>
+<li><strong>Ignore cert</strong> — опция, позволяющая отключить проверку SSL-сертификата (не рекомендуется для продакшена)</li>
+<li><strong>Secret</strong> — секретная строка, используемая для формирования и проверки подписи запросов</li>
+</ul>
+<h4 id="webhook-signature">Проверка подписи запросов</h4>
+<p>Для обеспечения безопасности каждый WebHook-запрос содержит подпись в заголовке <code>X-BotAPI-Sign</code>, которая формируется следующим образом:</p>
+<ul>
+<li>Если секретный ключ задан: <code>sha256(body + token + '.' + secret)</code></li>
+<li>Если секретный ключ не задан: <code>sha256(body + token)</code></li>
+</ul>
+<p>Подпись передается в заголовке в виде шестнадцатеричной (hex) строки:</p>
+<pre tabindex="0"><code class="language-code" data-lang="code">if (secret !== &#34;&#34;) {
+  sign = sha256(body + token + &#39;.&#39; + secret);
+} else {
+  sign = sha256(body + token);
+}
+headers[&#34;X-BotAPI-Sign&#34;] = hexEncode(sign);
+</code></pre><p>Рекомендуется всегда проверять подпись входящих WebHook-запросов на вашем сервере перед их обработкой.</p>
+<h4 id="webhook-retry">Механизм повторной отправки</h4>
+<p>В случае ошибки при доставке обновления (если ваш сервер вернул код ответа, отличный от 2xx), система автоматически повторяет отправку со следующими интервалами:</p>
+<ol>
+<li>Первая повторная попытка: через 10 секунд</li>
+<li>Вторая повторная попытка: через 30 секунд</li>
+<li>Третья повторная попытка: через 60 секунд</li>
+<li>Последняя попытка: через 120 секунд</li>
+</ol>
+<p>Если все попытки завершились неудачей, обновление отбрасывается и не будет доставлено.</p>
+<h4 id="webhook-data-format">Формат данных</h4>
+<p>WebHooks отправляют данные в том же формате, что и метод <code>/getupdate</code>. Подробное описание формата входящих данных можно найти в разделе <a href="#incoming-data-types">Типы получаемых данных</a>.</p>
+<h2 id="incoming-data-types">Типы получаемых данных</h2>
+<p>При получении обновлений через Long Polling или WebHooks данные приходят в едином формате JSON. Каждое обновление содержит следующие обязательные поля:</p>
+<ul>
+<li><code>type</code> - тип обновления</li>
+<li><code>ts</code> - время отправки в формате Unix timestamp</li>
+<li><code>chat</code> - информация о чате</li>
+<li><code>user</code> - информация о пользователе</li>
+</ul>
+<h3 id="update-types">Основные типы обновлений</h3>
+<p>API поддерживает следующие типы обновлений:</p>
+<ol>
+<li><strong>message</strong> - обычное текстовое сообщение или сообщение с вложениями</li>
+<li><strong>messageEdited</strong> - отредактированное сообщение</li>
+<li><strong>inlineRequest</strong> - запрос к боту через инлайн-режим (<code>@bot текст_запроса</code>)</li>
+<li><strong>inlineChoice</strong> - выбор пользователем варианта из инлайн-результатов</li>
+<li><strong>buttonAction</strong> - нажатие пользователем на интерактивную кнопку</li>
+</ol>
+<h3 id="data-structures">Структуры данных</h3>
+<h4 id="chat-structure">Структура <code>chat</code></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">321</span>,                <span style="color:#75715e">// Числовой идентификатор чата
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;p2p&#34;</span>: <span style="color:#66d9ef">false</span>,             <span style="color:#75715e">// Признак приватного чата (true) или группового (false)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;Название чата&#34;</span>  <span style="color:#75715e">// Название группового чата (для p2p пустая строка)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h4 id="user-structure">Структура <code>user</code></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">123</span>,                  <span style="color:#75715e">// Числовой идентификатор пользователя
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Иванов&#34;</span>,      <span style="color:#75715e">// Имя пользователя
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Иван&#34;</span>,         <span style="color:#75715e">// Фамилия пользователя
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;userName&#34;</span>: <span style="color:#e6db74">&#34;ivan_ivanov&#34;</span>   <span style="color:#75715e">// Ник пользователя (если установлен)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h4 id="message-structure">Структура <code>message</code></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">14139</span>,                       <span style="color:#75715e">// Идентификатор сообщения
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;Текст сообщения&#34;</span>,          <span style="color:#75715e">// Текстовое содержимое
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;device&#34;</span>: <span style="color:#e6db74">&#34;Android:8 27@DRA-LX22&#34;</span>, <span style="color:#75715e">// Устройство отправителя
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;entity&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,          <span style="color:#75715e">// Форматирование сообщения (null если отсутствует)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;file&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,            <span style="color:#75715e">// Информация о файле (null если отсутствует)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;sticker&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,         <span style="color:#75715e">// Информация о стикере (null если отсутствует)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;reply&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,           <span style="color:#75715e">// Информация о сообщении, на которое ответили
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;forward&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,         <span style="color:#75715e">// Информация о пересланном сообщении
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;edited&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,          <span style="color:#75715e">// Информация о редактировании
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;isMention&#34;</span>: <span style="color:#960050;background-color:#1e0010">bool</span>                  <span style="color:#75715e">// Признак упоминания бота(нет поля если не упоминается)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="group-chat-updates">Получение обновлений из группового чата</h3>
+<p>Поумолчанию бот не получает обновления из групповых чатов, в которых он состоит, только если участник чата не упоминает его в сообщении (поле <code>isMention</code>). Чтобы бот получал все сообщения из группового чата, необходимо в настройках botmother указать получение групповых сообщений (edit-&gt;group settings). В этом случае бот будет получать все сообщения, отправленные в этот чат.</p>
+<h3 id="text-formatting">Форматирование текста (entity)</h3>
+<p>Если сообщение содержит форматированный текст (BBCode), поле <code>entity</code> содержит массив объектов, определяющих форматирование:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;entity&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> [
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Bold&#34;</span>,           <span style="color:#75715e">// Тип форматирования
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;start&#34;</span>: <span style="color:#ae81ff">0</span>,               <span style="color:#75715e">// Начальная позиция в тексте
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;length&#34;</span>: <span style="color:#ae81ff">4</span>,              <span style="color:#75715e">// Длина форматированного фрагмента
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>               <span style="color:#75715e">// Дополнительное значение (для некоторых типов)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Другие элементы форматирования
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>]
+</span></span></code></pre></div><p>Поддерживаемые типы форматирования:</p>
+<ul>
+<li><strong>Bold</strong> - жирный текст</li>
+<li><strong>Italic</strong> - курсивный текст</li>
+<li><strong>Underline</strong> - подчеркнутый текст</li>
+<li><strong>Strikethrough</strong> - зачеркнутый текст</li>
+<li><strong>Code</strong> - моноширинный текст (код)</li>
+<li><strong>Size</strong> - размер текста (в поле value указывается размер)</li>
+<li><strong>Mention</strong> - упоминание пользователя (в value указывается id пользователя)</li>
+<li><strong>Url</strong> - ссылка (в value указывается URL)</li>
+<li><strong>Color</strong> - цветной текст (в value указывается цвет в формате HEX)</li>
+<li><strong>Quote</strong> - цитата</li>
+<li><strong>Hashtag</strong> - хэштег (в value указывается текст тега без символа #)</li>
+</ul>
+<h3 id="files-media-structure">Файлы и медиа</h3>
+<p>Если сообщение содержит файл, структура <code>file</code> будет содержать:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;file&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;image&#34;</span>,                    <span style="color:#75715e">// Тип файла: &#34;image&#34; или &#34;file&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;photo.jpg&#34;</span>,                <span style="color:#75715e">// Имя файла
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;url&#34;</span>: <span style="color:#e6db74">&#34;https://example.com/file&#34;</span>,  <span style="color:#75715e">// Временная ссылка для скачивания
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;fileId&#34;</span>: <span style="color:#e6db74">&#34;abc123def456&#34;</span>            <span style="color:#75715e">// ID файла для повторного использования
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="stickers-structure">Стикеры</h3>
+<p>Для сообщений со стикерами:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;sticker&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">42</span>,                 <span style="color:#75715e">// ID стикера
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;collectionId&#34;</span>: <span style="color:#ae81ff">3</span>,        <span style="color:#75715e">// ID коллекции стикеров
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;emoji&#34;</span>: <span style="color:#e6db74">&#34;👍&#34;</span>             <span style="color:#75715e">// Связанный эмодзи
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="reply-messages-structure">Ответы на сообщения</h3>
+<p>Для сообщений, являющихся ответом на другое сообщение:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;reply&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: {                    <span style="color:#75715e">// Структура пользователя, как описано выше
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">456</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Петр&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Петров&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;Исходное сообщение&#34;</span>, <span style="color:#75715e">// Текст сообщения, на которое отвечают
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1633346100</span>,            <span style="color:#75715e">// Время отправки исходного сообщения
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">14138</span>                  <span style="color:#75715e">// ID исходного сообщения
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="forwarded-messages-structure">Пересланные сообщения</h3>
+<p>Для пересланных сообщений:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;forward&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: {                 <span style="color:#75715e">// Структура пользователя, как описано выше
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">789</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Алексей&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Алексеев&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1633345000</span>          <span style="color:#75715e">// Время отправки оригинального сообщения
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="edited-messages-structure">Отредактированные сообщения</h3>
+<p>Для отредактированных сообщений:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;edited&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;oldMessageId&#34;</span>: <span style="color:#ae81ff">146</span>,      <span style="color:#75715e">// ID сообщения до редактирования
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;editDate&#34;</span>: <span style="color:#ae81ff">1721040975</span>    <span style="color:#75715e">// Время редактирования
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="inline-requests-structure">Инлайн-запросы</h3>
+<p>Для обновлений типа <code>inlineRequest</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;inlineRequest&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1586508133</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: { <span style="color:#960050;background-color:#1e0010">/*</span> <span style="color:#960050;background-color:#1e0010">структура</span> <span style="color:#960050;background-color:#1e0010">chat</span> <span style="color:#960050;background-color:#1e0010">*/</span> },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: { <span style="color:#960050;background-color:#1e0010">/*</span> <span style="color:#960050;background-color:#1e0010">структура</span> <span style="color:#960050;background-color:#1e0010">user</span> <span style="color:#960050;background-color:#1e0010">*/</span> },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;inline&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;Va40Gp6VCNbEYnA_ecRT&#34;</span>,  <span style="color:#75715e">// Уникальный ID запроса
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;data&#34;</span>: <span style="color:#e6db74">&#34;get&#34;</span>,                 <span style="color:#75715e">// Текст инлайн-запроса
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;reqId&#34;</span>: <span style="color:#e6db74">&#34;unique_request_id&#34;</span>   <span style="color:#75715e">// ID запроса для ответа
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="inline-choice-structure">Выбор инлайн-результата</h3>
+<p>Для обновлений типа <code>inlineChoice</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;inlineChoice&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1586508929</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: { <span style="color:#960050;background-color:#1e0010">/*</span> <span style="color:#960050;background-color:#1e0010">структура</span> <span style="color:#960050;background-color:#1e0010">chat</span> <span style="color:#960050;background-color:#1e0010">*/</span> },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: { <span style="color:#960050;background-color:#1e0010">/*</span> <span style="color:#960050;background-color:#1e0010">структура</span> <span style="color:#960050;background-color:#1e0010">user</span> <span style="color:#960050;background-color:#1e0010">*/</span> },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;inline&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;r8zKrns0TDllVfioofte&#34;</span>,  <span style="color:#75715e">// Уникальный ID выбора
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;data&#34;</span>: <span style="color:#e6db74">&#34;Australia&#34;</span>,           <span style="color:#75715e">// Выбранный пользователем вариант
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;reqId&#34;</span>: <span style="color:#e6db74">&#34;unique_request_id&#34;</span>   <span style="color:#75715e">// ID запроса
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="button-action-structure">Нажатие на кнопку</h3>
+<p>Для обновлений типа <code>buttonAction</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;buttonAction&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1586509000</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: { <span style="color:#960050;background-color:#1e0010">/*</span> <span style="color:#960050;background-color:#1e0010">структура</span> <span style="color:#960050;background-color:#1e0010">chat</span> <span style="color:#960050;background-color:#1e0010">*/</span> },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: { <span style="color:#960050;background-color:#1e0010">/*</span> <span style="color:#960050;background-color:#1e0010">структура</span> <span style="color:#960050;background-color:#1e0010">user</span> <span style="color:#960050;background-color:#1e0010">*/</span> },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;button&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">14139</span>,            <span style="color:#75715e">// ID сообщения с кнопкой
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;data&#34;</span>: <span style="color:#e6db74">&#34;action_data&#34;</span>,         <span style="color:#75715e">// Данные кнопки из поля data
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;reqId&#34;</span>: <span style="color:#e6db74">&#34;unique_request_id&#34;</span>   <span style="color:#75715e">// ID запроса
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="sending-messages">Отправка и управление сообщениями</h2>
+<h3 id="text-messages">Отправка текстовых сообщений</h3>
+<p>Для отправки сообщения используйте запрос с параметрами:</p>
+<ul>
+<li><strong>chat</strong> - ID чата (можно получить через команду <code>/show_address</code> в чате)</li>
+<li><strong>userkey</strong> - Номер пользователя вида <code>71110000401</code> (можно посмотреть в профиле)</li>
+<li><strong>msg</strong> - Текст сообщения</li>
+</ul>
+<blockquote>
+<p>Если указаны оба параметра <code>chat</code> и <code>userkey</code>, приоритет будет отдан параметру <strong>chat</strong>.</p>
+<p>Примечание: бот должен быть добавлен в групповой чат, иначе он не сможет писать и получит ошибку 404.</p>
+</blockquote>
+<h4 id="send">Отправка сообщения</h4>
+<pre tabindex="0"><code>POST https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/send
+</code></pre><p>Примеры сообщений для отправки на сервер:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;привет&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;userKey&#34;</span>: <span style="color:#e6db74">&#34;73120000445&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;Hello&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: <span style="color:#ae81ff">32</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;Hello&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: <span style="color:#ae81ff">32</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;reply&#34;</span>: <span style="color:#ae81ff">12</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="message-parameters">Принимаеемые данные для отправки сообщения</h4>
+<table>
+  <thead>
+      <tr>
+          <th>Параметр</th>
+          <th>Тип</th>
+          <th>Описание</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>userId</td>
+          <td>int</td>
+          <td>ID пользователя</td>
+      </tr>
+      <tr>
+          <td>userKey</td>
+          <td>string</td>
+          <td>Ключ пользователя</td>
+      </tr>
+      <tr>
+          <td>chat</td>
+          <td>int</td>
+          <td>ID чата</td>
+      </tr>
+      <tr>
+          <td>reply</td>
+          <td>int</td>
+          <td>ID сообщения, на которое отвечаем</td>
+      </tr>
+  </tbody>
+</table>
+<h4 id="send-response">Ответ на запрос отправки</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">125</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">57</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="http-codes">Коды HTTP ответов</h4>
+<ul>
+<li><strong>200</strong> - Сообщение отправлено успешно</li>
+<li><strong>404</strong> - Сообщение не отправлено (бот не в чате, нет такого чата, нет прав)</li>
+<li><strong>429</strong> - Превышен лимит на отправку (по умолчанию 10 сообщений в секунду)</li>
+</ul>
+<h3 id="editing-messages">Редактирование сообщений</h3>
+<p>Для редактирования отправленных сообщений используйте метод <code>/update</code>:</p>
+<pre tabindex="0"><code>POST https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/update
+</code></pre><p>Метод содержит все те же поля, что и метод <code>/send</code>, с добавлением обязательного поля <code>messageId</code>.
+Необходимо также указать <code>chat</code> (сообщение не будет изменено при использовании только <code>userId</code> или <code>userKey</code>).</p>
+<h4 id="edit-message">Пример редактирования сообщения</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -H <span style="color:#e6db74">&#34;Content-Type: text/plain&#34;</span> -X POST --data <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;msg&#34;: &#34;сообщение с кнопками&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;chat&#34;: 49030,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;messageId&#34;: 2,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;keyboard&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;command&#34;, &#34;data&#34;: &#34;/help&#34;, &#34;title&#34;: &#34;help&#34; },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;act&#34;, &#34;title&#34;: &#34;action button&#34; }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    ],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;sharefb&#34;, &#34;title&#34;: &#34;fb&#34; },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;shareVk&#34;, &#34;title&#34;: &#34;vk&#34; },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;test&#34;, &#34;title&#34;: &#34;test&#34; }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    ]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  ]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">}&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/update&#34;</span>
+</span></span></code></pre></div><h4 id="editing-notifications">Получение уведомлений о редактировании</h4>
+<p>Когда сообщение редактируется, бот получает обновление с <code>type: &quot;messageEdited&quot;</code> и
+дополнительным полем <code>edited</code> в структуре <code>message</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;edited&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;oldMessageId&#34;</span>: <span style="color:#ae81ff">146</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;editDate&#34;</span>: <span style="color:#ae81ff">1721040975</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="message-structure-example">Структура сообщения</h4>
+<p>При отправке сообщения бот получает следующую структуру:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">14139</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;текстовое содержимое&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;device&#34;</span>: <span style="color:#e6db74">&#34;Android:8.1.0 27@DRA-LX2&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;entity&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;file&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;sticker&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;reply&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;forward&#34;</span>: <span style="color:#960050;background-color:#1e0010">NullableObject</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>id</code> - идентификатор сообщения</li>
+<li><code>msg</code> - текстовое содержимое</li>
+<li><code>device</code> - устройство отправителя</li>
+<li><code>entity</code> - форматирование сообщения (null если отсутствует)</li>
+<li><code>file</code> - информация о файле (null если отсутствует)</li>
+<li><code>sticker</code> - информация о стикере (null если отсутствует)</li>
+<li><code>reply</code> - информация о сообщении, на которое ответили</li>
+<li><code>forward</code> - информация о пересланном сообщении</li>
+<li><code>edited</code> - информация о редактировании</li>
+</ul>
+<h4 id="entity-structure">Пример структуры entity</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;entity&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> [
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Bold&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;start&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;length&#34;</span>: <span style="color:#ae81ff">4</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>name</code> - тип форматирования</li>
+<li><code>start</code> - начальная позиция в тексте</li>
+<li><code>length</code> - длина форматированного фрагмента</li>
+<li><code>value</code> - дополнительное значение (для некоторых типов)</li>
+</ul>
+<h4 id="file-structure">Пример структуры file</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;file&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;image&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;filename.jpg&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;url&#34;</span>: <span style="color:#e6db74">&#34;https://example.com/getf/...&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;fileId&#34;</span>: <span style="color:#e6db74">&#34;abc123...&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>type</code> - тип файла: &ldquo;image&rdquo; или &ldquo;file&rdquo;</li>
+<li><code>name</code> - имя файла</li>
+<li><code>url</code> - временная ссылка для скачивания</li>
+<li><code>fileId</code> - ID файла для повторного использования</li>
+</ul>
+<h4 id="sticker-structure">Пример структуры sticker</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;sticker&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;collectionId&#34;</span>: <span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;emoji&#34;</span>: <span style="color:#e6db74">&#34;👍&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>id</code> - ID стикера</li>
+<li><code>collectionId</code> - ID коллекции стикеров</li>
+<li><code>emoji</code> - связанный эмодзи</li>
+</ul>
+<h4 id="reply-structure">Пример структуры reply</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;reply&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">123</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Иван&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Петров&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;userName&#34;</span>: <span style="color:#e6db74">&#34;ivan&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;текст сообщения, на которое отвечают&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1633346288</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">14138</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>user</code> - структура пользователя</li>
+<li><code>msg</code> - текст сообщения, на которое отвечают</li>
+<li><code>ts</code> - время отправки исходного сообщения</li>
+<li><code>id</code> - ID исходного сообщения</li>
+</ul>
+<h4 id="forward-structure">Пример структуры forward</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;forward&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">123</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Иван&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Петров&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;userName&#34;</span>: <span style="color:#e6db74">&#34;ivan&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1633346288</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>user</code> - структура пользователя</li>
+<li><code>ts</code> - время отправки оригинального сообщения</li>
+</ul>
+<h4 id="edited-structure">Пример структуры edited</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;edited&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;oldMessageId&#34;</span>: <span style="color:#ae81ff">146</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;editDate&#34;</span>: <span style="color:#ae81ff">1721040975</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>oldMessageId</code> - ID сообщения до редактирования</li>
+<li><code>editDate</code> - время редактирования</li>
+</ul>
+<h3 id="formatting">Форматирование текста</h3>
+<p>Текст сообщения (<strong>msg</strong>) может содержать BBCode, который сервер преобразует в entity.</p>
+<h4 id="bbcode">Поддерживаемые теги BBCode</h4>
+<pre tabindex="0"><code>[b]текст[/b]                      жирный
+[i]текст[/i]                      наклонный
+[u]текст[/u]                      подчеркнутый
+[s]текст[/s]                      зачеркнутый
+[user=id]текст[/user]             упоминание пользователя
+[chatgroup=id]текст[/chatgroup]   упоминание группы пользователей внутри чата
+[code]блок[/code]                 моноширный текст
+[quote]текст[/quote]              цитата
+[color=#ff0000]текст[/color]      цвет
+[size=10]текст[/size]             размер
+[url=https://ya.ru]ссылка[/url]    ссылка
+[hashtag]#tagname[/hashtag]       хештег - ссылка на поиск по тегу
+                                  (должен начинаться с &#34;#&#34;, приводится к lowercase)
+</code></pre><p>Когда бот получает форматированное текстовое сообщение, в поле <code>entity</code> содержится информация о форматировании:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;entity&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> [
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Bold&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;start&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;length&#34;</span>: <span style="color:#ae81ff">4</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Italic&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;start&#34;</span>: <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;length&#34;</span>: <span style="color:#ae81ff">6</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;value&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></div><h3 id="user-mentions">Упоминание пользователя</h3>
+<p>При упоминании пользователя в сообщении используется тег <code>[user=id][/user]</code>, где <code>id</code> - ID пользователя.</p>
+<p><strong>Внимание!!! не путать ID пользователя с его key</strong> (key - состоит из 10-12 цифр).</p>
+<p>Узнать ID пользователя зная его key можно с помощью метода <a href="#finduser"><code>v2/finduser</code></a></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/finduser?userkey=71110000401&#34;</span>
+</span></span></code></pre></div><p>Так же id пользователя можно получить из структуры <code>user</code> в <a href="#incoming-data-types">update</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">123</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Иван&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Петров&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;userName&#34;</span>: <span style="color:#e6db74">&#34;ivan&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="chatgroup-mentions">Упоминание групп пользователей</h3>
+<p>При упоминании группы пользователей внутри чата используется тег <code>[chatgroup=id][/chatgroup]</code>, где <code>id</code> - ID группы пользователей внутри чата.</p>
+<p>группы по умолчанию:</p>
+<ul>
+<li><code>0</code> - все пользователи чата</li>
+<li><code>1</code> - администраторы чата</li>
+<li><code>2</code> - модераторы чата</li>
+</ul>
+<p>Дополнительные группы пользователей внутри чата можно посмотреть запросом <a href="#chat-info">getchatinfo</a></p>
+<p>**Если указать несуществующий ID группы при отправке сообщения упоминание будет проигнорировано.</p>
+<h3 id="deleting-messages">Удаление сообщений</h3>
+<p>** Внимание!** Удаление сообщений работает только в p2p чатах, в групповых чатах бот не может удалять сообщения. Необходимы специальные права.</p>
+<p>Для удаления сообщения используйте метод <code>/v2/delete</code>:</p>
+<pre tabindex="0"><code>POST https://&lt;botdomain&gt;/v2{bottoken}/delete
+</code></pre><p>BODY</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">123</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageIds&#34;</span>:[<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><pre tabindex="0"><code>curl  -X POST -d &#39;{&#34;chatId&#34;:123,&#34;messageIds&#34;:[2,3,4]}&#39; &#34;&lt;botdomain&gt;/v2{bottoken}/delete&#34;
+</code></pre><p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>:<span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;deletedMessages&#34;</span>:[<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">4</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="добавление-реакций">Добавление реакций</h3>
+<pre tabindex="0"><code>POST https://&lt;botdomain&gt;/v2{bottoken}/addreaction
+</code></pre><p>BODY</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: <span style="color:#ae81ff">104798</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">59</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;reaction&#34;</span>: <span style="color:#e6db74">&#34;👍&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><pre tabindex="0"><code>GET https://&lt;botdomain&gt;/v2{bottoken}/addreaction?chat=104798&amp;messageId=59&amp;reaction=&#34;👍&#34;
+</code></pre><p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="удаление-реакций">Удаление реакций</h3>
+<pre tabindex="0"><code>POST `https://&lt;botdomain&gt;/v2{bottoken}/removereaction`
+</code></pre><p>BODY</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: <span style="color:#ae81ff">104798</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">59</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><pre tabindex="0"><code>GET https://&lt;botdomain&gt;/v2{bottoken}/removereaction?chat=104798&amp;messageId=59
+</code></pre><p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="media-files">Работа с медиа и файлами</h2>
+<h3 id="file-upload">Загрузка файлов</h3>
+<h4 id="uploadfile">Загрузка без отправки</h4>
+<p>Для загрузки файла без немедленной отправки используется HTTP-метод POST с данными в формате <code>multipart/form-data</code>, где имя параметра - <code>file</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -F <span style="color:#e6db74">&#39;file=@path_to_file.zip&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/uploadfile?type={type}&#34;</span>
+</span></span></code></pre></div><p>Поддерживаемые типы файлов:</p>
+<ul>
+<li><code>image</code></li>
+<li><code>video</code></li>
+</ul>
+<p>Ответ сервера при успешной загрузке:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;fileId&#34;</span>: <span style="color:#e6db74">&#34;b88ffab633e39424aa7ebae32a3066bfe6fd37bdb31dc0bd507667e07126055f&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Полученный <code>fileId</code> можно использовать для дальнейшей отправки файла в сообщениях.</p>
+<h4 id="getlink">Получение ссылки на загруженный файл</h4>
+<p>Для получения временной ссылки на ранее загруженный файл используется метод <code>getlink</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/getlink?fileId=d01c0ef34cb4b8a06c25af0f6a81934973ae6ef5d97619026888b0c0864ad930&#34;</span>
+</span></span></code></pre></div><p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;url&#34;</span>: <span style="color:#e6db74">&#34;https://dl.BOT_DOMAIN.com/c2_da0cc765a2f50abd1e946249da811cb988fc74e81c62bc61222050e4dcaf353d?fileName=image.png&amp;validUntil=1721894352&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;expire&#34;</span>: <span style="color:#ae81ff">1721894352</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Ссылка действительна до времени, указанного в поле <code>expire</code>.</p>
+<h3 id="sending-media">Отправка медиа</h3>
+<h4 id="sendfile">Отправка ранее загруженного файла</h4>
+<p>Для отправки ранее загруженного файла используется метод <code>send</code> с параметром <code>fileId</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> -X POST --data <span style="color:#e6db74">&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;msg&#34;: &#34;Подпись к файлу&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;chat&#34;: 123,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;fileId&#34;: &#34;b88ffab633e39424aa7ebae32a3066bfe6fd37bdb31dc0bd507667e07126055f&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/send&#34;</span>
+</span></span></code></pre></div><h4 id="sendfile-together">Загрузка и отправка одним запросом</h4>
+<p>Для отправки файла с одновременной загрузкой используется метод <code>sendfile</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -F <span style="color:#e6db74">&#39;file=@path_to_file.zip&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendfile?chat=42&amp;msg=Подпись&#34;</span>
+</span></span></code></pre></div><p>Для изображений добавляйте параметр <code>type=image</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -F <span style="color:#e6db74">&#39;file=@path_to_file.jpeg&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendfile?chat=42&amp;msg=Подпись&amp;type=image&#34;</span>
+</span></span></code></pre></div><p>Доступные параметры:</p>
+<ul>
+<li><code>chat</code> - ID чата</li>
+<li><code>userid</code> - ID пользователя</li>
+<li><code>userkey</code> - ключ пользователя</li>
+<li><code>msg</code> - подпись к файлу (необязательно)</li>
+<li><code>reply</code> - ID сообщения, на которое отвечаем</li>
+<li><code>type</code> - тип файла (для изображений: <code>image</code>)</li>
+</ul>
+<p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">42</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">57</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="albums">Работа с альбомами</h3>
+<p>Альбомы позволяют отправлять несколько медиафайлов в одном сообщении (до 10 файлов).</p>
+<h4 id="sendalbum">Отправка альбома</h4>
+<p>Для отправки альбома используется метод <code>sendalbum</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> -X POST --data <span style="color:#e6db74">&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;chat&#34;: 12345,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;msg&#34;: &#34;сообщение&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;albumFiles&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;37695d67a8d8c661........................1d80be1d57e9b60ba1&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;36638bcf820a1a6d........................9d66b2158ac3131d16&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;40a1179470a7b522........................624065b327351e2095&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  ]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendalbum&#34;</span>
+</span></span></code></pre></div><p>Доступные параметры:</p>
+<ul>
+<li><code>chat</code> (int) - идентификатор чата</li>
+<li><code>userId</code> (int) - идентификатор пользователя</li>
+<li><code>userKey</code> (string) - ключ пользователя</li>
+<li><code>to</code> (string) - userKey или chat в зависимости от длины значения</li>
+<li><code>msg</code> (string) - подпись к альбому</li>
+<li><code>albumFiles</code> (array) - массив fileId загруженных файлов</li>
+</ul>
+<p><strong>Важно:</strong> Все файлы в альбоме должны быть одного типа - либо все изображения, либо все обычные файлы. В один альбом можно добавить не более 10 файлов.</p>
+<p>Ответ при успешной отправке:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;albumId&#34;</span>: <span style="color:#ae81ff">112393268516880628</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>также можно отправить альбом контактов для этого используя метод <code>sendAlbum</code> с дополнитльным параметром. <code>contacts</code> []string</p>
+<pre tabindex="0"><code>curl -H &#34;Content-Type: application/json&#34; -X POST --data &#39;
+{
+  &#34;chat&#34;: 12345,
+  &#34;msg&#34;: &#34;сообщение&#34;,
+  &#34;contacts&#34;: [
+    &#34;79161234567&#34;,
+    &#34;79161234568&#34;,
+    &#34;79161234569&#34;
+  ]
+}
+&#39; &#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendalbum&#34;
+</code></pre><p>Для отправки альбома контактов необходимо иметь права на отправку контактов.</p>
+<h4 id="getfiles">Получение файлов из сообщений</h4>
+<p>Когда бот получает сообщение с файлом, информация о нём содержится в структуре <code>file</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;file&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;image&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;filename.jpg&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;url&#34;</span>: <span style="color:#e6db74">&#34;https://example.com/getf/...&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;fileId&#34;</span>: <span style="color:#e6db74">&#34;abc123...&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Где:</p>
+<ul>
+<li><code>type</code> - тип файла (&ldquo;image&rdquo; или &ldquo;file&rdquo;)</li>
+<li><code>name</code> - имя файла</li>
+<li><code>url</code> - временная ссылка для скачивания</li>
+<li><code>fileId</code> - ID файла для повторного использования</li>
+</ul>
+<p><strong>Примечание:</strong> URL доступен для скачивания файла в течение 5 минут после получения сообщения ботом.</p>
+<h3 id="sending-contacts">Отправка контактов</h3>
+<h4 id="sendcontact">Отправка контакта пользователя</h4>
+<p>Для отправки контакта можно использовать HTTP методы GET или POST <code>/v2{BOTTOKEN}/sendcontact</code>.</p>
+<p><strong>Параметры:</strong></p>
+<ul>
+<li><code>chat</code> (int) - идентификатор чата</li>
+<li><code>to</code> (string) - чат либо userkey</li>
+<li><code>contact</code> (string) - UserKey пользователя, контакт которого отправляем</li>
+<li><code>msg</code> (string) - подпись под контактом (необязательно)</li>
+</ul>
+<blockquote>
+<p>Используется либо <code>chat</code>, либо <code>to</code>. Приоритет имеет параметр <code>chat</code>.</p>
+</blockquote>
+<p><strong>Пример запроса GET:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendcontact?chat=5555&amp;contact=23210000993&#34;</span>
+</span></span></code></pre></div><p><strong>Пример запроса POST:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendcontact&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>     -d <span style="color:#e6db74">&#39;{&#34;chat&#34;: &#34;5555&#34;, &#34;contact&#34;: &#34;23210000993&#34;, &#34;msg&#34;: &#34;Contact message&#34;}&#39;</span>
+</span></span></code></pre></div><p><strong>Ответ:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">5555</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">42</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><blockquote>
+<p>Для отправки контактов боту требуются специальные привилегии (необходимо обратиться к администраторам).</p>
+</blockquote>
+<h4 id="sendself">Отправка контакта бота</h4>
+<p>Метод позволяет отправить контакт самого бота другим пользователям <code>/v2&lt;BOTTOKEN&gt;/sendself</code>.</p>
+<p><strong>Параметры:</strong></p>
+<ul>
+<li><code>chat</code> (int) - идентификатор чата, куда отправить контакт</li>
+</ul>
+<p><strong>Пример запроса:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendself?chat=5555&#34;</span>
+</span></span></code></pre></div><p><strong>Ответ:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">5555</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">43</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="sendsupport">Отправка контакта саппорта</h4>
+<p>Метод позволяет отправить контакт саппорта бота другим пользователям <code>/v2&lt;BOTTOKEN&gt;/sendsupport</code>.
+Поумолчанию саппортом бота является автор бота, его можно задать в настройках бота через botmother.</p>
+<p><strong>Параметры:</strong></p>
+<ul>
+<li><code>chat</code> (int) - идентификатор чата</li>
+<li><code>to</code> (string) - чат либо userkey</li>
+<li><code>userkey</code> (string) - UserKey пользователя</li>
+<li><code>msg</code> (string) - подпись под контактом (необязательно)</li>
+</ul>
+<p>POST <code>https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendsupport</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>:<span style="color:#ae81ff">49030</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;msg&#34;</span>:<span style="color:#e6db74">&#34;hello&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>Пример запроса:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendsupport?chat=5555&#34;</span>
+</span></span></code></pre></div><p><strong>Ответ:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">5555</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">44</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="finduser">Поиск пользователя</h3>
+<p>Поиск пользователя происходит по номеру телефона. Если пользователь не найден - вернется ошибка.</p>
+<p><strong>Запрос:</strong></p>
+<pre tabindex="0"><code>curl &#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/finduser?userkey=71110000401&#34;
+</code></pre><p><strong>Ответ:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">555</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Диван&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Диванов&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;userName&#34;</span>: <span style="color:#e6db74">&#34;username&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;avatar&#34;</span>: <span style="color:#e6db74">&#34;https://example.com/c2_dbb965554166a4.....048dabdad23324a5&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">71582</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;p2p&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="interactive-elements">Интерактивные элементы</h2>
+<h3 id="buttons">Кнопки</h3>
+<p>Кнопки позволяют создавать интерактивный интерфейс для взаимодействия пользователей с ботом.</p>
+<h4 id="button-fields">Доступные поля кнопок</h4>
+<ul>
+<li><strong>type</strong> - тип кнопки</li>
+<li><strong>title</strong> - название (отображается в клиенте)</li>
+<li><strong>data</strong> - данные, которые придут в API при нажатии кнопки</li>
+</ul>
+<h4 id="button-types">Типы кнопок</h4>
+<ul>
+<li><strong>command</strong> - пользователь отправляет команду с текстом из поля <code>data</code></li>
+<li><strong>action</strong> - отправляет action в API</li>
+</ul>
+<h4 id="keyboard-structure">Структура клавиатуры</h4>
+<p>Кнопки задаются в JSON через поле <code>keyboard</code>, которое представляет собой массив рядов кнопок. В одном ряде может быть до 8 кнопок.</p>
+<p>Пример отправки сообщения с кнопками:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -H <span style="color:#e6db74">&#34;Content-Type: text/plain&#34;</span> -X POST --data <span style="color:#e6db74">&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;msg&#34;: &#34;сообщение с кнопками&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;chat&#34;: 123,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;keyboard&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;command&#34;, &#34;data&#34;: &#34;/help&#34;, &#34;title&#34;: &#34;help&#34; },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;act&#34;, &#34;title&#34;: &#34;action button&#34; }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    ],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;sharefb&#34;, &#34;title&#34;: &#34;fb&#34; },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;shareVk&#34;, &#34;title&#34;: &#34;vk&#34; },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      { &#34;type&#34;: &#34;action&#34;, &#34;data&#34;: &#34;test&#34;, &#34;title&#34;: &#34;test&#34; }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    ]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  ]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/send&#34;</span>
+</span></span></code></pre></div><h4 id="button-action">Обработка нажатий на кнопки</h4>
+<p>Когда пользователь нажимает на кнопку, бот получает обновление с типом <code>buttonAction</code> и информацией в поле <code>button</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;button&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">123</span>, <span style="color:#75715e">// ID сообщения, в котором была нажата кнопка
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;data&#34;</span>: <span style="color:#e6db74">&#34;act&#34;</span>, <span style="color:#75715e">// данные из поля data кнопки
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;reqId&#34;</span>: <span style="color:#e6db74">&#34;uniqueRequestId&#34;</span> <span style="color:#75715e">// уникальный идентификатор запроса
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="inline-mode">Inline-режим</h3>
+<p>Inline-режим позволяет пользователям взаимодействовать с ботом прямо в строке ввода сообщения, вызывая бота с помощью синтаксиса <code>@bot запрос</code>.</p>
+<h4 id="inline-update">Получение inline-запросов</h4>
+<p>Для получения inline-запросов используется endpoint:</p>
+<pre tabindex="0"><code>https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/getupdate
+</code></pre><p>Данные приходят массивом, максимум по 10 сообщений.</p>
+<h4 id="inline-types">Типы inline-обновлений</h4>
+<p>В поле <code>type</code> указывается тип полученного сообщения:</p>
+<ul>
+<li><strong>inlineRequest</strong> - inline-запрос к боту</li>
+<li><strong>inlineChoice</strong> - выбранный пользователем результат</li>
+</ul>
+<h5 id="inline-request">Пример inline-запроса</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;Va40Gp6VCNbEYnA_ecRT&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">5555</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;inlineText&#34;</span>: <span style="color:#e6db74">&#34;get&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1586508133</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;inlineRequest&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;userId&#34;</span>: <span style="color:#ae81ff">830</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Это означает, что пользователь ввел <code>@bot get</code> в строке ввода.</p>
+<h4 id="sendinline">Ответ на inline-запрос</h4>
+<p>Для ответа на запрос нужно отправить POST-запрос на:</p>
+<pre tabindex="0"><code>https://&lt;BOT_DOMAIN&gt;/bot&lt;BOTTOKEN&gt;/sendinline
+</code></pre><h5 id="inline-menu">Пример ответа с меню</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;data&#34;</span>:[
+</span></span><span style="display:flex;"><span>      {<span style="color:#f92672">&#34;id&#34;</span>:<span style="color:#e6db74">&#34;menu1&#34;</span>,<span style="color:#f92672">&#34;text&#34;</span>:<span style="color:#e6db74">&#34;пункт 1&#34;</span>,<span style="color:#f92672">&#34;type&#34;</span>:<span style="color:#e6db74">&#34;inlineTitle&#34;</span>},
+</span></span><span style="display:flex;"><span>      {<span style="color:#f92672">&#34;id&#34;</span>:<span style="color:#e6db74">&#34;menu2&#34;</span>,<span style="color:#f92672">&#34;text&#34;</span>:<span style="color:#e6db74">&#34;пункт 2&#34;</span>,<span style="color:#f92672">&#34;type&#34;</span>:<span style="color:#e6db74">&#34;inlineTitle&#34;</span>},
+</span></span><span style="display:flex;"><span>      {<span style="color:#f92672">&#34;id&#34;</span>:<span style="color:#e6db74">&#34;menu3&#34;</span>,<span style="color:#f92672">&#34;text&#34;</span>:<span style="color:#e6db74">&#34;пункт 3&#34;</span>,<span style="color:#f92672">&#34;type&#34;</span>:<span style="color:#e6db74">&#34;inlineTitle&#34;</span>}
+</span></span><span style="display:flex;"><span>   ],
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;id&#34;</span>:<span style="color:#e6db74">&#34;VoXBmeWiXtgEhi47fNHV&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h5 id="inline-popup">Пример ответа с всплывающим окном</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;data&#34;</span>:[
+</span></span><span style="display:flex;"><span>      {
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">&#34;id&#34;</span>:<span style="color:#e6db74">&#34;ok&#34;</span>,
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">&#34;popup&#34;</span>:<span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">&#34;type&#34;</span>:<span style="color:#e6db74">&#34;inlineTitle&#34;</span>,
+</span></span><span style="display:flex;"><span>         <span style="color:#f92672">&#34;text&#34;</span>:<span style="color:#e6db74">&#34;многострочный [b]текст[/b] c [code]BBCode[/code]&#34;</span>
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>   ],
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;id&#34;</span>:<span style="color:#e6db74">&#34;oab08APd9H62gqI5gHle&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="inline-choice">Обработка выбора inline-результата</h4>
+<p>Когда пользователь выбирает пункт из меню, бот получает обновление с типом <code>inlineChoice</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;r8zKrns0TDllVfioofte&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">5555</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;respId&#34;</span>: <span style="color:#e6db74">&#34;Australia&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1586508929</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;inlineChoice&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;userId&#34;</span>: <span style="color:#ae81ff">821</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>На этот запрос нужно отвечать так же, как и на <code>inlineRequest</code>: либо вложенным меню, либо всплывающим окном.</p>
+<h3 id="polls">Голосования</h3>
+<p>Голосования позволяют проводить опросы среди пользователей чата.</p>
+<h4 id="sendpoll">Отправка голосования</h4>
+<pre tabindex="0"><code>POST https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sendpoll
+</code></pre><p>Пример JSON для отправки:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;chat&#34;</span>: <span style="color:#ae81ff">12345</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;public&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;recheck&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;colored&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;заголовок голосования&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;options&#34;</span>: [<span style="color:#e6db74">&#34;вариант 1&#34;</span>, <span style="color:#e6db74">&#34;вариант 2&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="poll-params">Параметры голосования</h4>
+<ul>
+<li><strong>chat</strong> (int) - идентификатор чата</li>
+<li><strong>public</strong> (bool) - публичное голосование</li>
+<li><strong>recheck</strong> (bool) - возможность повторного голосования</li>
+<li><strong>multiselect</strong> (bool) - возможность множественного голосования</li>
+<li><strong>colored</strong> (bool) - вариант расцветки</li>
+<li><strong>important</strong> (bool) - вариант важного голосования</li>
+<li><strong>title</strong> (string) - заголовок голосования</li>
+<li><strong>options</strong> (array string) - варианты голосования</li>
+</ul>
+<h4 id="poll-response">Ответ при успешной отправке</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;pollId&#34;</span>: <span style="color:#ae81ff">123</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">43</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="closepoll">Закрытие голосования</h4>
+<pre tabindex="0"><code>GET https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/closepoll?id=435
+</code></pre><p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="pollinfo">Получение информации о голосовании</h4>
+<pre tabindex="0"><code>GET https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/pollinfo?id=435
+</code></pre><p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">739</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">1234</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;fromId&#34;</span>: <span style="color:#ae81ff">1123</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;options&#34;</span>: [
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;вариант 1&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;вариант 2&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;не хочу я голосовать&#34;</span>
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;заголовок голосования&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;closed&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;results&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;option&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;optionName&#34;</span>: <span style="color:#e6db74">&#34;вариант 1&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">2</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;users&#34;</span>: [
+</span></span><span style="display:flex;"><span>        <span style="color:#ae81ff">256</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#ae81ff">821</span>
+</span></span><span style="display:flex;"><span>      ]
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;option&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;optionName&#34;</span>: <span style="color:#e6db74">&#34;вариант 2&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;users&#34;</span>: <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;option&#34;</span>: <span style="color:#ae81ff">2</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;optionName&#34;</span>: <span style="color:#e6db74">&#34;не хочу я голосовать&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;count&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;users&#34;</span>: [
+</span></span><span style="display:flex;"><span>        <span style="color:#ae81ff">782</span>
+</span></span><span style="display:flex;"><span>      ]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Примечание: Если голосование анонимное, поле <code>users</code> будет содержать <code>null</code>.</p>
+<h4 id="sharepoll">Пересылка голосования в другой чат</h4>
+<pre tabindex="0"><code>GET https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/sharepoll?id=435&amp;chatid=4321
+</code></pre><p>Ответ:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">4321</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;messageId&#34;</span>: <span style="color:#ae81ff">45</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Важно: Голосование можно переслать только в групповые чаты, где присутствует бот.</p>
+<h2 id="chats">Работа с чатами</h2>
+<h3 id="creating-chats">Создание чата</h3>
+<p>Для создания чата нужно разрешение в настройках бота (обратиться в Support). После этого можно создать чат с помощью метода <code>createсhat</code> в протоколе версии 2.</p>
+<p><strong>Метод:</strong> POST
+<strong>URL:</strong> <code>https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/createchat</code></p>
+<p><strong>JSON параметры:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;owner&#34;</span>: <span style="color:#ae81ff">821</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;Супер чат&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;about&#34;</span>: <span style="color:#e6db74">&#34;Описание чата&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;users&#34;</span>: [<span style="color:#ae81ff">821</span>, <span style="color:#ae81ff">55</span>, <span style="color:#ae81ff">66</span>, <span style="color:#ae81ff">77</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;admins&#34;</span>: [<span style="color:#ae81ff">55</span>, <span style="color:#ae81ff">77</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;ukeys&#34;</span>: [<span style="color:#e6db74">&#34;73210000111&#34;</span>, <span style="color:#e6db74">&#34;73210000112&#34;</span>, <span style="color:#e6db74">&#34;73210000113&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li><code>owner</code> - id пользователя, который будет создателем чата (необязательный параметр, по умолчанию создатель - бот)</li>
+<li><code>title</code> - название чата</li>
+<li><code>about</code> - описание чата</li>
+<li><code>users</code> - массив int с id пользователей которые будут добавлены в чат</li>
+<li><code>ukeys</code> - массив string с userKey пользователей, которые будут добавлены в чат (если указаны оба массива, то будут добавлены пользователи из обоих массивов)</li>
+<li><code>admins</code> - массив int с id пользователей, которые будут добавлены в чат как админы (id должен быть в массиве users)</li>
+</ul>
+<p><strong>Пример запроса:</strong></p>
+<pre tabindex="0"><code>curl -v -H &#39;Content-Type: application/json&#39; -X POST -d &#39;{&#34;owner&#34;:821,&#34;title&#34;:&#34;Супер чат&#34;,&#34;about&#34;:&#34;Описание чата&#34;, &#34;users&#34;:[821,55,66,77]}&#39; &#34;https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/createchat&#34;
+</code></pre><p><strong>Ответ:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatId&#34;</span>: <span style="color:#ae81ff">71170</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;users&#34;</span>: [<span style="color:#ae81ff">821</span>, <span style="color:#ae81ff">55</span>, <span style="color:#ae81ff">66</span>, <span style="color:#ae81ff">77</span>, <span style="color:#ae81ff">887</span>, <span style="color:#ae81ff">888</span>, <span style="color:#ae81ff">889</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="добавление-участников-в-чат">Добавление участников в чат</h3>
+<p>Добавление участников в чат может быть выполнено с помощью метода <code>chat/addusers</code>. Этот метод позволяет добавить одного или нескольких пользователей в существующий чат.</p>
+<p>параметры метода:</p>
+<ul>
+<li><code>chat</code> - идентификатор чата, в который необходимо добавить пользователей.</li>
+<li><code>userIds</code> - массив идентификаторов пользователей, которых нужно добавить в чат.</li>
+<li><code>userKeys</code> - массив ключей пользователей, которых нужно добавить в чат. Ключи могут быть использованы вместо идентификаторов для добавления пользователей.</li>
+</ul>
+<p>пример запроса:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>curl -X POST -d <span style="color:#e6db74">&#39;{&#34;chat&#34;:12345,&#34;userIds&#34;:[123,321],&#34;userKeys&#34;:[&#34;21230000123&#34;,&#34;71230000123&#34;]}&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOTDOMAIN&gt;/v2{token}/chat/addusers&#34;</span>
+</span></span></code></pre></div><p>В ответе будет содержаться информация о чате с обновленным списком участников.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>:<span style="color:#ae81ff">12345</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>:<span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;users&#34;</span>:[<span style="color:#ae81ff">123</span>,<span style="color:#ae81ff">321</span>,<span style="color:#ae81ff">333</span>,<span style="color:#ae81ff">444</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="удаление-участников-из-чата">Удаление участников из чата</h3>
+<p>Удаление участников из чата может быть выполнено с помощью метода <code>chat/delusers</code>. Этот метод позволяет удалить одного или нескольких пользователей из существующего чата.</p>
+<p>параметры метода:</p>
+<ul>
+<li><code>chat</code> - идентификатор чата, из которого необходимо удалить пользователей.</li>
+<li><code>userIds</code> - массив идентификаторов пользователей, которых нужно удалить из чата.</li>
+<li><code>userKeys</code> - массив ключей пользователей, которых нужно удалить из чата. Ключи могут быть использованы вместо идентификаторов для удаления пользователей.</li>
+</ul>
+<p>пример запроса:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>curl -X POST -d <span style="color:#e6db74">&#39;{&#34;chat&#34;:12345,&#34;userIds&#34;:[123],&#34;userKeys&#34;:[&#34;21230000123&#34;]}&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOTDOMAIN&gt;/v2{token}/chat/delusers&#34;</span>
+</span></span></code></pre></div><p>В ответе будет содержаться информация о чате с обновленным списком участников.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chat&#34;</span>:<span style="color:#ae81ff">12345</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorCode&#34;</span>:<span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;errorMessage&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;users&#34;</span>:[<span style="color:#ae81ff">321</span>,<span style="color:#ae81ff">333</span>,<span style="color:#ae81ff">444</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="изменение-прав-участников-в-чате">Изменение прав участников в чате</h2>
+<p>метод <code>v2/chat/changeprivilege</code> позволяет изменить права участников в чате. Этот метод может быть использован для назначения ролей или установки флагов прав для участников.</p>
+<p>Для изменения прав участников в чате необходимо отправить POST-запрос с указанием идентификатора чата, идентификаторов пользователей, для которых необходимо изменить права, и новых прав (роли или флаги).</p>
+<p>** Необходимы права администратора или владельца чата для изменения прав участников. **</p>
+<p>параметры метода:
+<code>chat</code> - идентификатор чата, в котором необходимо изменить права участников.
+<code>userIds</code> - массив идентификаторов пользователей, для которых необходимо изменить права.
+<code>role</code> - роль, которую необходимо присвоить пользователям.
+<code>flags</code> - объект с флагами прав, которые необходимо установить для пользователей.</p>
+<p>примеры запроса:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>curl -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> -X POST -d <span style="color:#e6db74">&#39;{&#34;userIds&#34;:[753], &#34;chat&#34;:106806, &#34;flags&#34;:{&#34;editMessages&#34;:true}}&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOTDOMAIN&gt;/v2{token}/chat/changeprivilege&#34;</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>curl -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> -X POST -d <span style="color:#e6db74">&#39;{&#34;userIds&#34;:[753], &#34;chat&#34;:106806, &#34;role&#34;:&#34;admin&#34;}&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOTDOMAIN&gt;/v2{token}/chat/changeprivilege&#34;</span>
+</span></span></code></pre></div><p>доступны роли в чате :</p>
+<ul>
+<li><code>admin</code> - администратор чата, имеет расширенные права, но не полный контроль над чатом.</li>
+<li><code>moder</code> - модератор чата, имеет ограниченные права и может управлять некоторыми аспектами чата, такими как удаление сообщений или управление участниками.</li>
+<li><code>user</code> - обычный участник чата, имеет базовые права и может участвовать в обсуждениях, но не имеет административных прав.</li>
+</ul>
+<p>Доступные флаги прав участников в чате:</p>
+<ul>
+<li><code>writeMessages</code> - возможность отправлять сообщения в чат</li>
+<li><code>editMessages</code> - возможность редактировать свои сообщения в чате</li>
+<li><code>deleteAnyMessages</code> - возможность удалять любые сообщения в чате</li>
+<li><code>editUserList</code> - возможность редактировать (добавлять/удалять) список участников чата</li>
+<li><code>editChatInfo</code> - возможность редактировать заголовок и изображение чата</li>
+<li><code>viewReadedList</code> - возможность видеть список прочитавших сообщение</li>
+<li><code>deleteSelf</code> - возможность удалять свои сообщения в чате (удалять не только со своей стороны, а в общем, что не увидит никто)</li>
+</ul>
+<p>Для изменения прав участника в чате можно использовать как роли, так и флаги прав. Роли предоставляют предопределенные наборы прав, в то время как флаги позволяют более гибко настраивать права для каждого участника. При изменении прав участника в чате, бот должен быть администратором или владельцем чата. В ответе будет содержаться информация о чате с обновленным списком участников и их правами.</p>
+<p>Ответ содержит код ошибки и сообщение об ошибке, если таковые имеются. Если запрос выполнен успешно, код ошибки будет равен 0, а сообщение об ошибке будет пустым. В противном случае, код ошибки будет отличным от 0, а сообщение об ошибке будет содержать описание проблемы.</p>
+<h2 id="получение-информации-о-чате">Получение информации о чате</h2>
+<p>Для получения информации о чате используется метод <code>chat/info</code>. Этот метод возвращает подробную информацию о чате, включая его название, описание, список участников и другие параметры.</p>
+<p>параметры метода: <code>chat</code> - идентификатор чата, информацию о котором необходимо получить.</p>
+<p>пример запроса:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>curl  <span style="color:#e6db74">&#34;https://&lt;BOTDOMAIN&gt;/v2{token}/chat/info?chat=12345&#34;</span>
+</span></span></code></pre></div><p>Ответ содержит объект с информацией о чате, включая его название, описание, список участников и другие параметры.</p>
+<ul>
+<li><code>chatTitle</code> название чата</li>
+<li><code>chatType</code>  тип чата (например, &ldquo;group&rdquo;, &ldquo;private&rdquo;)</li>
+<li><code>mentionGroups</code></li>
+<li><code>pinned</code></li>
+<li><code>inviteLinks</code></li>
+</ul>
+<p>структура <code>mentionGroups</code></p>
+<ul>
+<li><code>id</code> - идентификатор группы</li>
+<li><code>name</code> - название группы</li>
+<li><code>users</code> - массив пользователей в группе</li>
+</ul>
+<p>структура <code>pinned</code> - массив закрепленных сообщений в чате
+формат сообщения повторяет update который приходит при получении нового сообщения.</p>
+<p>** внимание прикрепленные сообщения доступны только если у бота есть права администратора чата**</p>
+<p>структура <code>inviteLinks</code> - массив ссылок для приглашения в чат, каждая ссылка содержит следующие поля:</p>
+<ul>
+<li><code>url</code> - URL ссылки для приглашения</li>
+</ul>
+<p>Пример ответа:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatTitle&#34;</span>: <span style="color:#e6db74">&#34;большой чат&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;chatType&#34;</span>: <span style="color:#e6db74">&#34;group&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;mentionGroups&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">20</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;группа1&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;users&#34;</span>: [
+</span></span><span style="display:flex;"><span>        {
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">6665</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Чуваак&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Bot&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;userName&#34;</span>: <span style="color:#e6db74">&#34;chuw&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;chatRole&#34;</span>: <span style="color:#e6db74">&#34;admin&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;avatar&#34;</span>: <span style="color:#e6db74">&#34;https://...7c6603dec1d3b2a373538e1ccad9ca?fileName=avatar.png&#34;</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        {
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">123</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;admin&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;big&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;userName&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;chatRole&#34;</span>: <span style="color:#e6db74">&#34;owner&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">&#34;avatar&#34;</span>: <span style="color:#e6db74">&#34;https://...025ef2d8697af6688fdb794483836b?fileName=avatar.jpg&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>      ]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;pinned&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">104</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;test message for pin&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;device&#34;</span>: <span style="color:#e6db74">&#34;osx:26.0.1@MacBook Pro Retina&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;entity&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;file&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;sticker&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;reply&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;forward&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1762777154</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">106</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;msg&#34;</span>: <span style="color:#e6db74">&#34;📊 Опрос: опрос вопрос да нет не знаю&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;device&#34;</span>: <span style="color:#e6db74">&#34;osx:26.0.1@MacBook Pro Retina&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;entity&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;file&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;sticker&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;reply&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;forward&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;poll&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">42410</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;title&#34;</span>: <span style="color:#e6db74">&#34;опрос вопрос&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;options&#34;</span>: [
+</span></span><span style="display:flex;"><span>          <span style="color:#e6db74">&#34;да&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#e6db74">&#34;нет&#34;</span>,
+</span></span><span style="display:flex;"><span>          <span style="color:#e6db74">&#34;не знаю&#34;</span>
+</span></span><span style="display:flex;"><span>        ],
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;public&#34;</span>: <span style="color:#66d9ef">false</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;multiselect&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;recheck&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;important&#34;</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>      },
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;ts&#34;</span>: <span style="color:#ae81ff">1762777297</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;inviteLinks&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;url&#34;</span>: <span style="color:#e6db74">&#34;https://..../invite/.....xCJ1SLgGDz6hhusri27&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="роспуск-чата">Роспуск чата</h3>
+<p>** Внимание: для этого метода необходимо быть владельцем чата. **</p>
+<p>метод <code>chat/disband</code> позволяет распустить чат, удалив его и всех его участников. После распуска чата, он больше не будет доступен для использования.</p>
+<p>параметры метода: <code>chat</code> - идентификатор чата, который необходимо распустить.</p>
+<p>пример запроса:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>curl -X POST -d <span style="color:#e6db74">&#39;{&#34;chat&#34;:12345}&#39;</span> <span style="color:#e6db74">&#34;https://&lt;BOTDOMAIN&gt;/v2{token}/chat/disband&#34;</span>
+</span></span></code></pre></div><h3 id="chat-users">Получение списка пользователей чата</h3>
+<p>Метод <code>chat/users</code> позволяет получить список пользователей чата.</p>
+<p><strong>Запрос:</strong></p>
+<pre tabindex="0"><code>GET https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/chat/users?chat=55
+</code></pre><p><strong>Ответ:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>[
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;James&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Bond&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;photo&#34;</span>: <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/6ZPx1gdwfbz3z8gJhWh5fbKBhkSUpDFR&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">33</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Kostya&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Tszyu&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;photo&#34;</span>: <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/I9AX535oGjTuGd_wr421iVt8p8RtCW4e&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#ae81ff">881</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;firstName&#34;</span>: <span style="color:#e6db74">&#34;Kinder&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;lastName&#34;</span>: <span style="color:#e6db74">&#34;Surprise&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;photo&#34;</span>: <span style="color:#e6db74">&#34;https://&lt;BOT_DOMAIN&gt;/RmRUly3bRKg5LPSqSHuR9cXcsmboRnrb&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></div><p>В ответе может содержаться <code>key</code> пользователя (нужно установить флаг боту через админку).</p>
+<h2 id="bot-whois">Информация о боте</h2>
+<p>Метод <code>v2/whoami</code> позволяет получить информацию о самом боте.</p>
+<p><strong>Запрос:</strong></p>
+<pre tabindex="0"><code>GET https://&lt;BOT_DOMAIN&gt;/v2&lt;BOTTOKEN&gt;/whoami
+</code></pre><p><strong>Ответ:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;user_id&#34;</span>: <span style="color:#ae81ff">123</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;first_name&#34;</span>: <span style="color:#e6db74">&#34;Test&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;last_name&#34;</span>: <span style="color:#e6db74">&#34;Bot&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;username&#34;</span>: <span style="color:#e6db74">&#34;loginname&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;722200123456&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;avatar&#34;</span>: <span style="color:#e6db74">&#34;https://example.com??fileName=mage_1678447725.png&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>  
+</span></span></code></pre></div><h2 id="error-codes">Коды ошибок</h2>
+<pre tabindex="0"><code> 0  &#34;&#34;                                   # успешное выполнение операции
+ 1  &#34;Access deny&#34;                        # доступ запрещен
+ 2  &#34;User not found&#34;                     # пользователь не найден
+ 3  &#34;Can&#39;t write to chat&#34;                # невозможно написать в чат
+ 4  &#34;Chat not found&#34;                     # чат не найден
+ 5  &#34;Too many messages per second&#34;       # слишком много сообщений в секунду
+ 6  &#34;Need chatId and MessageId&#34;          # необходимы идентификаторы чата и сообщения
+ 7  &#34;No chat permission&#34;                 # нет прав доступа к чату
+ 8  &#34;Message too large&#34;                  # сообщение слишком большое
+ 9  &#34;Sticker not allowed in keyboard&#34;    # стикеры не разрешены в клавиатуре
+10  &#34;Can&#39;t parse body&#34;                   # невозможно разобрать тело запроса
+11  &#34;Can&#39;t parse media&#34;                  # невозможно разобрать медиафайл
+20  &#34;Row limit reached&#34;                  # достигнут лимит строк
+21  &#34;Button limit reached&#34;               # достигнут лимит кнопок
+22  &#34;Poll is not valid&#34;                  # голосование недействительно
+23  &#34;Poll not found&#34;                     # голосование не найдено
+24  &#34;Poll already closed&#34;                # голосование уже закрыто
+25  &#34;Need user ids&#34;                      # необходимы идентификаторы пользователей
+26  &#34;Need title&#34;                         # необходим заголовок
+27  &#34;Message is empty&#34;                   # сообщение пусто
+28  &#34;Contact not allowed&#34;                # контакт не разрешен
+29  &#34;Need contact reddyid&#34;               # необходим reddyid контакта
+30  &#34;Too many request&#34;                   # слишком много запросов
+31  &#34;No live upstreams&#34;                  # нет активных трансляций
+33  &#34;Encrypt error&#34;                      # ошибка шифрования
+34  &#34;File id not found&#34;                  # идентификатор файла не найден
+35  &#34;Messages not allowed&#34;               # сообщения не разрешены
+36  &#34;Need chatId&#34;                        # необходим идентификатор чата
+37  &#34;Share poll only to group chat&#34;      # делиться голосованием можно только в групповом чате
+38  &#34;Need files list&#34;                    # необходим список файлов
+39  &#34;Too many files&#34;                     # слишком много файлов
+40  &#34;All files in album must be images&#34;  # все файлы в альбоме должны быть изображениями
+41  &#34;Message type not allowed&#34;           # тип сообщения не разрешен
+43  &#34;Need chatId and MessageIds&#34;         # необходимы идентификатор чата и идентификаторы сообщений
+44  &#34;No users in chat&#34;                   # в чате нет пользователей
+45  &#34;User was deleted&#34;                   # пользователь был удален
+46  &#34;Need userkey&#34;                       # необходим userKey
+47  &#34;Can&#39;t write to thread&#34;              # невозможно написать в thread
+48  &#34;Can&#39;t add reactions&#34;                # невозможно добавить реакции
+49  &#34;Bot was blocked by user&#34;            # бот был заблокирован пользователем
+50  &#34;Method not allowed&#34;                 # метод не разрешен
+51  &#34;Inline query id not found&#34;          # идентификатор инлайн запроса не найден
+52  &#34;Need ThreadId&#34;                      # необходим идентификатор thread
+53  &#34;Too many contacts&#34;                  # слишком много контактов
+54  &#34;Too few contacts&#34;                   # слишком мало контактов
+55  &#34;Contact not found&#34;                  # контакт не найден
+</code></pre><p>При успешной отправке сообщения <code>errorCode</code> = 0.</p>
+
+      </div>
+    </div>
+
+    <footer>
+      <div>
+        <p class="f6 gray mt6 lh-copy">
+          
+        </p>
+      </div>
+    </footer>
+
+    
+    
+    
+    
+    
+    
+    <script src="https://bot.doc.bknd.wtf/script.min.6f57141fa65729439cb4b826d9771a0f609426bb284337f1e8cac2ef3032940b.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/prism.min.js" integrity="sha512-HiD3V4nv8fcjtouznjT9TqDNDm1EXngV331YGbfVGeKUoH+OLkRTCMzA34ecjlgSQZpdHZupdSrqHY+Hz3l6uQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha512-SkmBfuA2hqjzEVpmnMt/LINrjop3GKWqsuLSSB3e7iBmYK7JuWw4ldmmxwD9mdm2IRTTi0OxSAfEGvgEi0i2Kw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  </body>
+</html>

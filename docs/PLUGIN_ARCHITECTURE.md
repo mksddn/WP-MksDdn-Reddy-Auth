@@ -7,6 +7,10 @@
 - WordPress monolith login via cookie session (shortcode or REST `issue_session: true`).
 - API clients via opaque Bearer tokens (`issue_token: true`; cookie not set by default).
 
+## External References
+
+- Messenger BotAPI reference (snapshot used for integration checks): `docs/external/Messenger BotAPI.html`
+
 ## Main Flows
 
 ### 1) Send Code
