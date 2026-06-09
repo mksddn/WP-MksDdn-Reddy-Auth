@@ -514,8 +514,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	public function logout( WP_REST_Request $request ) {
 		unset( $request );
 
-		$session_service = $this->session_service;
-		$session_service->logout();
+		$this->session_service->logout();
 
 		$bearer = $this->token_service->get_bearer_token_from_request();
 		if ( '' !== $bearer ) {
@@ -694,7 +693,10 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		$has_credentials = '' !== $intent_id && '' !== $intent_secret;
 
 		if ( ! $has_cookie && ! $has_credentials ) {
-			return new WP_Error( 'invalid_intent', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
+			$error = new WP_Error( 'invalid_intent', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
+			$this->emit_auth_failure( 'intent_resolve', $error );
+
+			return $error;
 		}
 
 		if ( $has_credentials ) {
@@ -702,7 +704,10 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 				$same_id     = hash_equals( (string) $context['intent_id'], $intent_id );
 				$same_secret = hash_equals( (string) $context['intent_secret'], $intent_secret );
 				if ( ! $same_id || ! $same_secret ) {
-					return new WP_Error( 'intent_context_mismatch', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
+					$error = new WP_Error( 'intent_context_mismatch', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
+					$this->emit_auth_failure( 'intent_resolve', $error );
+
+					return $error;
 				}
 			}
 
@@ -788,5 +793,22 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Emit auth failure observability event.
+	 *
+	 * @param string   $stage Auth stage key.
+	 * @param WP_Error $error Error object.
+	 * @return void
+	 */
+	private function emit_auth_failure( $stage, WP_Error $error ) {
+		do_action(
+			'mksddn_reddy_auth_failure',
+			array(
+				'stage'      => sanitize_key( (string) $stage ),
+				'error_code' => (string) $error->get_error_code(),
+			)
+		);
 	}
 }

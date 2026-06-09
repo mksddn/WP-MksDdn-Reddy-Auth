@@ -297,13 +297,8 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 		);
 
 		$message = str_replace( array_keys( $replacements ), array_values( $replacements ), $template );
-		$message = trim( preg_replace( '/\s+/', ' ', $message ) );
 
-		if ( 'link_only' === $delivery_mode && '' !== $magic_link_url ) {
-			return $message;
-		}
-
-		return $message;
+		return trim( preg_replace( '/\s+/', ' ', $message ) );
 	}
 
 	/**

@@ -68,10 +68,11 @@ class Mksddn_Reddy_Auth_Auth_Flow_Service {
 
 		$settings = $this->get_settings();
 
+		$delivery_mode  = $this->resolve_delivery_mode( $settings );
 		$intent_payload = null;
 		$magic_link_url = '';
 
-		if ( 'otp_only' !== $this->resolve_delivery_mode( $settings ) ) {
+		if ( 'otp_only' !== $delivery_mode ) {
 			$intent = $this->login_intent_service->create( $reddy_id );
 			if ( is_wp_error( $intent ) ) {
 				return $intent;
@@ -85,8 +86,6 @@ class Mksddn_Reddy_Auth_Auth_Flow_Service {
 			$intent_payload = $intent;
 			$magic_link_url = (string) $magic['url'];
 		}
-
-		$delivery_mode = $this->resolve_delivery_mode( $settings );
 		$delivery      = array(
 			'delivery_mode'  => $delivery_mode,
 			'magic_link_url' => $magic_link_url,
