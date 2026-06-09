@@ -4,7 +4,7 @@ Tags: authentication, otp, rest-api, login
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -150,6 +150,24 @@ This service is provided by Reddy: terms of use and privacy policy at https://he
 No other third-party services are required for core plugin operation.
 
 == Changelog ==
+
+= 1.1.0 =
+* One-click authorization: optional magic link + inline button delivered alongside the OTP code.
+* Login intent system: `POST /auth/intent-status` and `POST /auth/complete-intent` endpoints for polling one-click flow.
+* Webhook endpoint `POST /auth/button-callback` for Reddy bot inline button callbacks (HMAC-verified).
+* Reddy ID whitelist: restrict authentication to a configured set of Reddy IDs.
+* Plugin translations loaded via `load_plugin_textdomain`; en_US and ru_RU catalogs included.
+* Auth failure observability: new `mksddn_reddy_auth_failure` action on every failed OTP, intent, or finalize step.
+* Transport observability: new `mksddn_reddy_transport_failed` and `mksddn_reddy_transport_response` actions.
+* New `mksddn_reddy_send_payload` filter to modify the Reddy bot request payload before delivery.
+* Settings page redesigned with tabbed layout.
+
+**Breaking changes from 1.0.0:**
+
+* REST error responses: the default `message` for generic failures changed from `"Invalid credentials."` to `"Unable to process authentication request."`. The `code` field is unchanged. Clients should rely on `code`, not `message`.
+* Rate-limit error `message` changed from the Reddy API text to `"Too many requests. Try again later."`.
+* Monolith content lock (`monolith_lock_enabled`) now redirects to `wp-login.php` when no login page is configured (previously redirected to `home_url('/')`). Sites with monolith lock on but no login page set will now land on WP login.
+* `mksddn_reddy_otp_message` filter: the default message passed as the first argument now depends on delivery mode. When `delivery_mode` is `link_only`, the message uses the magic link template (no `{code}`). Custom filter handlers should check the delivery context if they manipulate the message.
 
 = 1.0.0 =
 * Do not require Bearer on HTTP OPTIONS when REST API content lock is enabled (CORS preflight for cross-origin SPAs).
