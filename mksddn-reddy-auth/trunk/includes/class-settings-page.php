@@ -1019,7 +1019,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return string
 	 */
 	public static function get_default_otp_message_template() {
-		return __( 'Your verification code: {code}. It expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+		return self::translate_default_string( 'Your verification code: {code}. It expires in {ttl} seconds.' );
 	}
 
 	/**
@@ -1028,7 +1028,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return string
 	 */
 	public static function get_default_bot_test_message() {
-		return __( 'Reddy bot connection test from WordPress plugin.', 'mksddn-reddy-auth' );
+		return self::translate_default_string( 'Reddy bot connection test from WordPress plugin.' );
 	}
 
 	/**
@@ -1037,7 +1037,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return string
 	 */
 	public static function get_default_magic_link_message_template() {
-		return __( 'Tap Authorize to sign in. The link expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+		return self::translate_default_string( 'Tap Authorize to sign in. The link expires in {ttl} seconds.' );
 	}
 
 	/**
@@ -1046,7 +1046,24 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return string
 	 */
 	public static function get_default_magic_link_button_label() {
-		return __( 'Authorize', 'mksddn-reddy-auth' );
+		return self::translate_default_string( 'Authorize' );
+	}
+
+	/**
+	 * Translate default value when locale loading is ready.
+	 *
+	 * Avoid calling translation loading before init to prevent
+	 * _load_textdomain_just_in_time notices on WordPress 6.7+.
+	 *
+	 * @param string $text Default source text.
+	 * @return string
+	 */
+	private static function translate_default_string( $text ) {
+		if ( ! did_action( 'init' ) && ! doing_action( 'init' ) ) {
+			return $text;
+		}
+
+		return __( $text, 'mksddn-reddy-auth' );
 	}
 
 	/**

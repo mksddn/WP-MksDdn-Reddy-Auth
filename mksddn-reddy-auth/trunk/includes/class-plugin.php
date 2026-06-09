@@ -188,7 +188,7 @@ class Mksddn_Reddy_Auth_Plugin {
 	 * @return void
 	 */
 	public function run() {
-		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
+		add_action( 'init', array( $this, 'load_textdomain' ), 0 );
 		add_action( 'rest_api_init', array( $this->rest_controller, 'register_routes' ) );
 		add_action( 'admin_menu', array( $this->settings_page, 'register_menu' ) );
 		add_action( 'admin_init', array( $this->settings_page, 'register_settings' ) );
