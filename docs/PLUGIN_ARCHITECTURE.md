@@ -229,64 +229,276 @@ Use this guide when the frontend runs on a different domain from WordPress (e.g.
 | Intent binding | Signed HttpOnly cookie (automatic) | `intent_id` + `intent_secret` in request body/params |
 | Credentials storage | Cookie, managed by browser | In-memory (do not use localStorage for `intent_secret`) |
 
-### Step-by-step
-
-**1. Send code**
+### Authentication flow overview
 
 ```
-POST /mksddn-reddy-auth/v1/auth/send-code
-Content-Type: application/json
-
-{ "reddy_id": "14963104048" }
+Client                              WordPress
+  │                                     │
+  │── POST /send-code ────────────────► │  generates OTP + intent
+  │◄─ { intent_id, intent_secret } ──── │
+  │                                     │
+  │   [user sees OTP in messenger]      │
+  │                                     │
+  ├── path A: user presses button ──────┤
+  │   GET /intent-status (polling) ───► │
+  │◄─ { status: "approved" } ─────────  │
+  │── POST /complete-intent ──────────► │
+  │                                     │
+  ├── path B: user enters OTP ──────────┤
+  │── POST /login ─────────────────────►│
+  │                                     │
+  │◄─ { access_token, user } ───────────│
+  │                                     │
+  │── GET /me (Authorization: Bearer) ─►│
 ```
 
-Response:
-```json
-{ "success": true, "status": "code_sent", "intent_id": "...", "intent_secret": "..." }
-```
+Paths A and B run concurrently. Whichever resolves first wins — cancel the other.
 
-Store `intent_id` and `intent_secret` in memory. Show OTP input. If `intent_id` is present, start polling in parallel.
-
-**2a. Complete via button (one-click)**
-
-Poll until `approved`:
-```
-GET /mksddn-reddy-auth/v1/auth/intent-status
-  ?intent_id=...&intent_secret=...
-```
-
-When `status === "approved"`, complete:
-```
-POST /mksddn-reddy-auth/v1/auth/complete-intent
-Content-Type: application/json
-
-{ "intent_id": "...", "intent_secret": "...", "issue_token": true }
-```
-
-**2b. Complete via OTP (manual)**
+### Base URL
 
 ```
-POST /mksddn-reddy-auth/v1/auth/login
-Content-Type: application/json
-
-{ "reddy_id": "14963104048", "code": "123456", "issue_token": true }
+https://your-wordpress.com/wp-json/mksddn-reddy-auth/v1
 ```
 
-Both 2a and 2b return the same response shape. Use whichever completes first; cancel the other.
+### Step 1 — Send code
 
-**3. Authenticate subsequent requests**
+```js
+const BASE = 'https://your-wordpress.com/wp-json/mksddn-reddy-auth/v1';
 
+async function sendCode(reddyId) {
+  const res = await fetch(`${BASE}/auth/send-code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reddy_id: reddyId }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? `HTTP ${res.status}`);
+  }
+
+  return res.json();
+  // { success: true, status: "code_sent", intent_id: "...", intent_secret: "..." }
+}
 ```
-Authorization: Bearer <access_token>
+
+Store `intent_id` and `intent_secret` in component state / memory — never in `localStorage`.  
+If `intent_id` is present in the response, start polling (path A) immediately alongside showing the OTP input (path B).
+
+### Step 2a — One-click: poll intent status, then complete
+
+```js
+/**
+ * Polls until the user presses the authorize button in the messenger.
+ * Resolves with the auth response; rejects on timeout or abort.
+ */
+async function waitForButtonApproval({ intentId, intentSecret, signal }) {
+  const INTERVAL_MS = 2_000;
+  const TIMEOUT_MS  = 5 * 60_000; // 5 min
+  const deadline    = Date.now() + TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    if (signal?.aborted) throw new DOMException('Polling aborted', 'AbortError');
+
+    const url = new URL(`${BASE}/auth/intent-status`);
+    url.searchParams.set('intent_id',     intentId);
+    url.searchParams.set('intent_secret', intentSecret);
+
+    const res  = await fetch(url, { signal });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data?.message ?? `HTTP ${res.status}`);
+
+    if (data.status === 'approved') {
+      return completeIntent({ intentId, intentSecret });
+    }
+
+    await sleep(INTERVAL_MS);
+  }
+
+  throw new Error('One-click authorization timed out');
+}
+
+async function completeIntent({ intentId, intentSecret }) {
+  const res = await fetch(`${BASE}/auth/complete-intent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      intent_id:     intentId,
+      intent_secret: intentSecret,
+      issue_token:   true,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 ```
 
-**4. Webhook setup (required for button)**
+### Step 2b — OTP: manual code entry
+
+```js
+async function loginWithOtp({ reddyId, code }) {
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      reddy_id:    reddyId,
+      code,
+      issue_token: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+```
+
+### Combining paths A and B with `Promise.race`
+
+```js
+async function authenticate(reddyId, getOtpFromUser) {
+  const { intent_id: intentId, intent_secret: intentSecret } = await sendCode(reddyId);
+
+  // AbortController for the losing path
+  const abortA = new AbortController();
+  const abortB = new AbortController();
+
+  const pathA = intentId
+    ? waitForButtonApproval({ intentId, intentSecret, signal: abortA.signal })
+    : null;
+
+  const pathB = getOtpFromUser().then(
+    (code) => loginWithOtp({ reddyId, code }),
+  );
+
+  const candidates = pathA ? [pathA, pathB] : [pathB];
+
+  try {
+    const authData = await Promise.race(candidates);
+
+    // Cancel the slower path
+    abortA.abort();
+    abortB.abort();
+
+    return authData;
+    /*
+    {
+      success:      true,
+      status:       "authenticated",
+      user:         { id: 1, display_name: "...", email: "..." },
+      access_token: "...",
+      token:        "...",
+      expires_at:   "2026-07-01T00:00:00+00:00",
+      token_type:   "Bearer"
+    }
+    */
+  } catch (err) {
+    abortA.abort();
+    abortB.abort();
+    throw err;
+  }
+}
+```
+
+### Step 3 — Call authenticated endpoints
+
+```js
+class AuthClient {
+  #token = null;
+
+  setToken(token) {
+    this.#token = token;
+  }
+
+  async fetch(path, options = {}) {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(this.#token ? { Authorization: `Bearer ${this.#token}` } : {}),
+      ...options.headers,
+    };
+
+    const res = await fetch(`${BASE}${path}`, { ...options, headers });
+
+    if (res.status === 401) {
+      this.#token = null;
+      throw new Error('Token invalid or expired — re-authenticate');
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.message ?? `HTTP ${res.status}`);
+    }
+
+    return res.json();
+  }
+}
+
+// Usage
+const client = new AuthClient();
+const authData = await authenticate('14963104048', promptUserForOtp);
+client.setToken(authData.access_token);
+
+const me = await client.fetch('/auth/me');
+console.log(me.user.display_name);
+```
+
+### Step 4 — Logout
+
+```js
+async function logout(token) {
+  await fetch(`${BASE}/auth/logout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  // Discard token from memory regardless of response
+}
+```
+
+### Webhook setup (required for one-click button)
 
 The Reddy bot must POST `buttonAction` events to:
+
 ```
 https://your-wordpress.com/wp-json/mksddn-reddy-auth/v1/auth/button-callback
 ```
-Configure this URL in Reddy BotMother settings. The URL is also shown in WP Admin → Settings → Reddy Auth → One-Click Authorization.
+
+Configure this URL in Reddy BotMother settings. The URL is also shown in **WP Admin → Settings → Reddy Auth → One-Click Authorization**.
+
+### Error response shape
+
+All endpoints return JSON with `success: false` on failure:
+
+```json
+{
+  "success": false,
+  "code":    "rest_invalid_param",
+  "message": "Human-readable description",
+  "data":    { "status": 400 }
+}
+```
+
+Common status codes:
+
+| Code | Meaning |
+|------|---------|
+| 400  | Validation error (missing/invalid field) |
+| 403  | Forbidden — request origin not in allowlist |
+| 429  | Rate limit exceeded — back off and retry |
+| 401  | Bearer token invalid or expired |
 
 ### CORS
 

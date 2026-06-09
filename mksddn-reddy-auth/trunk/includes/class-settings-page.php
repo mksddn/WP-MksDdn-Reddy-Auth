@@ -1506,24 +1506,132 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return void
 	 */
 	private function render_frontend_guide() {
+		$pre = 'background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px;line-height:1.5';
+		$url = untrailingslashit( rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE ) );
+
+		// JS code samples; injected into <pre><code> via esc_html().
+		$otp_code = str_replace(
+			'__BASE__',
+			esc_js( $url ),
+			'const BASE = \'__BASE__\';
+
+// 1. Send OTP
+const sendRes = await fetch(`${BASE}/auth/send-code`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({ reddy_id: \'14963104048\' }),
+});
+if (!sendRes.ok) throw new Error(`HTTP ${sendRes.status}`);
+
+// 2. User reads the code in messenger and submits the form
+const loginRes = await fetch(`${BASE}/auth/login`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({
+    reddy_id:    \'14963104048\',
+    code:        \'123456\',      // code entered by the user
+    issue_token: true,
+  }),
+});
+if (!loginRes.ok) throw new Error(`HTTP ${loginRes.status}`);
+const { access_token, user } = await loginRes.json();
+// → { success: true, user: { id: 1, display_name: \'...\', email: \'...\' }, access_token: \'...\' }
+
+// 3. Call authenticated endpoints
+const me = await fetch(`${BASE}/auth/me`, {
+  headers: { Authorization: `Bearer ${access_token}` },
+}).then(r => r.json());'
+		);
+
+		$oneclick_code = str_replace(
+			'__BASE__',
+			esc_js( $url ),
+			'const BASE = \'__BASE__\';
+
+// 1. Send code — save intent_id and intent_secret from the response
+const sendData = await fetch(`${BASE}/auth/send-code`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({ reddy_id: \'14963104048\' }),
+}).then(r => r.json());
+
+const { intent_id, intent_secret } = sendData;
+
+// 2. Poll every 2 s until the user taps Authorize in the messenger
+async function pollUntilApproved(intentId, intentSecret, signal) {
+  const url = new URL(`${BASE}/auth/intent-status`);
+  url.searchParams.set(\'intent_id\',     intentId);
+  url.searchParams.set(\'intent_secret\', intentSecret);
+
+  while (!signal?.aborted) {
+    const data = await fetch(url, { signal }).then(r => r.json());
+    if (data.status === \'approved\') return;
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+}
+
+await pollUntilApproved(intent_id, intent_secret);
+
+// 3. Complete login
+const { access_token, user } = await fetch(`${BASE}/auth/complete-intent`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({ intent_id, intent_secret, issue_token: true }),
+}).then(r => r.json());
+// → { success: true, user: { id: 1, ... }, access_token: \'...\' }'
+		);
+
+		$race_code = str_replace(
+			'__BASE__',
+			esc_js( $url ),
+			'const BASE   = \'__BASE__\';
+const abort  = new AbortController();
+
+// Path A: one-click — user taps button in messenger
+async function loginViaButton() {
+  await pollUntilApproved(intent_id, intent_secret, abort.signal);
+  return fetch(`${BASE}/auth/complete-intent`, {
+    method:  \'POST\',
+    headers: { \'Content-Type\': \'application/json\' },
+    body:    JSON.stringify({ intent_id, intent_secret, issue_token: true }),
+  }).then(r => r.json());
+}
+
+// Path B: OTP — user types the code from messenger
+async function loginViaOtp(code) {
+  return fetch(`${BASE}/auth/login`, {
+    method:  \'POST\',
+    headers: { \'Content-Type\': \'application/json\' },
+    body:    JSON.stringify({ reddy_id: \'14963104048\', code, issue_token: true }),
+  }).then(r => r.json());
+}
+
+// getCodeFromUser() should resolve when the form is submitted
+const authData = await Promise.race([
+  loginViaButton(),
+  getCodeFromUser().then(code => loginViaOtp(code)),
+]);
+abort.abort(); // cancel the slower path'
+		);
+
 		?>
 		<div style="max-width:860px;margin-top:20px">
 			<h2><?php echo esc_html__( 'Frontend Setup Guide', 'mksddn-reddy-auth' ); ?></h2>
 
 			<h3><?php echo esc_html__( 'Shortcode (monolith mode)', 'mksddn-reddy-auth' ); ?></h3>
 			<p><?php echo esc_html__( 'Add to your login page. Two-step flow: enter Reddy ID → receive OTP in messenger → enter code.', 'mksddn-reddy-auth' ); ?></p>
-			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>[mksddn_reddy_login]</code></pre>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code>[mksddn_reddy_login]</code></pre>
 
 			<h3><?php echo esc_html__( 'CSS classes', 'mksddn-reddy-auth' ); ?></h3>
 			<p><?php echo esc_html__( 'Target these classes to style the shortcode form:', 'mksddn-reddy-auth' ); ?></p>
-			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>.mksddn-reddy-auth-form          /* outer wrapper */
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code>.mksddn-reddy-auth-form          /* outer wrapper */
 .mksddn-reddy-auth-send-form     /* step 1: enter Reddy ID */
 .mksddn-reddy-auth-login-form    /* step 2: enter OTP code */
 .mksddn-reddy-auth-waiting       /* one-click: waiting for approval */
 .mksddn-reddy-auth-message       /* status / error message */</code></pre>
 
 			<h3><?php echo esc_html__( 'REST API (headless / SPA)', 'mksddn-reddy-auth' ); ?></h3>
-			<p><?php esc_html_e( 'Base URL:', 'mksddn-reddy-auth' ); ?> <code><?php echo esc_html( rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE ) ); ?></code></p>
+			<p><?php esc_html_e( 'Base URL:', 'mksddn-reddy-auth' ); ?> <code><?php echo esc_html( $url ); ?></code></p>
 			<table class="widefat striped" style="margin-bottom:20px">
 				<thead>
 					<tr>
@@ -1567,31 +1675,20 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			</table>
 
 			<h3><?php echo esc_html__( 'OTP flow', 'mksddn-reddy-auth' ); ?></h3>
-			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>// 1. Request OTP
-POST /auth/send-code
-{ "reddy_id": "123456" }
-
-// 2. Verify and get Bearer token
-POST /auth/login
-{ "reddy_id": "123456", "code": "654321", "issue_token": true }
-// → { "token": "...", "user": { "id": 1, "email": "..." } }</code></pre>
+			<p><?php echo esc_html__( 'Send code → user enters OTP from messenger → verify → Bearer token.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code><?php echo esc_html( $otp_code ); ?></code></pre>
 
 			<h3><?php echo esc_html__( 'One-click flow', 'mksddn-reddy-auth' ); ?></h3>
-			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>// 1. Send code — response includes intent_id + intent_secret
-POST /auth/send-code  { "reddy_id": "123456" }
+			<p><?php echo esc_html__( 'Send code → user taps Authorize in messenger → poll until approved → complete login → Bearer token.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code><?php echo esc_html( $oneclick_code ); ?></code></pre>
 
-// 2. Poll until user taps Authorize in Reddy
-GET /auth/intent-status?intent_id=...&intent_secret=...
-// → { "status": "approved" }
-
-// 3. Complete login
-POST /auth/complete-intent
-{ "intent_id": "...", "intent_secret": "...", "issue_token": true }
-// → { "token": "...", "user": { ... } }</code></pre>
+			<h3><?php echo esc_html__( 'Both paths in parallel', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Run OTP and one-click paths at the same time. Whichever completes first wins; cancel the other.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code><?php echo esc_html( $race_code ); ?></code></pre>
 
 			<h3><?php echo esc_html__( 'Bearer token', 'mksddn-reddy-auth' ); ?></h3>
 			<p><?php echo esc_html__( 'Include in subsequent API requests:', 'mksddn-reddy-auth' ); ?></p>
-			<pre style="background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px"><code>Authorization: Bearer {token}</code></pre>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code>Authorization: Bearer {token}</code></pre>
 
 			<h3><?php echo esc_html__( 'Cookie session (monolith mode)', 'mksddn-reddy-auth' ); ?></h3>
 			<p><?php echo esc_html__( 'Pass issue_session: true in login or complete-intent to set a WordPress auth cookie.', 'mksddn-reddy-auth' ); ?></p>

@@ -72,6 +72,9 @@ msgstr "Base URL:"
 msgid "Bearer token"
 msgstr "Bearer token"
 
+msgid "Both paths in parallel"
+msgstr "Both paths in parallel"
+
 msgid "Bearer token TTL (seconds)"
 msgstr "Bearer token TTL (seconds)"
 
@@ -239,6 +242,15 @@ msgstr "One-Click"
 
 msgid "One-click flow"
 msgstr "One-click flow"
+
+msgid "Send code → user enters OTP from messenger → verify → Bearer token."
+msgstr "Send code → user enters OTP from messenger → verify → Bearer token."
+
+msgid "Send code → user taps Authorize in messenger → poll until approved → complete login → Bearer token."
+msgstr "Send code → user taps Authorize in messenger → poll until approved → complete login → Bearer token."
+
+msgid "Run OTP and one-click paths at the same time. Whichever completes first wins; cancel the other."
+msgstr "Run OTP and one-click paths at the same time. Whichever completes first wins; cancel the other."
 
 msgid "OTP + authorize button"
 msgstr "OTP + authorize button"
