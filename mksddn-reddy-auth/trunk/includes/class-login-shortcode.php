@@ -412,8 +412,6 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 			array(
 				'intentStatusUrl'   => rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/intent-status' ),
 				'completeIntentUrl' => rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/complete-intent' ),
-				'intentId'          => $intent_id,
-				'intentSecret'      => $intent_secret,
 				'pollIntervalMs'    => max( 1000, (int) apply_filters( 'mksddn_reddy_intent_poll_interval_ms', 3000 ) ),
 				'maxPollIntervalMs' => max( 1000, (int) apply_filters( 'mksddn_reddy_intent_poll_max_interval_ms', 15000 ) ),
 				'pollBackoffFactor' => max( 1, (int) apply_filters( 'mksddn_reddy_intent_poll_backoff_factor', 2 ) ),

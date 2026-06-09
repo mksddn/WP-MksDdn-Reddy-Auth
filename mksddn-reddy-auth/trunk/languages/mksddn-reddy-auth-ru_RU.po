@@ -336,8 +336,14 @@ msgstr "Используйте {code} для одноразового кода, 
 msgid "Used when delivery mode is authorize button only. Placeholders: {link}, {ttl}."
 msgstr "Используется в режиме доставки только кнопкой подтверждения. Плейсхолдеры: {link}, {ttl}."
 
+msgid "Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events."
+msgstr "Настройте этот URL в вашем Reddy-боте (BotMother) как адрес вебхука для получения событий нажатия кнопки."
+
 msgid "Waiting for authorization in Reddy. You can also enter the code below."
 msgstr "Ожидаем подтверждение в Reddy. Вы также можете ввести код ниже."
+
+msgid "Webhook URL"
+msgstr "URL вебхука"
 
 msgid "Your verification code: {code}. It expires in {ttl} seconds."
 msgstr "Ваш код подтверждения: {code}. Он истекает через {ttl} сек."

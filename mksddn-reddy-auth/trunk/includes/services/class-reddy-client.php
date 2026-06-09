@@ -183,14 +183,16 @@ class Mksddn_Reddy_Auth_Reddy_Client {
 			'userKey' => $reddy_id,
 		);
 
+		$intent_id    = isset( $delivery['intent_id'] ) ? sanitize_text_field( (string) $delivery['intent_id'] ) : '';
 		$button_label = $this->resolve_magic_link_button_label();
-		if ( '' !== $magic_link_url && in_array( $delivery_mode, array( 'otp_plus_link', 'link_only' ), true ) ) {
+
+		if ( '' !== $intent_id && in_array( $delivery_mode, array( 'otp_plus_link', 'link_only' ), true ) ) {
 			$payload['keyboard'] = array(
 				array(
 					array(
-						'type'  => 'command',
+						'type'  => 'action',
 						'title' => $button_label,
-						'data'  => $magic_link_url,
+						'data'  => $intent_id,
 					),
 				),
 			);

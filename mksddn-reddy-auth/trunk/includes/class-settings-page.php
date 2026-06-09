@@ -373,6 +373,10 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 */
 	public function render_one_click_section_description() {
 		echo '<p>' . esc_html__( 'One-click lets users authorize from messenger without entering OTP manually. Keep OTP flow as fallback.', 'mksddn-reddy-auth' ) . '</p>';
+		$webhook_url = rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/button-callback' );
+		echo '<p><strong>' . esc_html__( 'Webhook URL', 'mksddn-reddy-auth' ) . ':</strong> ';
+		echo '<code style="user-select:all">' . esc_html( $webhook_url ) . '</code></p>';
+		echo '<p class="description">' . esc_html__( 'Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events.', 'mksddn-reddy-auth' ) . '</p>';
 	}
 
 	/**

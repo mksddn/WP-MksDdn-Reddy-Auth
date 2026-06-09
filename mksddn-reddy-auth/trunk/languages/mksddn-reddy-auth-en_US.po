@@ -336,8 +336,14 @@ msgstr "Use {code} for the one-time password, {ttl} for expiry time in seconds, 
 msgid "Used when delivery mode is authorize button only. Placeholders: {link}, {ttl}."
 msgstr "Used when delivery mode is authorize button only. Placeholders: {link}, {ttl}."
 
+msgid "Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events."
+msgstr "Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events."
+
 msgid "Waiting for authorization in Reddy. You can also enter the code below."
 msgstr "Waiting for authorization in Reddy. You can also enter the code below."
+
+msgid "Webhook URL"
+msgstr "Webhook URL"
 
 msgid "Your verification code: {code}. It expires in {ttl} seconds."
 msgstr "Your verification code: {code}. It expires in {ttl} seconds."

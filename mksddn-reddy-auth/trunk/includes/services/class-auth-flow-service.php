@@ -87,13 +87,16 @@ class Mksddn_Reddy_Auth_Auth_Flow_Service {
 		}
 
 		$delivery_mode = $this->resolve_delivery_mode( $settings );
-		$otp_result    = $this->otp_service->request_code(
-			$reddy_id,
-			array(
-				'delivery_mode'  => $delivery_mode,
-				'magic_link_url' => $magic_link_url,
-			)
+		$delivery      = array(
+			'delivery_mode'  => $delivery_mode,
+			'magic_link_url' => $magic_link_url,
 		);
+
+		if ( is_array( $intent_payload ) && ! empty( $intent_payload['id'] ) ) {
+			$delivery['intent_id'] = (string) $intent_payload['id'];
+		}
+
+		$otp_result = $this->otp_service->request_code( $reddy_id, $delivery );
 
 		if ( is_wp_error( $otp_result ) ) {
 			return $otp_result;

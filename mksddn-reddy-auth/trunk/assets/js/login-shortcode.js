@@ -8,7 +8,7 @@
 	var config = window.mksddnReddyAuthLogin;
 	var formRoot = document.querySelector('[data-mksddn-reddy-auth-form="1"]');
 
-	if (!formRoot || !config.intentId || !config.intentSecret) {
+	if (!formRoot || !config.intentStatusUrl || !config.completeIntentUrl) {
 		return;
 	}
 
@@ -18,14 +18,6 @@
 	var maxInterval = Number(config.maxPollIntervalMs) || 15000;
 	var backoffFactor = Number(config.pollBackoffFactor) || 2;
 	var expiresAt = Number(config.expiresAt) || 0;
-
-	function buildQuery(params) {
-		return Object.keys(params)
-			.map(function (key) {
-				return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
-			})
-			.join('&');
-	}
 
 	function hideForms() {
 		var sendForm = formRoot.querySelector('.mksddn-reddy-auth-send-form');
@@ -94,8 +86,6 @@
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				intent_id: config.intentId,
-				intent_secret: config.intentSecret,
 				issue_session: true
 			})
 		})
@@ -111,6 +101,11 @@
 				if (!result.ok || !result.payload || !result.payload.success) {
 					completing = false;
 					showMessage(config.errorText || 'Unable to process authentication request.');
+					if (result && result.payload && (result.payload.code === 'invalid_intent' || result.payload.code === 'intent_context_mismatch')) {
+						stopPolling();
+						return;
+					}
+
 					schedulePoll(currentInterval);
 					return;
 				}
@@ -134,10 +129,7 @@
 			return;
 		}
 
-		var url = config.intentStatusUrl + '?' + buildQuery({
-			intent_id: config.intentId,
-			intent_secret: config.intentSecret
-		});
+		var url = config.intentStatusUrl;
 
 		fetch(url, {
 			method: 'GET',
@@ -148,6 +140,12 @@
 			})
 			.then(function (payload) {
 				if (!payload || !payload.success) {
+					if (payload && (payload.code === 'invalid_intent' || payload.code === 'intent_context_mismatch')) {
+						showMessage(config.errorText || 'Unable to process authentication request.');
+						stopPolling();
+						return;
+					}
+
 					currentInterval = Math.min(maxInterval, currentInterval * backoffFactor);
 					schedulePoll(currentInterval);
 					return;

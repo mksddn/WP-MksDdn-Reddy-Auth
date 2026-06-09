@@ -20,27 +20,54 @@
   - Store only OTP hash in transient.
   - When delivery mode is not `otp_only`:
     - Create login intent (`intent_id`, `intent_secret`).
-    - Issue one-time magic link token bound to intent.
-    - Send Reddy message with optional authorize button (`buttons` payload).
+    - Issue one-time magic link token (for legacy text link in message body).
+    - Send Reddy message with authorize button (`type: action`, `data: intent_id`).
   - Trigger Reddy delivery through `ReddyClient`.
-- Response (one-click enabled): may include `intent_id` and `intent_secret` for browser polling.
+- Response:
+  ```json
+  { "success": true, "status": "code_sent", "message": "..." }
+  ```
+  When one-click is enabled, also includes:
+  ```json
+  { "intent_id": "...", "intent_secret": "..." }
+  ```
+  Sets signed HttpOnly cookie `mksddn_reddy_polling` with the same values (for browser shortcode flow).
 
 ### 1a) One-Click Authorization
 
-- Magic link handler: `admin-post.php?action=mksddn_reddy_verify_link&token=...`
-  - Validates signed one-time token (hash-only transient, TTL, rate limit).
-  - Approves login intent for cross-device polling.
-  - Does not finalize session directly; completion is performed by `/auth/complete-intent`.
-- Intent polling: `GET /mksddn-reddy-auth/v1/auth/intent-status`
-  - Input: `intent_id`, `intent_secret`
-  - Returns `pending` or `approved`.
-- Intent completion: `POST /mksddn-reddy-auth/v1/auth/complete-intent`
-  - Input: `intent_id`, `intent_secret`, optional `issue_session`, optional `issue_token`
-  - Consumes approved intent and runs shared finalize-auth pipeline.
-- Shortcode: after send-code redirect, `assets/js/login-shortcode.js` polls intent status and completes login in the original browser tab.
-- Shortcode polling context (`intent_id`, `intent_secret`) is stored in a signed HttpOnly cookie instead of URL query params.
+The messenger button uses `type: action` — pressing it sends a `buttonAction` event to the configured webhook. **No browser window opens.**
 
-### 2) Login
+- Button event receiver: `POST /mksddn-reddy-auth/v1/auth/button-callback`
+  - Called by Reddy bot when user presses the authorize button in messenger.
+  - Verifies `X-BotAPI-Sign` header signature (`sha256(body + bot_token)`).
+  - Extracts `button.data` = `intent_id`, calls `Login_Intent_Service::approve()`.
+  - Returns `{ "success": true }`.
+  - **Must be configured as webhook URL in Reddy bot (BotMother) settings.** The URL is shown in plugin settings under One-Click Authorization.
+- Intent polling: `GET /mksddn-reddy-auth/v1/auth/intent-status`
+  - Accepts `intent_id` + `intent_secret` as query params (headless), or reads from cookie (browser shortcode).
+  - Returns `{ "success": true, "status": "pending|approved" }`.
+- Intent completion: `POST /mksddn-reddy-auth/v1/auth/complete-intent`
+  - Accepts `intent_id` + `intent_secret` in body (headless), or reads from cookie (browser shortcode).
+  - Optional: `issue_session` (bool), `issue_token` (bool).
+  - Consumes approved intent and runs shared finalize-auth pipeline.
+  - Response:
+    ```json
+    {
+      "success": true,
+      "status": "authenticated",
+      "message": "...",
+      "user": { "id": 1, "display_name": "...", "email": "..." },
+      "access_token": "...",
+      "token": "...",
+      "expires_at": "...",
+      "token_type": "Bearer"
+    }
+    ```
+    Token fields present only when `issue_token: true`.
+- Shortcode: after send-code redirect, `assets/js/login-shortcode.js` polls intent status and completes login in the original browser tab using cookie (no credentials in page JS).
+- Fallback: `admin-post.php?action=mksddn_reddy_verify_link&token=...` still accepts magic link clicks from message text for backward compatibility.
+
+### 2) Login (OTP)
 
 - Endpoint: `POST /mksddn-reddy-auth/v1/auth/login`
 - Input: `reddy_id`, `code`, optional `issue_token`, optional `issue_session`
@@ -49,6 +76,20 @@
   - Resolve user via `IdentityService` (auto-create on first login if missing).
   - Start WP cookie session via `SessionService` only when `issue_session` is true (default false).
   - Optionally issue Bearer token via `TokenService` when `issue_token` is true.
+- Response:
+  ```json
+  {
+    "success": true,
+    "status": "authenticated",
+    "message": "...",
+    "user": { "id": 1, "display_name": "...", "email": "..." },
+    "access_token": "...",
+    "token": "...",
+    "expires_at": "...",
+    "token_type": "Bearer"
+  }
+  ```
+  Token fields present only when `issue_token: true`.
 - Shortcode login always sets a WP cookie session; REST login does not unless `issue_session` is true.
 
 ### 3) Current User
@@ -94,7 +135,7 @@
   - Reads bot token from `MKSDDN_REDDY_BOT_TOKEN` or dev fallback option.
   - Builds OTP and connection test message text from admin settings (`otp_message_template`, `magic_link_message_template`, `bot_test_message`).
   - Supports delivery modes: `otp_only`, `otp_plus_link`, `link_only`.
-  - Sends optional inline authorize button via `buttons` payload (when API accepts it).
+  - Sends authorize button with `type: action` and `intent_id` as data (triggers `buttonAction` webhook, no browser opens).
   - Custom transport via `mksddn_reddy_send_code_transport` bypasses the admin OTP template.
 - `Mksddn_Reddy_Auth_Otp_Service`
   - OTP generation, hashing, TTL, one-time validation, rate limiting.
@@ -176,11 +217,86 @@
 - Bearer validation rejects tokens when the mapped user is missing or has no `_mksddn_reddy_id` meta.
 - Deleting a WordPress user does not block the Reddy ID permanently; the next successful OTP login can recreate the account via `IdentityService`.
 
+## Headless / Cross-Domain Frontend Integration
+
+Use this guide when the frontend runs on a different domain from WordPress (e.g. headless CMS, SPA, mobile app).
+
+### Key differences from browser shortcode
+
+| | Browser shortcode | Headless |
+|---|---|---|
+| Session auth | WP cookie (`issue_session: true`) | Bearer token (`issue_token: true`) |
+| Intent binding | Signed HttpOnly cookie (automatic) | `intent_id` + `intent_secret` in request body/params |
+| Credentials storage | Cookie, managed by browser | In-memory (do not use localStorage for `intent_secret`) |
+
+### Step-by-step
+
+**1. Send code**
+
+```
+POST /mksddn-reddy-auth/v1/auth/send-code
+Content-Type: application/json
+
+{ "reddy_id": "14963104048" }
+```
+
+Response:
+```json
+{ "success": true, "status": "code_sent", "intent_id": "...", "intent_secret": "..." }
+```
+
+Store `intent_id` and `intent_secret` in memory. Show OTP input. If `intent_id` is present, start polling in parallel.
+
+**2a. Complete via button (one-click)**
+
+Poll until `approved`:
+```
+GET /mksddn-reddy-auth/v1/auth/intent-status
+  ?intent_id=...&intent_secret=...
+```
+
+When `status === "approved"`, complete:
+```
+POST /mksddn-reddy-auth/v1/auth/complete-intent
+Content-Type: application/json
+
+{ "intent_id": "...", "intent_secret": "...", "issue_token": true }
+```
+
+**2b. Complete via OTP (manual)**
+
+```
+POST /mksddn-reddy-auth/v1/auth/login
+Content-Type: application/json
+
+{ "reddy_id": "14963104048", "code": "123456", "issue_token": true }
+```
+
+Both 2a and 2b return the same response shape. Use whichever completes first; cancel the other.
+
+**3. Authenticate subsequent requests**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**4. Webhook setup (required for button)**
+
+The Reddy bot must POST `buttonAction` events to:
+```
+https://your-wordpress.com/wp-json/mksddn-reddy-auth/v1/auth/button-callback
+```
+Configure this URL in Reddy BotMother settings. The URL is also shown in WP Admin → Settings → Reddy Auth → One-Click Authorization.
+
+### CORS
+
+If WordPress and the frontend are on different origins, configure CORS headers in WordPress to allow the frontend origin. The plugin does not manage CORS itself.
+
 ## Security Invariants
 
 - Never store raw OTP or magic link tokens in DB/options; compare hash values only.
 - Magic link tokens are one-time, signed, and expire by TTL.
-- Login intents require `intent_id` + `intent_secret` for polling and completion.
+- Login intents require `intent_id` + `intent_secret` for polling and completion (headless), or a matching signed cookie (browser shortcode).
 - OTP is one-time and expires by TTL.
 - Send and login flows are rate-limited with progressive backoff.
 - Bearer tokens are stored only as HMAC hash.

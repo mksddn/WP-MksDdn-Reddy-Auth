@@ -11,6 +11,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	/**
+	 * Cookie name for one-click polling context.
+	 *
+	 * @var string
+	 */
+	const POLLING_COOKIE_NAME = 'mksddn_reddy_polling';
+
+	/**
+	 * Cookie lifetime for one-click polling context.
+	 *
+	 * @var int
+	 */
+	const POLLING_COOKIE_TTL = 900;
+
+	/**
 	 * OTP service.
 	 *
 	 * @var Mksddn_Reddy_Auth_Otp_Service
@@ -153,12 +167,12 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 				'callback'            => array( $this, 'intent_status' ),
 				'args'                => array(
 					'intent_id'     => array(
-						'required'          => true,
+						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 					'intent_secret' => array(
-						'required'          => true,
+						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
@@ -175,12 +189,12 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 				'callback'            => array( $this, 'complete_intent' ),
 				'args'                => array(
 					'intent_id'     => array(
-						'required'          => true,
+						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 					'intent_secret' => array(
-						'required'          => true,
+						'required'          => false,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
@@ -195,6 +209,16 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 						'default'  => false,
 					),
 				),
+			)
+		);
+
+		register_rest_route(
+			Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE,
+			'/auth/button-callback',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => '__return_true',
+				'callback'            => array( $this, 'button_callback' ),
 			)
 		);
 
@@ -259,12 +283,14 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 
 		$response = array(
 			'success' => true,
+			'status'  => 'code_sent',
 			'message' => __( 'OTP was sent successfully.', 'mksddn-reddy-auth' ),
 		);
 
 		if ( ! empty( $result['intent_id'] ) && ! empty( $result['intent_secret'] ) ) {
 			$response['intent_id']     = (string) $result['intent_id'];
 			$response['intent_secret'] = (string) $result['intent_secret'];
+			$this->set_polling_context_cookie( (string) $result['intent_id'], (string) $result['intent_secret'] );
 		}
 
 		return new WP_REST_Response( $response, 200 );
@@ -301,12 +327,16 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 
 		$response = array(
 			'success' => true,
+			'status'  => 'authenticated',
 			'message' => __( 'Authentication successful.', 'mksddn-reddy-auth' ),
 			'user'    => $this->auth_finalizer_service->format_user_payload( $finalize['user'] ),
 		);
 
 		if ( ! empty( $finalize['token'] ) && is_array( $finalize['token'] ) ) {
 			$response = array_merge( $response, $finalize['token'] );
+			if ( ! empty( $finalize['token']['access_token'] ) && empty( $response['token'] ) ) {
+				$response['token'] = (string) $finalize['token']['access_token'];
+			}
 		}
 
 		return new WP_REST_Response( $response, 200 );
@@ -319,9 +349,17 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function intent_status( WP_REST_Request $request ) {
-		$result = $this->login_intent_service->get_status(
+		$credentials = $this->resolve_intent_credentials(
 			(string) $request->get_param( 'intent_id' ),
 			(string) $request->get_param( 'intent_secret' )
+		);
+		if ( is_wp_error( $credentials ) ) {
+			return $this->error_response_from_wp_error( $credentials );
+		}
+
+		$result = $this->login_intent_service->get_status(
+			(string) $credentials['intent_id'],
+			(string) $credentials['intent_secret']
 		);
 
 		if ( is_wp_error( $result ) ) {
@@ -344,9 +382,17 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function complete_intent( WP_REST_Request $request ) {
-		$reddy_id = $this->login_intent_service->consume_approved(
+		$credentials = $this->resolve_intent_credentials(
 			(string) $request->get_param( 'intent_id' ),
 			(string) $request->get_param( 'intent_secret' )
+		);
+		if ( is_wp_error( $credentials ) ) {
+			return $this->error_response_from_wp_error( $credentials );
+		}
+
+		$reddy_id = $this->login_intent_service->consume_approved(
+			(string) $credentials['intent_id'],
+			(string) $credentials['intent_secret']
 		);
 
 		if ( is_wp_error( $reddy_id ) ) {
@@ -367,15 +413,96 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 
 		$response = array(
 			'success' => true,
+			'status'  => 'authenticated',
 			'message' => __( 'Authentication successful.', 'mksddn-reddy-auth' ),
 			'user'    => $this->auth_finalizer_service->format_user_payload( $finalize['user'] ),
 		);
 
 		if ( ! empty( $finalize['token'] ) && is_array( $finalize['token'] ) ) {
 			$response = array_merge( $response, $finalize['token'] );
+			if ( ! empty( $finalize['token']['access_token'] ) && empty( $response['token'] ) ) {
+				$response['token'] = (string) $finalize['token']['access_token'];
+			}
 		}
 
 		return new WP_REST_Response( $response, 200 );
+	}
+
+	/**
+	 * Handle Reddy bot buttonAction webhook.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function button_callback( WP_REST_Request $request ) {
+		$raw_body = $request->get_body();
+
+		if ( ! $this->verify_reddy_signature( $raw_body, $request->get_header( 'X-BotAPI-Sign' ) ) ) {
+			return new WP_REST_Response( array( 'success' => false ), 403 );
+		}
+
+		$payload = json_decode( $raw_body, true );
+
+		if ( ! is_array( $payload ) ) {
+			return new WP_REST_Response( array( 'success' => true ), 200 );
+		}
+
+		$updates = isset( $payload[0] ) ? $payload : array( $payload );
+
+		foreach ( $updates as $update ) {
+			if ( ! is_array( $update ) || ( isset( $update['type'] ) && 'buttonAction' !== $update['type'] ) ) {
+				continue;
+			}
+
+			$intent_id = '';
+			if ( ! empty( $update['button']['data'] ) ) {
+				$intent_id = sanitize_text_field( (string) $update['button']['data'] );
+			} elseif ( ! empty( $update['data'] ) ) {
+				$intent_id = sanitize_text_field( (string) $update['data'] );
+			}
+
+			if ( '' !== $intent_id ) {
+				$this->login_intent_service->approve( $intent_id );
+			}
+		}
+
+		return new WP_REST_Response( array( 'success' => true ), 200 );
+	}
+
+	/**
+	 * Verify Reddy bot webhook signature.
+	 *
+	 * @param string $raw_body   Raw request body.
+	 * @param string $signature  Value of X-BotAPI-Sign header.
+	 * @return bool
+	 */
+	private function verify_reddy_signature( $raw_body, $signature ) {
+		$bot_token = $this->get_bot_token();
+
+		if ( '' === $bot_token ) {
+			return false;
+		}
+
+		if ( '' === (string) $signature ) {
+			return false;
+		}
+
+		$expected = hash( 'sha256', $raw_body . $bot_token );
+
+		return hash_equals( $expected, strtolower( (string) $signature ) );
+	}
+
+	/**
+	 * Resolve bot token from constant or option.
+	 *
+	 * @return string
+	 */
+	private function get_bot_token() {
+		if ( defined( 'MKSDDN_REDDY_BOT_TOKEN' ) && '' !== (string) MKSDDN_REDDY_BOT_TOKEN ) {
+			return (string) MKSDDN_REDDY_BOT_TOKEN;
+		}
+
+		return (string) get_option( Mksddn_Reddy_Auth_Reddy_Client::BOT_TOKEN_OPTION_KEY, '' );
 	}
 
 	/**
@@ -457,6 +584,9 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			$message = __( 'Unable to create or resolve account. Contact the site administrator.', 'mksddn-reddy-auth' );
 		} elseif ( in_array( $code, array( 'invalid_credentials', 'invalid_request' ), true ) ) {
 			$message = __( 'OTP is invalid or expired. Request a new code and try again.', 'mksddn-reddy-auth' );
+		} elseif ( in_array( $code, array( 'intent_context_mismatch' ), true ) ) {
+			$status  = 403;
+			$message = __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' );
 		} elseif ( in_array( $code, array( 'invalid_intent', 'magic_link_storage_failed', 'intent_storage_failed', 'otp_generation_failed', 'otp_storage_failed' ), true ) ) {
 			$message = __( 'Unable to process authentication request.', 'mksddn-reddy-auth' );
 		}
@@ -510,5 +640,153 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 			),
 			500
 		);
+	}
+
+	/**
+	 * Persist one-click polling context in signed HttpOnly cookie.
+	 *
+	 * @param string $intent_id Intent ID.
+	 * @param string $intent_secret Intent secret.
+	 * @return void
+	 */
+	private function set_polling_context_cookie( $intent_id, $intent_secret ) {
+		$intent_id     = sanitize_text_field( (string) $intent_id );
+		$intent_secret = sanitize_text_field( (string) $intent_secret );
+
+		if ( '' === $intent_id || '' === $intent_secret ) {
+			return;
+		}
+
+		$expires_at = time() + self::POLLING_COOKIE_TTL;
+		$payload    = array(
+			'intent_id'     => $intent_id,
+			'intent_secret' => $intent_secret,
+			'expires_at'    => $expires_at,
+		);
+		$encoded    = base64_encode( (string) wp_json_encode( $payload ) );
+		$signature  = hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
+		$value      = $encoded . '.' . $signature;
+
+		setcookie(
+			self::POLLING_COOKIE_NAME,
+			$value,
+			$expires_at,
+			$this->get_cookie_path(),
+			$this->get_cookie_domain(),
+			is_ssl(),
+			true
+		);
+	}
+
+	/**
+	 * Ensure intent request is bound to current browser profile cookie context.
+	 *
+	 * @param string $intent_id Intent ID from request.
+	 * @param string $intent_secret Intent secret from request.
+	 * @return true|WP_Error
+	 */
+	private function resolve_intent_credentials( $intent_id, $intent_secret ) {
+		$intent_id     = sanitize_text_field( (string) $intent_id );
+		$intent_secret = sanitize_text_field( (string) $intent_secret );
+		$context       = $this->get_polling_context_from_cookie();
+
+		$has_cookie      = ! empty( $context['intent_id'] ) && ! empty( $context['intent_secret'] );
+		$has_credentials = '' !== $intent_id && '' !== $intent_secret;
+
+		if ( ! $has_cookie && ! $has_credentials ) {
+			return new WP_Error( 'invalid_intent', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
+		}
+
+		if ( $has_credentials ) {
+			if ( $has_cookie ) {
+				$same_id     = hash_equals( (string) $context['intent_id'], $intent_id );
+				$same_secret = hash_equals( (string) $context['intent_secret'], $intent_secret );
+				if ( ! $same_id || ! $same_secret ) {
+					return new WP_Error( 'intent_context_mismatch', __( 'Authorization request is invalid or expired.', 'mksddn-reddy-auth' ) );
+				}
+			}
+
+			return array(
+				'intent_id'     => $intent_id,
+				'intent_secret' => $intent_secret,
+			);
+		}
+
+		return array(
+			'intent_id'     => (string) $context['intent_id'],
+			'intent_secret' => (string) $context['intent_secret'],
+		);
+	}
+
+	/**
+	 * Read and validate one-click polling context from cookie.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function get_polling_context_from_cookie() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only cookie access.
+		if ( empty( $_COOKIE[ self::POLLING_COOKIE_NAME ] ) ) {
+			return array();
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only cookie access.
+		$raw   = (string) wp_unslash( $_COOKIE[ self::POLLING_COOKIE_NAME ] );
+		$parts = explode( '.', $raw, 2 );
+		if ( 2 !== count( $parts ) ) {
+			return array();
+		}
+
+		$encoded   = (string) $parts[0];
+		$signature = (string) $parts[1];
+		$expected  = hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
+		if ( ! hash_equals( $expected, $signature ) ) {
+			return array();
+		}
+
+		$decoded = base64_decode( $encoded, true );
+		if ( false === $decoded ) {
+			return array();
+		}
+
+		$payload = json_decode( $decoded, true );
+		if ( ! is_array( $payload ) || empty( $payload['intent_id'] ) || empty( $payload['intent_secret'] ) || empty( $payload['expires_at'] ) ) {
+			return array();
+		}
+
+		if ( time() > (int) $payload['expires_at'] ) {
+			return array();
+		}
+
+		return array(
+			'intent_id'     => sanitize_text_field( (string) $payload['intent_id'] ),
+			'intent_secret' => sanitize_text_field( (string) $payload['intent_secret'] ),
+			'expires_at'    => (int) $payload['expires_at'],
+		);
+	}
+
+	/**
+	 * Return cookie path for plugin auth context.
+	 *
+	 * @return string
+	 */
+	private function get_cookie_path() {
+		if ( defined( 'COOKIEPATH' ) && '' !== COOKIEPATH ) {
+			return COOKIEPATH;
+		}
+
+		return '/';
+	}
+
+	/**
+	 * Return cookie domain for plugin auth context.
+	 *
+	 * @return string
+	 */
+	private function get_cookie_domain() {
+		if ( defined( 'COOKIE_DOMAIN' ) ) {
+			return (string) COOKIE_DOMAIN;
+		}
+
+		return '';
 	}
 }
