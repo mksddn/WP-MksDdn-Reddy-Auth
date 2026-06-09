@@ -44,7 +44,9 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 	 * @return true|WP_Error
 	 */
 	public function rest_permission_check( $request ) {
-		unset( $request );
+		if ( $request instanceof WP_REST_Request && $this->is_public_webhook_route( (string) $request->get_route() ) ) {
+			return true;
+		}
 
 		if ( $this->is_request_allowed() ) {
 			return true;
@@ -55,6 +57,18 @@ class Mksddn_Reddy_Auth_Request_Url_Guard {
 			__( 'Request not allowed from this source.', 'mksddn-reddy-auth' ),
 			array( 'status' => 403 )
 		);
+	}
+
+	/**
+	 * True when route is the signed webhook callback.
+	 *
+	 * @param string $route REST route path.
+	 * @return bool
+	 */
+	private function is_public_webhook_route( $route ) {
+		$route = '/' . ltrim( (string) $route, '/' );
+
+		return $this->is_plugin_rest_route( $route ) && $this->url_starts_with( $route, '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/button-callback' );
 	}
 
 	/**

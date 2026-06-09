@@ -251,23 +251,9 @@ class Mksddn_Reddy_Auth_Login_Intent_Service {
 	 * @return string
 	 */
 	private function get_request_ip() {
-		$keys = array(
-			'HTTP_CF_CONNECTING_IP',
-			'HTTP_X_FORWARDED_FOR',
-			'REMOTE_ADDR',
-		);
-
-		foreach ( $keys as $key ) {
-			if ( ! empty( $_SERVER[ $key ] ) ) {
-				$value = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
-
-				if ( 'HTTP_X_FORWARDED_FOR' === $key ) {
-					$parts = explode( ',', $value );
-					$value = trim( (string) $parts[0] );
-				}
-
-				return $value;
-			}
+		$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		if ( '' !== $remote_addr ) {
+			return $remote_addr;
 		}
 
 		return '0.0.0.0';
