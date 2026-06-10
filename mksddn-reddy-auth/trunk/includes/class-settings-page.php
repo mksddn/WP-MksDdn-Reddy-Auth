@@ -1408,6 +1408,30 @@ class Mksddn_Reddy_Auth_Settings_Page {
 							'429' => array( 'description' => 'Rate limited' ),
 						),
 					),
+					'post' => array(
+						'summary'     => 'Poll login intent status',
+						'description' => 'Same as GET intent-status but accepts intent data in JSON body.',
+						'requestBody' => array(
+							'required' => true,
+							'content'  => array(
+								'application/json' => array(
+									'schema' => array(
+										'type'       => 'object',
+										'required'   => array( 'intent_id', 'intent_secret' ),
+										'properties' => array(
+											'intent_id'     => array( 'type' => 'string' ),
+											'intent_secret' => array( 'type' => 'string' ),
+										),
+									),
+								),
+							),
+						),
+						'responses'   => array(
+							'200' => array( 'description' => 'Intent status returned' ),
+							'400' => array( 'description' => 'Invalid intent' ),
+							'429' => array( 'description' => 'Rate limited' ),
+						),
+					),
 				),
 				'/auth/complete-intent' => array(
 					'post' => array(
@@ -1521,6 +1545,15 @@ class Mksddn_Reddy_Auth_Settings_Page {
 					'Intent status',
 					'GET',
 					'{{baseUrl}}/auth/intent-status?intent_id={{intentId}}&intent_secret={{intentSecret}}'
+				),
+				$this->build_postman_item(
+					'Intent status (POST)',
+					'POST',
+					'{{baseUrl}}/auth/intent-status',
+					array(
+						'intent_id'     => '{{intentId}}',
+						'intent_secret' => '{{intentSecret}}',
+					)
 				),
 				$this->build_postman_item(
 					'Complete intent (cookie)',
@@ -1712,7 +1745,7 @@ abort.abort(); // cancel the slower path'
 						<td><?php echo esc_html__( 'Verify OTP and issue token or session.', 'mksddn-reddy-auth' ); ?></td>
 					</tr>
 					<tr>
-						<td><code>GET</code></td>
+						<td><code>GET / POST</code></td>
 						<td><code>/auth/intent-status</code></td>
 						<td><?php echo esc_html__( 'Poll one-click login intent status.', 'mksddn-reddy-auth' ); ?></td>
 					</tr>
