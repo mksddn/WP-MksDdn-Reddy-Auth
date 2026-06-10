@@ -59,6 +59,13 @@ Public auth routes remain available without login:
 
 * `POST /wp-json/mksddn-reddy-auth/v1/auth/send-code`
 * `POST /wp-json/mksddn-reddy-auth/v1/auth/login`
+* `GET /wp-json/mksddn-reddy-auth/v1/auth/intent-status`
+* `POST /wp-json/mksddn-reddy-auth/v1/auth/intent-status`
+* `POST /wp-json/mksddn-reddy-auth/v1/auth/complete-intent`
+
+Webhook callback route is also public for BotMother integration:
+
+* `POST /wp-json/mksddn-reddy-auth/v1/auth/button-callback`
 
 = 4. Use REST API for headless clients =
 
@@ -69,6 +76,12 @@ Typical flow:
 3. Call protected REST routes with `Authorization: Bearer <token>`.
 4. `GET /auth/me` to read the current user (Bearer or cookie session).
 5. `POST /auth/logout` to end the cookie session and revoke the Bearer token when provided.
+
+One-click flow:
+
+1. `POST /auth/send-code` returns `intent_id` and `intent_secret` when one-click is enabled.
+2. Poll `GET|POST /auth/intent-status` with `intent_id` + `intent_secret`.
+3. After approval, finalize auth via `POST /auth/complete-intent` with `intent_id`, `intent_secret`, and optional `issue_token` / `issue_session`.
 
 For one-click polling, `intent-status` supports both:
 
