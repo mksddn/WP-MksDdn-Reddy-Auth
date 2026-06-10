@@ -70,6 +70,11 @@ Typical flow:
 4. `GET /auth/me` to read the current user (Bearer or cookie session).
 5. `POST /auth/logout` to end the cookie session and revoke the Bearer token when provided.
 
+For one-click polling, `intent-status` supports both:
+
+* `GET /auth/intent-status` with `intent_id` + `intent_secret` query params.
+* `POST /auth/intent-status` with `intent_id` + `intent_secret` in JSON body.
+
 **Protect site content** checks the WordPress cookie session (shortcode login or REST login with `issue_session: true`). It does not accept Bearer tokens. **Protect all REST API content** requires a Bearer token and ignores cookie-only sessions.
 
 Download OpenAPI and Postman files from **Settings > Reddy Auth > Developer Resources**.
@@ -77,6 +82,13 @@ Download OpenAPI and Postman files from **Settings > Reddy Auth > Developer Reso
 = 5. Optional: restrict REST callers by browser source =
 
 In **Settings > Reddy Auth**, **Allowed request sources** limits plugin REST traffic (`/mksddn-reddy-auth/v1/*`) to listed `Origin` or `Referer` URLs. Leave empty to allow any client (recommended for server-to-server integrations). This is a soft guard for browser apps, not a secret key.
+
+= 6. Optional: harden one-click webhook verification =
+
+In **Settings > Reddy Auth > One-Click Authorization**, set **Webhook secret (optional)** to match BotMother webhook Secret.
+
+* With a configured secret, webhook signature verification uses `sha256(body + bot_token + "." + webhook_secret)`.
+* With an empty secret, compatibility mode uses `sha256(body + bot_token)`.
 
 == Frequently Asked Questions ==
 
@@ -153,10 +165,10 @@ No other third-party services are required for core plugin operation.
 
 = 1.1.0 =
 * One-click authorization: optional magic link + inline button delivered alongside the OTP code.
-* Login intent system: `POST /auth/intent-status` and `POST /auth/complete-intent` endpoints for polling one-click flow.
+* Login intent system: `GET|POST /auth/intent-status` and `POST /auth/complete-intent` endpoints for polling one-click flow.
 * Webhook endpoint `POST /auth/button-callback` for Reddy bot inline button callbacks (HMAC-verified).
 * Reddy ID whitelist: restrict authentication to a configured set of Reddy IDs.
-* Plugin translations loaded via `load_plugin_textdomain`; en_US and ru_RU catalogs included.
+* Translation defaults were updated to avoid early textdomain loading notices on WordPress 6.7+; en_US and ru_RU catalogs included.
 * Auth failure observability: new `mksddn_reddy_auth_failure` action on every failed OTP, intent, or finalize step.
 * Transport observability: new `mksddn_reddy_transport_failed` and `mksddn_reddy_transport_response` actions.
 * New `mksddn_reddy_send_payload` filter to modify the Reddy bot request payload before delivery.

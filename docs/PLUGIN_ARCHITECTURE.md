@@ -25,7 +25,7 @@
   - When delivery mode is not `otp_only`:
     - Create login intent (`intent_id`, `intent_secret`).
     - Issue one-time magic link token (for legacy text link in message body).
-    - Send Reddy message with authorize button (`type: action`, `data: intent_id`).
+    - Send Reddy message with authorize button (`type: action`, `data: intent_id.intent_secret`).
   - Trigger Reddy delivery through `ReddyClient`.
 - Response:
   ```json
@@ -47,8 +47,10 @@ The messenger button uses `type: action` — pressing it sends a `buttonAction` 
   - Extracts `button.data` as `intent_id.intent_secret` and calls `Login_Intent_Service::approve()` with strict secret validation.
   - Returns `{ "success": true }`.
   - **Must be configured as webhook URL in Reddy bot (BotMother) settings.** The URL is shown in plugin settings under One-Click Authorization.
-- Intent polling: `GET /mksddn-reddy-auth/v1/auth/intent-status`
-  - Accepts `intent_id` + `intent_secret` as query params (headless), or reads from cookie (browser shortcode).
+- Intent polling: `GET|POST /mksddn-reddy-auth/v1/auth/intent-status`
+  - `GET`: accepts `intent_id` + `intent_secret` as query params (headless).
+  - `POST`: accepts `intent_id` + `intent_secret` in JSON body (headless/shortcode JS).
+  - Cookie fallback remains available for browser shortcode flow.
   - Returns `{ "success": true, "status": "pending|approved" }`.
 - Intent completion: `POST /mksddn-reddy-auth/v1/auth/complete-intent`
   - Accepts `intent_id` + `intent_secret` in body (headless), or reads from cookie (browser shortcode).
@@ -139,7 +141,7 @@ The messenger button uses `type: action` — pressing it sends a `buttonAction` 
   - Reads bot token from `MKSDDN_REDDY_BOT_TOKEN` or dev fallback option.
   - Builds OTP and connection test message text from admin settings (`otp_message_template`, `magic_link_message_template`, `bot_test_message`).
   - Supports delivery modes: `otp_only`, `otp_plus_link`, `link_only`.
-  - Sends authorize button with `type: action` and `intent_id` as data (triggers `buttonAction` webhook, no browser opens).
+  - Sends authorize button with `type: action` and callback data `intent_id.intent_secret` (triggers `buttonAction` webhook, no browser opens).
   - Custom transport via `mksddn_reddy_send_code_transport` bypasses the admin OTP template.
 - `Mksddn_Reddy_Auth_Otp_Service`
   - OTP generation, hashing, TTL, one-time validation, rate limiting.
