@@ -416,6 +416,8 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 			array(
 				'intentStatusUrl'   => rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/intent-status' ),
 				'completeIntentUrl' => rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/complete-intent' ),
+				'intentId'          => $intent_id,
+				'intentSecret'      => $intent_secret,
 				'pollIntervalMs'    => max( 1000, (int) apply_filters( 'mksddn_reddy_intent_poll_interval_ms', 3000 ) ),
 				'maxPollIntervalMs' => max( 1000, (int) apply_filters( 'mksddn_reddy_intent_poll_max_interval_ms', 15000 ) ),
 				'pollBackoffFactor' => max( 1, (int) apply_filters( 'mksddn_reddy_intent_poll_backoff_factor', 2 ) ),
@@ -452,15 +454,17 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		$signature  = hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
 		$value      = $encoded . '.' . $signature;
 
-		setcookie(
-			self::POLLING_COOKIE_NAME,
-			$value,
-			$expires_at,
-			$this->get_cookie_path(),
-			$this->get_cookie_domain(),
-			is_ssl(),
-			true
-		);
+		foreach ( $this->get_cookie_paths() as $cookie_path ) {
+			setcookie(
+				self::POLLING_COOKIE_NAME,
+				$value,
+				$expires_at,
+				$cookie_path,
+				$this->get_cookie_domain(),
+				is_ssl(),
+				true
+			);
+		}
 	}
 
 	/**
@@ -515,15 +519,17 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	 * @return void
 	 */
 	private function clear_polling_context_cookie() {
-		setcookie(
-			self::POLLING_COOKIE_NAME,
-			'',
-			time() - HOUR_IN_SECONDS,
-			$this->get_cookie_path(),
-			$this->get_cookie_domain(),
-			is_ssl(),
-			true
-		);
+		foreach ( $this->get_cookie_paths() as $cookie_path ) {
+			setcookie(
+				self::POLLING_COOKIE_NAME,
+				'',
+				time() - HOUR_IN_SECONDS,
+				$cookie_path,
+				$this->get_cookie_domain(),
+				is_ssl(),
+				true
+			);
+		}
 	}
 
 	/**
@@ -547,15 +553,17 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 		$signature  = hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
 		$value      = $encoded . '.' . $signature;
 
-		setcookie(
-			self::LOGIN_CONTEXT_COOKIE_NAME,
-			$value,
-			$expires_at,
-			$this->get_cookie_path(),
-			$this->get_cookie_domain(),
-			is_ssl(),
-			true
-		);
+		foreach ( $this->get_cookie_paths() as $cookie_path ) {
+			setcookie(
+				self::LOGIN_CONTEXT_COOKIE_NAME,
+				$value,
+				$expires_at,
+				$cookie_path,
+				$this->get_cookie_domain(),
+				is_ssl(),
+				true
+			);
+		}
 	}
 
 	/**
@@ -606,24 +614,38 @@ class Mksddn_Reddy_Auth_Login_Shortcode {
 	 * @return void
 	 */
 	private function clear_login_context_cookie() {
-		setcookie(
-			self::LOGIN_CONTEXT_COOKIE_NAME,
-			'',
-			time() - HOUR_IN_SECONDS,
-			$this->get_cookie_path(),
-			$this->get_cookie_domain(),
-			is_ssl(),
-			true
-		);
+		foreach ( $this->get_cookie_paths() as $cookie_path ) {
+			setcookie(
+				self::LOGIN_CONTEXT_COOKIE_NAME,
+				'',
+				time() - HOUR_IN_SECONDS,
+				$cookie_path,
+				$this->get_cookie_domain(),
+				is_ssl(),
+				true
+			);
+		}
 	}
 
 	/**
-	 * Resolve cookie path.
+	 * Resolve cookie paths.
 	 *
-	 * @return string
+	 * @return array<int, string>
 	 */
-	private function get_cookie_path() {
-		return defined( 'COOKIEPATH' ) && is_string( COOKIEPATH ) && '' !== COOKIEPATH ? COOKIEPATH : '/';
+	private function get_cookie_paths() {
+		$paths = array();
+
+		if ( defined( 'COOKIEPATH' ) && is_string( COOKIEPATH ) && '' !== COOKIEPATH ) {
+			$paths[] = COOKIEPATH;
+		}
+
+		if ( defined( 'SITECOOKIEPATH' ) && is_string( SITECOOKIEPATH ) && '' !== SITECOOKIEPATH ) {
+			$paths[] = SITECOOKIEPATH;
+		}
+
+		$paths[] = '/';
+
+		return array_values( array_unique( $paths ) );
 	}
 
 	/**

@@ -180,17 +180,19 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return false;
 		}
 
-		$path   = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
-		$prefix = '/' . rest_get_url_prefix() . '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/';
-		$send           = $prefix . 'send-code';
-		$login          = $prefix . 'login';
-		$intent_status  = $prefix . 'intent-status';
+		$path            = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$prefix          = '/' . rest_get_url_prefix() . '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/';
+		$send            = $prefix . 'send-code';
+		$login           = $prefix . 'login';
+		$intent_status   = $prefix . 'intent-status';
 		$complete_intent = $prefix . 'complete-intent';
+		$button_callback = $prefix . 'button-callback';
 
 		return $this->path_ends_with( $path, $send )
 			|| $this->path_ends_with( $path, $login )
 			|| $this->path_ends_with( $path, $intent_status )
-			|| $this->path_ends_with( $path, $complete_intent );
+			|| $this->path_ends_with( $path, $complete_intent )
+			|| $this->path_ends_with( $path, $button_callback );
 	}
 
 	/**
@@ -224,7 +226,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return false;
 		}
 
-		$user  = wp_get_current_user();
+		$user   = wp_get_current_user();
 		$exempt = current_user_can( 'edit_posts' );
 
 		return (bool) apply_filters( 'mksddn_reddy_content_lock_bypass', $exempt, $user );

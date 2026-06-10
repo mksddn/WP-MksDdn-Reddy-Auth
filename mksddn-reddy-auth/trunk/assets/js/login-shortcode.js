@@ -18,6 +18,8 @@
 	var maxInterval = Number(config.maxPollIntervalMs) || 15000;
 	var backoffFactor = Number(config.pollBackoffFactor) || 2;
 	var expiresAt = Number(config.expiresAt) || 0;
+	var intentId = config.intentId || '';
+	var intentSecret = config.intentSecret || '';
 
 	function hideForms() {
 		var sendForm = formRoot.querySelector('.mksddn-reddy-auth-send-form');
@@ -86,6 +88,8 @@
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
+				intent_id: intentId,
+				intent_secret: intentSecret,
 				issue_session: true
 			})
 		})
@@ -129,12 +133,23 @@
 			return;
 		}
 
-		var url = config.intentStatusUrl;
-
-		fetch(url, {
+		var statusRequest = {
 			method: 'GET',
 			credentials: 'same-origin'
-		})
+		};
+
+		if (intentId && intentSecret) {
+			statusRequest.method = 'POST';
+			statusRequest.headers = {
+				'Content-Type': 'application/json'
+			};
+			statusRequest.body = JSON.stringify({
+				intent_id: intentId,
+				intent_secret: intentSecret
+			});
+		}
+
+		fetch(config.intentStatusUrl, statusRequest)
 			.then(function (response) {
 				return response.json();
 			})

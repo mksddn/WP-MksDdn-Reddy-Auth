@@ -182,6 +182,28 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 
 		register_rest_route(
 			Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE,
+			'/auth/intent-status',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => array( $this->request_url_guard, 'rest_permission_check' ),
+				'callback'            => array( $this, 'intent_status' ),
+				'args'                => array(
+					'intent_id'     => array(
+						'required'          => false,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'intent_secret' => array(
+						'required'          => false,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE,
 			'/auth/complete-intent',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -435,34 +457,77 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function button_callback( WP_REST_Request $request ) {
-		$raw_body = $request->get_body();
+		$raw_body        = $request->get_body();
+		$signature_valid = $this->verify_reddy_signature( $raw_body, $request->get_header( 'X-BotAPI-Sign' ) );
 
-		if ( ! $this->verify_reddy_signature( $raw_body, $request->get_header( 'X-BotAPI-Sign' ) ) ) {
-			return new WP_REST_Response( array( 'success' => false ), 403 );
+		if ( ! $signature_valid ) {
+			do_action(
+				'mksddn_reddy_auth_failure',
+				array(
+					'stage'      => 'button_callback',
+					'error_code' => 'invalid_signature',
+				)
+			);
 		}
 
 		$payload = json_decode( $raw_body, true );
 
 		if ( ! is_array( $payload ) ) {
+			do_action(
+				'mksddn_reddy_auth_failure',
+				array(
+					'stage'      => 'button_callback',
+					'error_code' => 'invalid_payload',
+				)
+			);
 			return new WP_REST_Response( array( 'success' => true ), 200 );
 		}
 
-		$updates = isset( $payload[0] ) ? $payload : array( $payload );
+		$updates = $this->extract_button_updates( $payload );
 
 		foreach ( $updates as $update ) {
-			if ( ! is_array( $update ) || ( isset( $update['type'] ) && 'buttonAction' !== $update['type'] ) ) {
+			if ( ! is_array( $update ) ) {
 				continue;
 			}
 
-			$button_data = '';
-			if ( ! empty( $update['button']['data'] ) ) {
-				$button_data = sanitize_text_field( (string) $update['button']['data'] );
-			} elseif ( ! empty( $update['data'] ) ) {
-				$button_data = sanitize_text_field( (string) $update['data'] );
+			$update = $this->normalize_button_update( $update );
+			if ( empty( $update ) ) {
+				continue;
+			}
+
+			$update_type = isset( $update['type'] ) ? sanitize_key( (string) $update['type'] ) : '';
+
+			if ( '' !== $update_type && ! in_array( $update_type, array( 'buttonaction', 'button_action' ), true ) ) {
+				continue;
+			}
+
+			$button_data = $this->extract_button_data( $update );
+
+			if ( '' === $button_data ) {
+				do_action(
+					'mksddn_reddy_auth_failure',
+					array(
+						'stage'      => 'button_callback',
+						'error_code' => 'missing_button_data',
+					)
+				);
+				continue;
 			}
 
 			list( $intent_id, $intent_secret ) = $this->parse_button_callback_data( $button_data );
+
 			if ( '' !== $intent_id ) {
+				if ( ! $signature_valid && '' === $intent_secret ) {
+					do_action(
+						'mksddn_reddy_auth_failure',
+						array(
+							'stage'      => 'button_callback',
+							'error_code' => 'signature_invalid_secret_missing',
+						)
+					);
+					continue;
+				}
+
 				$approver_reddy_id = '' === $intent_secret ? $this->extract_update_reddy_id( $update ) : '';
 				if ( '' === $intent_secret && '' === $approver_reddy_id ) {
 					do_action(
@@ -475,7 +540,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 					continue;
 				}
 
-				$approve_result    = $this->login_intent_service->approve( $intent_id, $intent_secret, $approver_reddy_id );
+				$approve_result = $this->login_intent_service->approve( $intent_id, $intent_secret, $approver_reddy_id );
 				if ( is_wp_error( $approve_result ) && 'intent_consumed' !== $approve_result->get_error_code() ) {
 					do_action(
 						'mksddn_reddy_auth_failure',
@@ -489,6 +554,116 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		}
 
 		return new WP_REST_Response( array( 'success' => true ), 200 );
+	}
+
+	/**
+	 * Normalize incoming webhook payload to a list of updates.
+	 *
+	 * Supports raw single update, array of updates, and common wrappers
+	 * used by webhook forwarders and long-polling responses.
+	 *
+	 * @param array<string, mixed> $payload Raw webhook payload.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function extract_button_updates( array $payload ) {
+		if ( isset( $payload[0] ) ) {
+			return array_values(
+				array_filter(
+					$payload,
+					'is_array'
+				)
+			);
+		}
+
+		if ( isset( $payload['updates'] ) && is_array( $payload['updates'] ) ) {
+			return array_values(
+				array_filter(
+					$payload['updates'],
+					'is_array'
+				)
+			);
+		}
+
+		if ( isset( $payload['result'] ) && is_array( $payload['result'] ) ) {
+			return array_values(
+				array_filter(
+					$payload['result'],
+					'is_array'
+				)
+			);
+		}
+
+		if ( isset( $payload['update'] ) && is_array( $payload['update'] ) ) {
+			return array( $payload['update'] );
+		}
+
+		if ( isset( $payload['data'] ) && is_array( $payload['data'] ) ) {
+			if ( isset( $payload['data'][0] ) ) {
+				return array_values(
+					array_filter(
+						$payload['data'],
+						'is_array'
+					)
+				);
+			}
+
+			return array( $payload['data'] );
+		}
+
+		return array( $payload );
+	}
+
+	/**
+	 * Extract callback data from button webhook update.
+	 *
+	 * @param array<string, mixed> $update Parsed update payload.
+	 * @return string
+	 */
+	private function extract_button_data( array $update ) {
+		if ( isset( $update['button'] ) && is_array( $update['button'] ) ) {
+			if ( ! empty( $update['button']['data'] ) ) {
+				return sanitize_text_field( (string) $update['button']['data'] );
+			}
+
+			if ( ! empty( $update['button']['payload'] ) ) {
+				return sanitize_text_field( (string) $update['button']['payload'] );
+			}
+		}
+
+		if ( ! empty( $update['data'] ) ) {
+			return sanitize_text_field( (string) $update['data'] );
+		}
+
+		if ( ! empty( $update['payload'] ) ) {
+			return sanitize_text_field( (string) $update['payload'] );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Normalize a single webhook update payload.
+	 *
+	 * Some webhook forwarders wrap event payload in nested keys like
+	 * "update", "event", "payload", or "data". This method unwraps such
+	 * envelopes to the canonical update structure.
+	 *
+	 * @param array<string, mixed> $update Raw update payload.
+	 * @return array<string, mixed>
+	 */
+	private function normalize_button_update( array $update ) {
+		$candidates = array( 'update', 'event', 'payload', 'data' );
+
+		foreach ( $candidates as $candidate_key ) {
+			if ( isset( $update[ $candidate_key ] ) && is_array( $update[ $candidate_key ] ) ) {
+				$nested = $update[ $candidate_key ];
+				if ( ! empty( $nested['type'] ) || ! empty( $nested['button'] ) || ! empty( $nested['data'] ) ) {
+					return $nested;
+				}
+			}
+		}
+
+		return $update;
 	}
 
 	/**
@@ -756,15 +931,17 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 		$signature  = hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
 		$value      = $encoded . '.' . $signature;
 
-		setcookie(
-			self::POLLING_COOKIE_NAME,
-			$value,
-			$expires_at,
-			$this->get_cookie_path(),
-			$this->get_cookie_domain(),
-			is_ssl(),
-			true
-		);
+		foreach ( $this->get_cookie_paths() as $cookie_path ) {
+			setcookie(
+				self::POLLING_COOKIE_NAME,
+				$value,
+				$expires_at,
+				$cookie_path,
+				$this->get_cookie_domain(),
+				is_ssl(),
+				true
+			);
+		}
 	}
 
 	/**
@@ -860,16 +1037,24 @@ class Mksddn_Reddy_Auth_Rest_Auth_Controller {
 	}
 
 	/**
-	 * Return cookie path for plugin auth context.
+	 * Return cookie paths for plugin auth context.
 	 *
-	 * @return string
+	 * @return array<int, string>
 	 */
-	private function get_cookie_path() {
-		if ( defined( 'COOKIEPATH' ) && '' !== COOKIEPATH ) {
-			return COOKIEPATH;
+	private function get_cookie_paths() {
+		$paths = array();
+
+		if ( defined( 'COOKIEPATH' ) && is_string( COOKIEPATH ) && '' !== COOKIEPATH ) {
+			$paths[] = COOKIEPATH;
 		}
 
-		return '/';
+		if ( defined( 'SITECOOKIEPATH' ) && is_string( SITECOOKIEPATH ) && '' !== SITECOOKIEPATH ) {
+			$paths[] = SITECOOKIEPATH;
+		}
+
+		$paths[] = '/';
+
+		return array_values( array_unique( $paths ) );
 	}
 
 	/**
