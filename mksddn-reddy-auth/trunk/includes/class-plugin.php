@@ -198,9 +198,32 @@ class Mksddn_Reddy_Auth_Plugin {
 		add_filter( 'plugin_action_links_' . plugin_basename( MKSDDN_REDDY_AUTH_FILE ), array( $this, 'add_plugin_action_links' ) );
 		add_filter( 'rest_pre_dispatch', array( $this->request_url_guard, 'enforce_rest_url_allowlist' ), 5, 3 );
 		add_filter( 'rest_authentication_errors', array( $this->rest_auth_middleware, 'enforce_api_content_lock' ), 20 );
+		add_filter( 'rest_json_encode_options', array( $this, 'filter_rest_json_encode_options' ), 10, 2 );
 		add_action( 'template_redirect', array( $this->rest_auth_middleware, 'enforce_monolith_content_lock' ), 1 );
 		add_action( 'delete_user', array( $this, 'revoke_user_credentials' ), 10, 2 );
 		$this->login_shortcode->register_hooks();
+	}
+
+	/**
+	 * Keep Cyrillic readable in plugin REST responses.
+	 *
+	 * @param int                  $options Encoding options bitmask.
+	 * @param WP_REST_Request|null $request Current REST request.
+	 * @return int
+	 */
+	public function filter_rest_json_encode_options( $options, $request = null ) {
+		if ( ! ( $request instanceof WP_REST_Request ) ) {
+			return $options;
+		}
+
+		$route_prefix = '/' . self::REST_NAMESPACE . '/';
+		$route        = (string) $request->get_route();
+
+		if ( 0 !== strpos( $route, $route_prefix ) ) {
+			return $options;
+		}
+
+		return $options | JSON_UNESCAPED_UNICODE;
 	}
 
 	/**
