@@ -11,6 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Mksddn_Reddy_Auth_Settings_Page {
 	/**
+	 * Request-scoped cache for merged plugin settings.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	private static $runtime_settings_cache = null;
+
+	/**
 	 * Settings option key.
 	 *
 	 * @var string
@@ -80,9 +87,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		);
 
 		add_settings_section(
-			'mksddn_reddy_auth_main_section',
-			__( 'Authentication Settings', 'mksddn-reddy-auth' ),
-			array( $this, 'render_section_description' ),
+			'mksddn_reddy_auth_connection_section',
+			'',
+			'__return_empty_string',
 			self::PAGE_SLUG
 		);
 
@@ -91,7 +98,14 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Bot token (dev fallback)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_bot_token_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_connection_section'
+		);
+
+		add_settings_section(
+			'mksddn_reddy_auth_access_section',
+			'',
+			'__return_empty_string',
+			self::PAGE_SLUG
 		);
 
 		add_settings_field(
@@ -99,7 +113,15 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Allowed request sources', 'mksddn-reddy-auth' ),
 			array( $this, 'render_allowed_urls_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
+		);
+
+		add_settings_field(
+			'allowed_reddy_ids',
+			__( 'Allowed Reddy IDs', 'mksddn-reddy-auth' ),
+			array( $this, 'render_allowed_reddy_ids_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_field(
@@ -107,7 +129,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Protect all REST API content', 'mksddn-reddy-auth' ),
 			array( $this, 'render_api_lock_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_field(
@@ -115,7 +137,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Protect site content', 'mksddn-reddy-auth' ),
 			array( $this, 'render_monolith_lock_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
 		);
 
 		add_settings_field(
@@ -123,7 +145,60 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Login page', 'mksddn-reddy-auth' ),
 			array( $this, 'render_login_page_select_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section'
+			'mksddn_reddy_auth_access_section'
+		);
+
+		add_settings_section(
+			'mksddn_reddy_auth_one_click_section',
+			'',
+			'__return_empty_string',
+			self::PAGE_SLUG
+		);
+
+		add_settings_field(
+			'one_click_delivery_mode',
+			__( 'Messenger delivery mode', 'mksddn-reddy-auth' ),
+			array( $this, 'render_one_click_delivery_mode_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_one_click_section'
+		);
+
+		add_settings_field(
+			'magic_link_ttl_seconds',
+			__( 'One-click link TTL (seconds)', 'mksddn-reddy-auth' ),
+			array( $this, 'render_number_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_one_click_section',
+			array(
+				'key'         => 'magic_link_ttl_seconds',
+				'min'         => 60,
+				'max'         => 900,
+				'step'        => 1,
+				'description' => __( 'Lifetime of the authorize button link and login intent.', 'mksddn-reddy-auth' ),
+			)
+		);
+
+		add_settings_field(
+			'one_click_redirect_url',
+			__( 'One-click redirect URL', 'mksddn-reddy-auth' ),
+			array( $this, 'render_one_click_redirect_url_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_one_click_section'
+		);
+
+		add_settings_field(
+			'webhook_secret',
+			__( 'Webhook secret (optional)', 'mksddn-reddy-auth' ),
+			array( $this, 'render_webhook_secret_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_one_click_section'
+		);
+
+		add_settings_section(
+			'mksddn_reddy_auth_limits_section',
+			'',
+			'__return_empty_string',
+			self::PAGE_SLUG
 		);
 
 		add_settings_field(
@@ -131,12 +206,13 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'OTP TTL (seconds)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_number_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section',
+			'mksddn_reddy_auth_limits_section',
 			array(
-				'key'  => 'otp_ttl_seconds',
-				'min'  => 60,
-				'max'  => 900,
-				'step' => 1,
+				'key'         => 'otp_ttl_seconds',
+				'min'         => 60,
+				'max'         => 900,
+				'step'        => 1,
+				'description' => __( 'How long an OTP code stays valid after it is sent.', 'mksddn-reddy-auth' ),
 			)
 		);
 
@@ -145,7 +221,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Send-code limit (per 5 minutes)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_number_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section',
+			'mksddn_reddy_auth_limits_section',
 			array(
 				'key'         => 'send_rate_limit',
 				'min'         => 1,
@@ -160,7 +236,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Login attempt limit (per 10 minutes)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_number_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section',
+			'mksddn_reddy_auth_limits_section',
 			array(
 				'key'         => 'login_rate_limit',
 				'min'         => 1,
@@ -175,19 +251,20 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			__( 'Bearer token TTL (seconds)', 'mksddn-reddy-auth' ),
 			array( $this, 'render_number_field' ),
 			self::PAGE_SLUG,
-			'mksddn_reddy_auth_main_section',
+			'mksddn_reddy_auth_limits_section',
 			array(
-				'key'  => 'token_ttl_seconds',
-				'min'  => 3600,
-				'max'  => 7776000,
-				'step' => 60,
+				'key'         => 'token_ttl_seconds',
+				'min'         => 3600,
+				'max'         => 7776000,
+				'step'        => 60,
+				'description' => __( 'How long API Bearer tokens remain valid before users must log in again.', 'mksddn-reddy-auth' ),
 			)
 		);
 
 		add_settings_section(
 			'mksddn_reddy_auth_messages_section',
-			__( 'Bot Messages', 'mksddn-reddy-auth' ),
-			array( $this, 'render_messages_section_description' ),
+			'',
+			'__return_empty_string',
 			self::PAGE_SLUG
 		);
 
@@ -195,6 +272,22 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			'otp_message_template',
 			__( 'OTP message template', 'mksddn-reddy-auth' ),
 			array( $this, 'render_otp_message_template_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_messages_section'
+		);
+
+		add_settings_field(
+			'magic_link_message_template',
+			__( 'One-click message template', 'mksddn-reddy-auth' ),
+			array( $this, 'render_magic_link_message_template_field' ),
+			self::PAGE_SLUG,
+			'mksddn_reddy_auth_messages_section'
+		);
+
+		add_settings_field(
+			'magic_link_button_label',
+			__( 'Authorize button label', 'mksddn-reddy-auth' ),
+			array( $this, 'render_magic_link_button_label_field' ),
 			self::PAGE_SLUG,
 			'mksddn_reddy_auth_messages_section'
 		);
@@ -209,7 +302,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 
 		add_settings_section(
 			'mksddn_reddy_auth_dev_section',
-			__( 'Developer Resources', 'mksddn-reddy-auth' ),
+			'',
 			'__return_empty_string',
 			self::PAGE_SLUG
 		);
@@ -232,7 +325,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
-	 * Render settings page.
+	 * Render settings page with tabbed navigation.
 	 *
 	 * @return void
 	 */
@@ -240,47 +333,137 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+
+		$tabs = array(
+			'connection' => __( 'Connection', 'mksddn-reddy-auth' ),
+			'access'     => __( 'Access Control', 'mksddn-reddy-auth' ),
+			'one-click'  => __( 'One-Click', 'mksddn-reddy-auth' ),
+			'limits'     => __( 'Limits', 'mksddn-reddy-auth' ),
+			'messages'   => __( 'Messages', 'mksddn-reddy-auth' ),
+			'developer'  => __( 'Developer', 'mksddn-reddy-auth' ),
+			'frontend'   => __( 'Frontend Setup', 'mksddn-reddy-auth' ),
+		);
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'Reddy Auth Settings', 'mksddn-reddy-auth' ); ?></h1>
-			<div class="notice notice-info inline" style="padding:12px 16px;">
-				<p style="margin:0 0 8px;">
-					<strong><?php echo esc_html__( 'Quick Start', 'mksddn-reddy-auth' ); ?></strong>
-				</p>
-				<p style="margin:0 0 8px;">
-					<?php echo esc_html__( '1) Set bot token (prefer MKSDDN_REDDY_BOT_TOKEN in wp-config.php for production). 2) Configure security limits below. 3) Create a login page and add shortcode:', 'mksddn-reddy-auth' ); ?>
-					<code>[mksddn_reddy_login]</code>.
-				</p>
-				<p style="margin:0 0 8px;">
-					<?php echo esc_html__( '4) If site protection is enabled, select Login page to avoid redirect loops.', 'mksddn-reddy-auth' ); ?>
-				</p>
-				<p style="margin:0;">
-					<?php echo esc_html__( 'Site and REST protection are off by default. Enable them only after the login page is ready.', 'mksddn-reddy-auth' ); ?>
-				</p>
-			</div>
 			<?php $this->render_bot_test_notice(); ?>
+			<nav class="nav-tab-wrapper mksddn-reddy-nav">
+				<?php foreach ( $tabs as $tab_id => $tab_label ) : ?>
+				<a href="#" class="nav-tab" data-tab="<?php echo esc_attr( $tab_id ); ?>">
+					<?php echo esc_html( $tab_label ); ?>
+				</a>
+				<?php endforeach; ?>
+			</nav>
 			<form method="post" action="options.php">
-				<?php
-				settings_fields( 'mksddn_reddy_auth_settings_group' );
-				do_settings_sections( self::PAGE_SLUG );
-				submit_button();
-				?>
+				<?php settings_fields( 'mksddn_reddy_auth_settings_group' ); ?>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="connection" style="display:none">
+					<div class="notice notice-info inline" style="padding:12px 16px;margin-top:12px">
+						<p style="margin:0 0 8px"><strong><?php echo esc_html__( 'Quick Start', 'mksddn-reddy-auth' ); ?></strong></p>
+						<ol style="margin:0 0 8px 20px;padding:0">
+							<li style="margin:0 0 6px"><?php echo esc_html__( 'In Reddy, message Bot Mother (72220000000) to create your bot.', 'mksddn-reddy-auth' ); ?></li>
+							<li style="margin:0 0 6px"><?php echo esc_html__( 'Paste your bot token here to connect WordPress with Reddy.', 'mksddn-reddy-auth' ); ?></li>
+							<li style="margin:0 0 6px">
+								<?php echo esc_html__( 'For monolith WordPress site mode, create a login page and add shortcode:', 'mksddn-reddy-auth' ); ?>
+								<code>[mksddn_reddy_login]</code>.
+							</li>
+							<li style="margin:0 0 6px"><?php echo esc_html__( 'After a successful login test, enable protection.', 'mksddn-reddy-auth' ); ?></li>
+						</ol>
+					</div>
+					<?php $this->render_connection_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_connection_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="access" style="display:none">
+					<?php $this->render_access_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_access_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="one-click" style="display:none">
+					<?php $this->render_one_click_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_one_click_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="limits" style="display:none">
+					<?php $this->render_limits_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_limits_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="messages" style="display:none">
+					<?php $this->render_messages_section_description(); ?>
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_messages_section' ); ?>
+					</table>
+				</div>
+
+				<div class="mksddn-reddy-tab-panel" data-panel="developer" style="display:none">
+					<table class="form-table" role="presentation">
+						<?php do_settings_fields( self::PAGE_SLUG, 'mksddn_reddy_auth_dev_section' ); ?>
+					</table>
+				</div>
+
+				<div id="mksddn-reddy-form-footer">
+					<?php submit_button(); ?>
+				</div>
 			</form>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="mksddn-reddy-bot-test-form">
 				<input type="hidden" name="action" value="mksddn_reddy_test_bot_connection" />
 				<?php wp_nonce_field( 'mksddn_reddy_test_bot_connection' ); ?>
 			</form>
+			<div class="mksddn-reddy-tab-panel" data-panel="frontend" style="display:none">
+				<?php $this->render_frontend_guide(); ?>
+			</div>
 		</div>
+		<?php $this->render_tab_js( array_keys( $tabs ) ); ?>
 		<?php
 	}
 
 	/**
-	 * Render section description.
+	 * Render connection section description.
 	 *
 	 * @return void
 	 */
-	public function render_section_description() {
-		echo '<p>' . esc_html__( 'Use wp-config constant MKSDDN_REDDY_BOT_TOKEN in production.', 'mksddn-reddy-auth' ) . '</p>';
+	public function render_connection_section_description() {
+		echo '<p>' . esc_html__( 'Enter your bot token and verify the connection before enabling any protection.', 'mksddn-reddy-auth' ) . '</p>';
+	}
+
+	/**
+	 * Render access control section description.
+	 *
+	 * @return void
+	 */
+	public function render_access_section_description() {
+		echo '<p>' . esc_html__( 'Configure which Reddy IDs and request sources are allowed, then enable content protection.', 'mksddn-reddy-auth' ) . '</p>';
+	}
+
+	/**
+	 * Render one-click section description.
+	 *
+	 * @return void
+	 */
+	public function render_one_click_section_description() {
+		echo '<p>' . esc_html__( 'One-click lets users authorize from messenger without entering OTP manually. Keep OTP flow as fallback.', 'mksddn-reddy-auth' ) . '</p>';
+		$webhook_url = rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/button-callback' );
+		echo '<p><strong>' . esc_html__( 'Webhook URL', 'mksddn-reddy-auth' ) . ':</strong> ';
+		echo '<code style="user-select:all">' . esc_html( $webhook_url ) . '</code></p>';
+		echo '<p class="description">' . esc_html__( 'Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events.', 'mksddn-reddy-auth' ) . '</p>';
+	}
+
+	/**
+	 * Render limits section description.
+	 *
+	 * @return void
+	 */
+	public function render_limits_section_description() {
+		echo '<p>' . esc_html__( 'Tune OTP/token TTL and anti-abuse limits. Start with defaults unless you have specific security requirements.', 'mksddn-reddy-auth' ) . '</p>';
 	}
 
 	/**
@@ -289,7 +472,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return void
 	 */
 	public function render_messages_section_description() {
-		echo '<p>' . esc_html__( 'Customize texts sent by the Reddy bot. Placeholders in the OTP template are replaced at send time.', 'mksddn-reddy-auth' ) . '</p>';
+		echo '<p>' . esc_html__( 'Customize texts sent by the Reddy bot. OTP template supports {code}, {ttl}, and {link}. One-click template is used when delivery mode is link only.', 'mksddn-reddy-auth' ) . '</p>';
 	}
 
 	/**
@@ -345,6 +528,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		$value = (string) get_option( self::BOT_TOKEN_OPTION_KEY, '' );
 		?>
 		<input type="password" name="<?php echo esc_attr( self::BOT_TOKEN_OPTION_KEY ); ?>" value="<?php echo esc_attr( $value ); ?>" class="regular-text" autocomplete="off" />
+		<p class="description">
+			<?php echo esc_html__( 'Development fallback. In production prefer MKSDDN_REDDY_BOT_TOKEN in wp-config.php.', 'mksddn-reddy-auth' ); ?>
+		</p>
 		<?php
 	}
 
@@ -375,6 +561,29 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	}
 
 	/**
+	 * Render allowed Reddy ID whitelist field.
+	 *
+	 * @return void
+	 */
+	public function render_allowed_reddy_ids_field() {
+		$settings = $this->get_settings();
+		$allowed  = isset( $settings['allowed_reddy_ids'] ) && is_array( $settings['allowed_reddy_ids'] ) ? $settings['allowed_reddy_ids'] : array();
+		$value    = implode( "\n", $allowed );
+		?>
+		<textarea
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[allowed_reddy_ids]' ); ?>"
+			rows="5"
+			cols="50"
+			class="large-text code"
+			placeholder="123456&#10;789012"
+		><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description">
+			<?php echo esc_html__( 'One Reddy ID per line. Empty = no restriction. Applies to OTP send and login completion.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
 	 * Render API lock checkbox.
 	 *
 	 * @return void
@@ -387,6 +596,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			<input type="checkbox" name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[api_lock_enabled]' ); ?>" value="1" <?php checked( $checked ); ?> />
 			<?php echo esc_html__( 'Require Reddy authentication for all REST API content (except send-code/login).', 'mksddn-reddy-auth' ); ?>
 		</label>
+		<p class="description">
+			<?php echo esc_html__( 'Enable when your API must be private. Public endpoints from other plugins may also require authentication.', 'mksddn-reddy-auth' ); ?>
+		</p>
 		<?php
 	}
 
@@ -403,6 +615,9 @@ class Mksddn_Reddy_Auth_Settings_Page {
 			<input type="checkbox" name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[monolith_lock_enabled]' ); ?>" value="1" <?php checked( $checked ); ?> />
 			<?php echo esc_html__( 'Require Reddy authentication for frontend site content.', 'mksddn-reddy-auth' ); ?>
 		</label>
+		<p class="description">
+			<?php echo esc_html__( 'Locks public pages for non-authenticated visitors. Keep the selected login page accessible so users can sign in.', 'mksddn-reddy-auth' ); ?>
+		</p>
 		<?php
 	}
 
@@ -510,10 +725,116 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		<p class="description">
 			<?php
 			echo esc_html__(
-				'Use {code} for the one-time password and {ttl} for expiry time in seconds. Example: Your verification code: {code}. It expires in {ttl} seconds.',
+				'Use {code} for the one-time password, {ttl} for expiry time in seconds, and {link} for the authorize URL. Example: Your verification code: {code}. It expires in {ttl} seconds.',
 				'mksddn-reddy-auth'
 			);
 			?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render one-click delivery mode select.
+	 *
+	 * @return void
+	 */
+	public function render_one_click_delivery_mode_field() {
+		$settings = $this->get_settings();
+		$selected = isset( $settings['one_click_delivery_mode'] ) ? sanitize_key( (string) $settings['one_click_delivery_mode'] ) : 'otp_plus_link';
+		?>
+		<select name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[one_click_delivery_mode]' ); ?>">
+			<option value="otp_only" <?php selected( $selected, 'otp_only' ); ?>><?php echo esc_html__( 'OTP only', 'mksddn-reddy-auth' ); ?></option>
+			<option value="otp_plus_link" <?php selected( $selected, 'otp_plus_link' ); ?>><?php echo esc_html__( 'OTP + authorize button', 'mksddn-reddy-auth' ); ?></option>
+			<option value="link_only" <?php selected( $selected, 'link_only' ); ?>><?php echo esc_html__( 'Authorize button only', 'mksddn-reddy-auth' ); ?></option>
+		</select>
+		<p class="description">
+			<?php echo esc_html__( 'Recommended: OTP + authorize button. Select OTP only to disable one-click authorization.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render one-click redirect URL field.
+	 *
+	 * @return void
+	 */
+	public function render_one_click_redirect_url_field() {
+		$settings = $this->get_settings();
+		$value    = isset( $settings['one_click_redirect_url'] ) ? (string) $settings['one_click_redirect_url'] : '';
+		?>
+		<input
+			type="url"
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[one_click_redirect_url]' ); ?>"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="regular-text"
+			placeholder="<?php echo esc_attr( home_url( '/' ) ); ?>"
+		/>
+		<p class="description">
+			<?php echo esc_html__( 'Optional. Redirect target after successful one-click login. Defaults to home or login page.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render webhook secret field.
+	 *
+	 * @return void
+	 */
+	public function render_webhook_secret_field() {
+		$settings = $this->get_settings();
+		$value    = isset( $settings['webhook_secret'] ) ? (string) $settings['webhook_secret'] : '';
+		?>
+		<input
+			type="password"
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[webhook_secret]' ); ?>"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="regular-text"
+			autocomplete="off"
+		/>
+		<p class="description">
+			<?php echo esc_html__( 'Must match Secret in BotMother webhook settings. Leave empty to use sha256(body + token) compatibility mode.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render one-click message template field.
+	 *
+	 * @return void
+	 */
+	public function render_magic_link_message_template_field() {
+		$settings = $this->get_settings();
+		$value    = isset( $settings['magic_link_message_template'] ) ? (string) $settings['magic_link_message_template'] : '';
+		?>
+		<textarea
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[magic_link_message_template]' ); ?>"
+			rows="3"
+			cols="50"
+			class="large-text"
+		><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description">
+			<?php echo esc_html__( 'Used when delivery mode is authorize button only. Placeholders: {link}, {ttl}.', 'mksddn-reddy-auth' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render authorize button label field.
+	 *
+	 * @return void
+	 */
+	public function render_magic_link_button_label_field() {
+		$settings = $this->get_settings();
+		$value    = isset( $settings['magic_link_button_label'] ) ? (string) $settings['magic_link_button_label'] : '';
+		?>
+		<input
+			type="text"
+			name="<?php echo esc_attr( self::SETTINGS_OPTION_KEY . '[magic_link_button_label]' ); ?>"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="regular-text"
+		/>
+		<p class="description">
+			<?php echo esc_html__( 'Short label shown on messenger button (for example: Authorize, Log in).', 'mksddn-reddy-auth' ); ?>
 		</p>
 		<?php
 	}
@@ -630,17 +951,27 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		$defaults = $this->get_default_settings();
 
 		$sanitized = array(
-			'allowed_urls'          => Mksddn_Reddy_Auth_Request_Url_Guard::sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
-			'api_lock_enabled'      => ! empty( $raw['api_lock_enabled'] ) ? 1 : 0,
-			'monolith_lock_enabled' => ! empty( $raw['monolith_lock_enabled'] ) ? 1 : 0,
-			'login_page_id'         => isset( $raw['login_page_id'] ) ? absint( $raw['login_page_id'] ) : 0,
-			'login_page_url'        => isset( $raw['login_page_url'] ) ? esc_url_raw( (string) $raw['login_page_url'] ) : '',
-			'otp_ttl_seconds'       => $this->sanitize_int_range( $raw, 'otp_ttl_seconds', $defaults['otp_ttl_seconds'], 60, 900 ),
-			'send_rate_limit'       => $this->sanitize_int_range( $raw, 'send_rate_limit', $defaults['send_rate_limit'], 1, 20 ),
-			'login_rate_limit'      => $this->sanitize_int_range( $raw, 'login_rate_limit', $defaults['login_rate_limit'], 1, 30 ),
-			'token_ttl_seconds'     => $this->sanitize_int_range( $raw, 'token_ttl_seconds', $defaults['token_ttl_seconds'], 3600, 7776000 ),
-			'otp_message_template'  => $this->sanitize_otp_message_template( isset( $raw['otp_message_template'] ) ? $raw['otp_message_template'] : '' ),
-			'bot_test_message'      => $this->sanitize_bot_test_message( isset( $raw['bot_test_message'] ) ? $raw['bot_test_message'] : '' ),
+			'allowed_urls'               => Mksddn_Reddy_Auth_Request_Url_Guard::sanitize_allowed_urls( isset( $raw['allowed_urls'] ) ? $raw['allowed_urls'] : '' ),
+			'allowed_reddy_ids'          => Mksddn_Reddy_Auth_Reddy_Id_Whitelist_Service::sanitize_allowed_reddy_ids( isset( $raw['allowed_reddy_ids'] ) ? $raw['allowed_reddy_ids'] : '' ),
+			'api_lock_enabled'           => ! empty( $raw['api_lock_enabled'] ) ? 1 : 0,
+			'monolith_lock_enabled'      => ! empty( $raw['monolith_lock_enabled'] ) ? 1 : 0,
+			'login_page_id'              => isset( $raw['login_page_id'] ) ? absint( $raw['login_page_id'] ) : 0,
+			'login_page_url'             => isset( $raw['login_page_url'] ) ? esc_url_raw( (string) $raw['login_page_url'] ) : '',
+			'otp_ttl_seconds'            => $this->sanitize_int_range( $raw, 'otp_ttl_seconds', $defaults['otp_ttl_seconds'], 60, 900 ),
+			'one_click_delivery_mode'    => $this->sanitize_one_click_delivery_mode(
+				isset( $raw['one_click_delivery_mode'] ) ? $raw['one_click_delivery_mode'] : '',
+				$raw
+			),
+			'magic_link_ttl_seconds'     => $this->sanitize_int_range( $raw, 'magic_link_ttl_seconds', $defaults['magic_link_ttl_seconds'], 60, 900 ),
+			'one_click_redirect_url'     => isset( $raw['one_click_redirect_url'] ) ? esc_url_raw( (string) $raw['one_click_redirect_url'] ) : '',
+			'webhook_secret'             => isset( $raw['webhook_secret'] ) ? sanitize_text_field( (string) $raw['webhook_secret'] ) : '',
+			'send_rate_limit'            => $this->sanitize_int_range( $raw, 'send_rate_limit', $defaults['send_rate_limit'], 1, 20 ),
+			'login_rate_limit'           => $this->sanitize_int_range( $raw, 'login_rate_limit', $defaults['login_rate_limit'], 1, 30 ),
+			'token_ttl_seconds'          => $this->sanitize_int_range( $raw, 'token_ttl_seconds', $defaults['token_ttl_seconds'], 3600, 7776000 ),
+			'otp_message_template'       => $this->sanitize_otp_message_template( isset( $raw['otp_message_template'] ) ? $raw['otp_message_template'] : '' ),
+			'magic_link_message_template'=> $this->sanitize_magic_link_message_template( isset( $raw['magic_link_message_template'] ) ? $raw['magic_link_message_template'] : '' ),
+			'magic_link_button_label'    => $this->sanitize_magic_link_button_label( isset( $raw['magic_link_button_label'] ) ? $raw['magic_link_button_label'] : '' ),
+			'bot_test_message'           => $this->sanitize_bot_test_message( isset( $raw['bot_test_message'] ) ? $raw['bot_test_message'] : '' ),
 		);
 
 		return $sanitized;
@@ -662,10 +993,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return array<string, mixed>
 	 */
 	private function get_settings() {
-		$raw = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$raw = is_array( $raw ) ? $raw : array();
-
-		return wp_parse_args( $raw, $this->get_default_settings() );
+		return self::get_runtime_settings();
 	}
 
 	/**
@@ -675,18 +1003,46 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 */
 	public static function get_install_defaults() {
 		return array(
-			'allowed_urls'          => array(),
-			'api_lock_enabled'      => 0,
-			'monolith_lock_enabled' => 0,
-			'login_page_id'         => 0,
-			'login_page_url'        => '',
-			'otp_ttl_seconds'       => 300,
-			'send_rate_limit'       => 5,
-			'login_rate_limit'      => 7,
-			'token_ttl_seconds'     => 2592000,
-			'otp_message_template'  => self::get_default_otp_message_template(),
-			'bot_test_message'      => self::get_default_bot_test_message(),
+			'allowed_urls'                => array(),
+			'allowed_reddy_ids'           => array(),
+			'api_lock_enabled'            => 0,
+			'monolith_lock_enabled'       => 0,
+			'login_page_id'               => 0,
+			'login_page_url'              => '',
+			'otp_ttl_seconds'             => 300,
+			'one_click_delivery_mode'     => 'otp_plus_link',
+			'magic_link_ttl_seconds'      => 300,
+			'one_click_redirect_url'      => '',
+			'webhook_secret'              => '',
+			'send_rate_limit'             => 5,
+			'login_rate_limit'            => 7,
+			'token_ttl_seconds'           => 2592000,
+			'otp_message_template'        => self::get_default_otp_message_template(),
+			'magic_link_message_template' => self::get_default_magic_link_message_template(),
+			'magic_link_button_label'     => self::get_default_magic_link_button_label(),
+			'bot_test_message'            => self::get_default_bot_test_message(),
 		);
+	}
+
+	/**
+	 * Return merged plugin settings with request-scoped cache.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function get_runtime_settings() {
+		if ( is_array( self::$runtime_settings_cache ) ) {
+			return self::$runtime_settings_cache;
+		}
+
+		$raw = get_option( self::SETTINGS_OPTION_KEY, array() );
+		$raw = is_array( $raw ) ? $raw : array();
+		if ( array_key_exists( 'one_click_enabled', $raw ) && empty( $raw['one_click_enabled'] ) ) {
+			$raw['one_click_delivery_mode'] = 'otp_only';
+		}
+
+		self::$runtime_settings_cache = wp_parse_args( $raw, self::get_install_defaults() );
+
+		return self::$runtime_settings_cache;
 	}
 
 	/**
@@ -695,7 +1051,7 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return string
 	 */
 	public static function get_default_otp_message_template() {
-		return __( 'Your verification code: {code}. It expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+		return self::translate_default_string( 'Your verification code: {code}. It expires in {ttl} seconds.' );
 	}
 
 	/**
@@ -704,7 +1060,53 @@ class Mksddn_Reddy_Auth_Settings_Page {
 	 * @return string
 	 */
 	public static function get_default_bot_test_message() {
-		return __( 'Reddy bot connection test from WordPress plugin.', 'mksddn-reddy-auth' );
+		return self::translate_default_string( 'Reddy bot connection test from WordPress plugin.' );
+	}
+
+	/**
+	 * Default one-click message template with placeholders.
+	 *
+	 * @return string
+	 */
+	public static function get_default_magic_link_message_template() {
+		return self::translate_default_string( 'Tap Authorize to sign in. The link expires in {ttl} seconds.' );
+	}
+
+	/**
+	 * Default authorize button label.
+	 *
+	 * @return string
+	 */
+	public static function get_default_magic_link_button_label() {
+		return self::translate_default_string( 'Authorize' );
+	}
+
+	/**
+	 * Translate default value when locale loading is ready.
+	 *
+	 * Avoid calling translation loading before init to prevent
+	 * _load_textdomain_just_in_time notices on WordPress 6.7+.
+	 *
+	 * @param string $text Default source text.
+	 * @return string
+	 */
+	private static function translate_default_string( $text ) {
+		if ( ! did_action( 'init' ) && ! doing_action( 'init' ) ) {
+			return $text;
+		}
+
+		switch ( $text ) {
+			case 'Your verification code: {code}. It expires in {ttl} seconds.':
+				return __( 'Your verification code: {code}. It expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+			case 'Reddy bot connection test from WordPress plugin.':
+				return __( 'Reddy bot connection test from WordPress plugin.', 'mksddn-reddy-auth' );
+			case 'Tap Authorize to sign in. The link expires in {ttl} seconds.':
+				return __( 'Tap Authorize to sign in. The link expires in {ttl} seconds.', 'mksddn-reddy-auth' );
+			case 'Authorize':
+				return __( 'Authorize', 'mksddn-reddy-auth' );
+			default:
+				return $text;
+		}
 	}
 
 	/**
@@ -759,6 +1161,62 @@ class Mksddn_Reddy_Auth_Settings_Page {
 		}
 
 		return substr( $message, 0, 500 );
+	}
+
+	/**
+	 * Sanitize one-click delivery mode.
+	 *
+	 * @param mixed                $raw Raw input.
+	 * @param array<string, mixed> $raw_settings Raw settings array for migration.
+	 * @return string
+	 */
+	private function sanitize_one_click_delivery_mode( $raw, array $raw_settings = array() ) {
+		if ( array_key_exists( 'one_click_enabled', $raw_settings ) && empty( $raw_settings['one_click_enabled'] ) ) {
+			return 'otp_only';
+		}
+
+		$mode  = sanitize_key( (string) $raw );
+		$modes = array( 'otp_only', 'otp_plus_link', 'link_only' );
+
+		if ( ! in_array( $mode, $modes, true ) ) {
+			return 'otp_plus_link';
+		}
+
+		return $mode;
+	}
+
+	/**
+	 * Sanitize one-click message template.
+	 *
+	 * @param mixed $raw Raw input.
+	 * @return string
+	 */
+	private function sanitize_magic_link_message_template( $raw ) {
+		$template = sanitize_textarea_field( (string) $raw );
+		$template = trim( $template );
+
+		if ( '' === $template ) {
+			return self::get_default_magic_link_message_template();
+		}
+
+		return substr( $template, 0, 500 );
+	}
+
+	/**
+	 * Sanitize authorize button label.
+	 *
+	 * @param mixed $raw Raw input.
+	 * @return string
+	 */
+	private function sanitize_magic_link_button_label( $raw ) {
+		$label = sanitize_text_field( (string) $raw );
+		$label = trim( $label );
+
+		if ( '' === $label ) {
+			return self::get_default_magic_link_button_label();
+		}
+
+		return substr( $label, 0, 64 );
 	}
 
 	/**
@@ -873,8 +1331,11 @@ class Mksddn_Reddy_Auth_Settings_Page {
 							),
 						),
 						'responses'   => array(
-							'200' => array( 'description' => 'OTP request accepted' ),
+							'200' => array(
+								'description' => 'OTP request accepted. May include intent_id and intent_secret when one-click auth is enabled.',
+							),
 							'400' => array( 'description' => 'Validation or auth flow error' ),
+							'429' => array( 'description' => 'Rate limited' ),
 							'403' => array( 'description' => 'Request source not allowed (allowed_urls setting)' ),
 						),
 					),
@@ -917,8 +1378,87 @@ class Mksddn_Reddy_Auth_Settings_Page {
 						'responses'   => array(
 							'200' => array( 'description' => 'Authenticated' ),
 							'400' => array( 'description' => 'Invalid credentials' ),
+							'429' => array( 'description' => 'Rate limited' ),
 							'403' => array( 'description' => 'Request source not allowed (allowed_urls setting)' ),
 							'500' => array( 'description' => 'Session or token issue error' ),
+						),
+					),
+				),
+				'/auth/intent-status' => array(
+					'get' => array(
+						'summary'     => 'Poll login intent status',
+						'description' => 'Returns pending or approved status for cross-device one-click login.',
+						'parameters'  => array(
+							array(
+								'name'     => 'intent_id',
+								'in'       => 'query',
+								'required' => true,
+								'schema'   => array( 'type' => 'string' ),
+							),
+							array(
+								'name'     => 'intent_secret',
+								'in'       => 'query',
+								'required' => true,
+								'schema'   => array( 'type' => 'string' ),
+							),
+						),
+						'responses'   => array(
+							'200' => array( 'description' => 'Intent status returned' ),
+							'400' => array( 'description' => 'Invalid intent' ),
+							'429' => array( 'description' => 'Rate limited' ),
+						),
+					),
+					'post' => array(
+						'summary'     => 'Poll login intent status',
+						'description' => 'Same as GET intent-status but accepts intent data in JSON body.',
+						'requestBody' => array(
+							'required' => true,
+							'content'  => array(
+								'application/json' => array(
+									'schema' => array(
+										'type'       => 'object',
+										'required'   => array( 'intent_id', 'intent_secret' ),
+										'properties' => array(
+											'intent_id'     => array( 'type' => 'string' ),
+											'intent_secret' => array( 'type' => 'string' ),
+										),
+									),
+								),
+							),
+						),
+						'responses'   => array(
+							'200' => array( 'description' => 'Intent status returned' ),
+							'400' => array( 'description' => 'Invalid intent' ),
+							'429' => array( 'description' => 'Rate limited' ),
+						),
+					),
+				),
+				'/auth/complete-intent' => array(
+					'post' => array(
+						'summary'     => 'Complete cross-device login',
+						'description' => 'Consumes an approved login intent and optionally issues session/token.',
+						'requestBody' => array(
+							'required' => true,
+							'content'  => array(
+								'application/json' => array(
+									'schema' => array(
+										'type'       => 'object',
+										'required'   => array( 'intent_id', 'intent_secret' ),
+										'properties' => array(
+											'intent_id'     => array( 'type' => 'string' ),
+											'intent_secret' => array( 'type' => 'string' ),
+											'issue_token'   => array( 'type' => 'boolean', 'default' => false ),
+											'issue_session' => array( 'type' => 'boolean', 'default' => false ),
+										),
+									),
+								),
+							),
+						),
+						'responses'   => array(
+							'200' => array( 'description' => 'Authenticated' ),
+							'400' => array( 'description' => 'Invalid intent' ),
+							'429' => array( 'description' => 'Rate limited' ),
+							'409' => array( 'description' => 'Intent not approved yet' ),
 						),
 					),
 				),
@@ -990,9 +1530,41 @@ class Mksddn_Reddy_Auth_Settings_Page {
 					'key'   => 'bearerToken',
 					'value' => '',
 				),
+				array(
+					'key'   => 'intentId',
+					'value' => '',
+				),
+				array(
+					'key'   => 'intentSecret',
+					'value' => '',
+				),
 			),
 			'item'     => array(
 				$this->build_postman_item( 'Send code', 'POST', '{{baseUrl}}/auth/send-code', array( 'reddy_id' => '123456' ) ),
+				$this->build_postman_item(
+					'Intent status',
+					'GET',
+					'{{baseUrl}}/auth/intent-status?intent_id={{intentId}}&intent_secret={{intentSecret}}'
+				),
+				$this->build_postman_item(
+					'Intent status (POST)',
+					'POST',
+					'{{baseUrl}}/auth/intent-status',
+					array(
+						'intent_id'     => '{{intentId}}',
+						'intent_secret' => '{{intentSecret}}',
+					)
+				),
+				$this->build_postman_item(
+					'Complete intent (cookie)',
+					'POST',
+					'{{baseUrl}}/auth/complete-intent',
+					array(
+						'intent_id'     => '{{intentId}}',
+						'intent_secret' => '{{intentSecret}}',
+						'issue_session' => true,
+					)
+				),
 				$this->build_postman_item(
 					'Login (Bearer only)',
 					'POST',
@@ -1019,6 +1591,250 @@ class Mksddn_Reddy_Auth_Settings_Page {
 				$this->build_postman_item( 'Logout', 'POST', '{{baseUrl}}/auth/logout', null, true ),
 			),
 		);
+	}
+
+	/**
+	 * Render frontend integration guide (static HTML, no form).
+	 *
+	 * @return void
+	 */
+	private function render_frontend_guide() {
+		$pre = 'background:#f6f7f7;border:1px solid #dcdcde;padding:12px 16px;overflow-x:auto;border-radius:3px;line-height:1.5';
+		$url = untrailingslashit( rest_url( Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE ) );
+
+		// JS code samples; injected into <pre><code> via esc_html().
+		$otp_code = str_replace(
+			'__BASE__',
+			esc_js( $url ),
+			'const BASE = \'__BASE__\';
+
+// 1. Send OTP
+const sendRes = await fetch(`${BASE}/auth/send-code`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({ reddy_id: \'14963104048\' }),
+});
+if (!sendRes.ok) throw new Error(`HTTP ${sendRes.status}`);
+
+// 2. User reads the code in messenger and submits the form
+const loginRes = await fetch(`${BASE}/auth/login`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({
+    reddy_id:    \'14963104048\',
+    code:        \'123456\',      // code entered by the user
+    issue_token: true,
+  }),
+});
+if (!loginRes.ok) throw new Error(`HTTP ${loginRes.status}`);
+const { access_token, user } = await loginRes.json();
+// → { success: true, user: { id: 1, display_name: \'...\', email: \'...\' }, access_token: \'...\' }
+
+// 3. Call authenticated endpoints
+const me = await fetch(`${BASE}/auth/me`, {
+  headers: { Authorization: `Bearer ${access_token}` },
+}).then(r => r.json());'
+		);
+
+		$oneclick_code = str_replace(
+			'__BASE__',
+			esc_js( $url ),
+			'const BASE = \'__BASE__\';
+
+// 1. Send code — save intent_id and intent_secret from the response
+const sendData = await fetch(`${BASE}/auth/send-code`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({ reddy_id: \'14963104048\' }),
+}).then(r => r.json());
+
+const { intent_id, intent_secret } = sendData;
+
+// 2. Poll every 2 s until the user taps Authorize in the messenger
+async function pollUntilApproved(intentId, intentSecret, signal) {
+  const url = new URL(`${BASE}/auth/intent-status`);
+  url.searchParams.set(\'intent_id\',     intentId);
+  url.searchParams.set(\'intent_secret\', intentSecret);
+
+  while (!signal?.aborted) {
+    const data = await fetch(url, { signal }).then(r => r.json());
+    if (data.status === \'approved\') return;
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+}
+
+await pollUntilApproved(intent_id, intent_secret);
+
+// 3. Complete login
+const { access_token, user } = await fetch(`${BASE}/auth/complete-intent`, {
+  method:  \'POST\',
+  headers: { \'Content-Type\': \'application/json\' },
+  body:    JSON.stringify({ intent_id, intent_secret, issue_token: true }),
+}).then(r => r.json());
+// → { success: true, user: { id: 1, ... }, access_token: \'...\' }'
+		);
+
+		$race_code = str_replace(
+			'__BASE__',
+			esc_js( $url ),
+			'const BASE   = \'__BASE__\';
+const abort  = new AbortController();
+
+// Path A: one-click — user taps button in messenger
+async function loginViaButton() {
+  await pollUntilApproved(intent_id, intent_secret, abort.signal);
+  return fetch(`${BASE}/auth/complete-intent`, {
+    method:  \'POST\',
+    headers: { \'Content-Type\': \'application/json\' },
+    body:    JSON.stringify({ intent_id, intent_secret, issue_token: true }),
+  }).then(r => r.json());
+}
+
+// Path B: OTP — user types the code from messenger
+async function loginViaOtp(code) {
+  return fetch(`${BASE}/auth/login`, {
+    method:  \'POST\',
+    headers: { \'Content-Type\': \'application/json\' },
+    body:    JSON.stringify({ reddy_id: \'14963104048\', code, issue_token: true }),
+  }).then(r => r.json());
+}
+
+// getCodeFromUser() should resolve when the form is submitted
+const authData = await Promise.race([
+  loginViaButton(),
+  getCodeFromUser().then(code => loginViaOtp(code)),
+]);
+abort.abort(); // cancel the slower path'
+		);
+
+		?>
+		<div style="max-width:860px;margin-top:20px">
+			<h2><?php echo esc_html__( 'Frontend Setup Guide', 'mksddn-reddy-auth' ); ?></h2>
+
+			<h3><?php echo esc_html__( 'Shortcode (monolith mode)', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Add to your login page. Two-step flow: enter Reddy ID → receive OTP in messenger → enter code.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code>[mksddn_reddy_login]</code></pre>
+
+			<h3><?php echo esc_html__( 'CSS classes', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Target these classes to style the shortcode form:', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code>.mksddn-reddy-auth-form          /* outer wrapper */
+.mksddn-reddy-auth-send-form     /* step 1: enter Reddy ID */
+.mksddn-reddy-auth-login-form    /* step 2: enter OTP code */
+.mksddn-reddy-auth-waiting       /* one-click: waiting for approval */
+.mksddn-reddy-auth-message       /* status / error message */</code></pre>
+
+			<h3><?php echo esc_html__( 'REST API (headless / SPA)', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php esc_html_e( 'Base URL:', 'mksddn-reddy-auth' ); ?> <code><?php echo esc_html( $url ); ?></code></p>
+			<table class="widefat striped" style="margin-bottom:20px">
+				<thead>
+					<tr>
+						<th><?php echo esc_html__( 'Method', 'mksddn-reddy-auth' ); ?></th>
+						<th><?php echo esc_html__( 'Endpoint', 'mksddn-reddy-auth' ); ?></th>
+						<th><?php echo esc_html__( 'Description', 'mksddn-reddy-auth' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/send-code</code></td>
+						<td><?php echo esc_html__( 'Send OTP to a Reddy user.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/login</code></td>
+						<td><?php echo esc_html__( 'Verify OTP and issue token or session.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>GET / POST</code></td>
+						<td><code>/auth/intent-status</code></td>
+						<td><?php echo esc_html__( 'Poll one-click login intent status.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/complete-intent</code></td>
+						<td><?php echo esc_html__( 'Finalize a one-click login intent.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>GET</code></td>
+						<td><code>/auth/me</code></td>
+						<td><?php echo esc_html__( 'Return the authenticated user.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+					<tr>
+						<td><code>POST</code></td>
+						<td><code>/auth/logout</code></td>
+						<td><?php echo esc_html__( 'Revoke session or Bearer token.', 'mksddn-reddy-auth' ); ?></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3><?php echo esc_html__( 'OTP flow', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Send code → user enters OTP from messenger → verify → Bearer token.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code><?php echo esc_html( $otp_code ); ?></code></pre>
+
+			<h3><?php echo esc_html__( 'One-click flow', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Send code → user taps Authorize in messenger → poll until approved → complete login → Bearer token.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code><?php echo esc_html( $oneclick_code ); ?></code></pre>
+
+			<h3><?php echo esc_html__( 'Both paths in parallel', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Run OTP and one-click paths at the same time. Whichever completes first wins; cancel the other.', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code><?php echo esc_html( $race_code ); ?></code></pre>
+
+			<h3><?php echo esc_html__( 'Bearer token', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Include in subsequent API requests:', 'mksddn-reddy-auth' ); ?></p>
+			<pre style="<?php echo esc_attr( $pre ); ?>"><code>Authorization: Bearer {token}</code></pre>
+
+			<h3><?php echo esc_html__( 'Cookie session (monolith mode)', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'Pass issue_session: true in login or complete-intent to set a WordPress auth cookie.', 'mksddn-reddy-auth' ); ?></p>
+
+			<h3><?php echo esc_html__( 'Allowed request sources', 'mksddn-reddy-auth' ); ?></h3>
+			<p><?php echo esc_html__( 'If the allowlist is configured, browser requests must send a matching Origin or Referer. Server-side clients (curl, backend) should leave the list empty or use the mksddn_reddy_is_request_url_allowed filter.', 'mksddn-reddy-auth' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render inline tab switching script.
+	 *
+	 * @param string[] $tab_ids Ordered tab IDs.
+	 * @return void
+	 */
+	private function render_tab_js( array $tab_ids ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- $tab_ids reserved for future server-side use.
+		?>
+		<script>
+		(function () {
+			var KEY = 'mksddn_reddy_active_tab';
+			var nav = document.querySelector('.mksddn-reddy-nav');
+			var links = nav ? Array.from(nav.querySelectorAll('[data-tab]')) : [];
+			var panels = Array.from(document.querySelectorAll('[data-panel]'));
+			var footer = document.getElementById('mksddn-reddy-form-footer');
+
+			function activate(tabId) {
+				links.forEach(function (a) {
+					a.classList.toggle('nav-tab-active', a.getAttribute('data-tab') === tabId);
+				});
+				panels.forEach(function (p) {
+					p.style.display = p.getAttribute('data-panel') === tabId ? '' : 'none';
+				});
+				if (footer) {
+					footer.style.display = tabId === 'frontend' ? 'none' : '';
+				}
+				try { localStorage.setItem(KEY, tabId); } catch (e) {}
+			}
+
+			links.forEach(function (a) {
+				a.addEventListener('click', function (e) {
+					e.preventDefault();
+					activate(a.getAttribute('data-tab'));
+				});
+			});
+
+			var saved = '';
+			try { saved = localStorage.getItem(KEY) || ''; } catch (e) {}
+			var ids = links.map(function (a) { return a.getAttribute('data-tab'); });
+			activate(ids.indexOf(saved) > -1 ? saved : (ids[0] || ''));
+		}());
+		</script>
+		<?php
 	}
 
 	/**

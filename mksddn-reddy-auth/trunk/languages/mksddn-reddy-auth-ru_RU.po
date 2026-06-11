@@ -1,0 +1,463 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mksddn-reddy-auth 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Codex\n"
+
+msgid "-- Select page --"
+msgstr "-- Выберите страницу --"
+
+msgid "Access Control"
+msgstr "Управление доступом"
+
+msgid "Add to your login page. Two-step flow: enter Reddy ID → receive OTP in messenger → enter code."
+msgstr "Добавьте на страницу входа. Двухшаговый процесс: Reddy ID → OTP в мессенджере → ввод кода."
+
+msgid "API Contracts"
+msgstr "API-контракты"
+
+msgid "After a successful login test, enable protection."
+msgstr "После успешной проверки входа включите защиту."
+
+msgid "Allowed request sources"
+msgstr "Разрешенные источники запросов"
+
+msgid "Allowed Reddy IDs"
+msgstr "Разрешённые Reddy ID"
+
+msgid "Authentication required."
+msgstr "Требуется аутентификация."
+
+msgid "Authentication successful."
+msgstr "Аутентификация выполнена успешно."
+
+msgid "Authorization confirmed. Redirecting..."
+msgstr "Авторизация подтверждена. Выполняется перенаправление..."
+
+msgid "Authorization confirmed. Return to the original login tab to complete sign-in."
+msgstr "Авторизация подтверждена. Вернитесь на исходную вкладку входа, чтобы завершить вход."
+
+msgid "Authorization failed"
+msgstr "Авторизация не выполнена"
+
+msgid "Authorization is not confirmed yet."
+msgstr "Авторизация пока не подтверждена."
+
+msgid "Authorization link is invalid or expired."
+msgstr "Ссылка авторизации недействительна или истекла."
+
+msgid "Authorization request is invalid or expired."
+msgstr "Запрос авторизации недействителен или истек."
+
+msgid "Authorization request was already completed."
+msgstr "Запрос авторизации уже завершен."
+
+msgid "Authorize"
+msgstr "Подтвердить"
+
+msgid "Authorize button label"
+msgstr "Текст кнопки подтверждения"
+
+msgid "Authorize button only"
+msgstr "Только кнопка подтверждения"
+
+msgid "Base URL:"
+msgstr "Базовый URL:"
+
+msgid "Bearer token"
+msgstr "Bearer-токен"
+
+msgid "Both paths in parallel"
+msgstr "Оба пути параллельно"
+
+msgid "Bearer token TTL (seconds)"
+msgstr "TTL Bearer-токена (сек)"
+
+msgid "Bot API rejected OTP delivery."
+msgstr "Bot API отклонил отправку OTP."
+
+msgid "Bot API request failed."
+msgstr "Запрос к Bot API завершился ошибкой."
+
+msgid "Bot Messages"
+msgstr "Сообщения бота"
+
+msgid "Bot connection test"
+msgstr "Тест подключения бота"
+
+msgid "Bot connection test message sent successfully."
+msgstr "Тестовое сообщение успешно отправлено."
+
+msgid "Bot did not confirm OTP delivery."
+msgstr "Бот не подтвердил доставку OTP."
+
+msgid "Bot token (dev fallback)"
+msgstr "Токен бота (dev fallback)"
+
+msgid "Bot token is not configured."
+msgstr "Токен бота не настроен."
+
+msgid "CSS classes"
+msgstr "CSS-классы"
+
+msgid "Configure required authentication settings first, then move to one-click and security limits."
+msgstr "Сначала настройте обязательные параметры аутентификации, затем переходите к one-click и ограничениям безопасности."
+
+msgid "Configure which Reddy IDs and request sources are allowed, then enable content protection."
+msgstr "Настройте разрешённые Reddy ID и источники запросов, затем включите защиту контента."
+
+msgid "Configure your bot token, create a login page with [mksddn_reddy_login], then optionally enable site or REST protection."
+msgstr "Укажите токен бота, создайте страницу входа с [mksddn_reddy_login], затем при необходимости включите защиту сайта или REST."
+
+msgid "Connection"
+msgstr "Подключение"
+
+msgid "Cookie session (monolith mode)"
+msgstr "Cookie-сессия (монолитный режим)"
+
+msgid "Connection test message"
+msgstr "Сообщение для теста подключения"
+
+msgid "Core Authentication"
+msgstr "Базовая аутентификация"
+
+msgid "Customize texts sent by the Reddy bot. OTP template supports {code}, {ttl}, and {link}. One-click template is used when delivery mode is link only."
+msgstr "Настройте тексты, которые отправляет бот Reddy. Шаблон OTP поддерживает {code}, {ttl} и {link}. Шаблон one-click используется, когда включен режим доставки только ссылкой."
+
+msgid "Description"
+msgstr "Описание"
+
+msgid "Developer"
+msgstr "Разработчик"
+
+msgid "Developer Resources"
+msgstr "Ресурсы для разработчиков"
+
+msgid "Development fallback. In production prefer MKSDDN_REDDY_BOT_TOKEN in wp-config.php."
+msgstr "Резервный вариант для разработки. В продакшене используйте MKSDDN_REDDY_BOT_TOKEN в wp-config.php."
+
+msgid "Dismiss"
+msgstr "Скрыть"
+
+msgid "Endpoint"
+msgstr "Эндпоинт"
+
+msgid "Enter your bot token and verify the connection before enabling any protection."
+msgstr "Введите токен бота и проверьте подключение перед включением защиты."
+
+msgid "Download OpenAPI"
+msgstr "Скачать OpenAPI"
+
+msgid "Download Postman collection"
+msgstr "Скачать коллекцию Postman"
+
+msgid "Enable when your API must be private. Public endpoints from other plugins may also require authentication."
+msgstr "Включайте, если API должен быть приватным. Публичные endpoints других плагинов тоже могут потребовать аутентификацию."
+
+msgid "Export current REST contracts for API clients and tests."
+msgstr "Экспортировать текущие REST-контракты для API-клиентов и тестов."
+
+msgid "Finalize a one-click login intent."
+msgstr "Завершить one-click вход."
+
+msgid "For monolith WordPress site mode, create a login page and add shortcode:"
+msgstr "Для монолитного режима WordPress-сайта создайте страницу входа и добавьте шорткод:"
+
+msgid "Frontend Setup"
+msgstr "Фронтенд"
+
+msgid "Frontend Setup Guide"
+msgstr "Руководство по интеграции фронтенда"
+
+msgid "How long API Bearer tokens remain valid before users must log in again."
+msgstr "Сколько времени Bearer-токены API остаются действительными до повторного входа пользователя."
+
+msgid "How long an OTP code stays valid after it is sent."
+msgstr "Сколько времени OTP-код остается действительным после отправки."
+
+msgid "If the allowlist is configured, browser requests must send a matching Origin or Referer. Server-side clients (curl, backend) should leave the list empty or use the mksddn_reddy_is_request_url_allowed filter."
+msgstr "Если список разрешённых источников настроен, браузер должен передавать совпадающий заголовок Origin или Referer. Серверные клиенты (curl, backend) должны оставлять список пустым или использовать фильтр mksddn_reddy_is_request_url_allowed."
+
+msgid "In Reddy, message Bot Mother (72220000000) to create your bot."
+msgstr "В Reddy напишите Bot Mother (72220000000), чтобы создать бота."
+
+msgid "Include in subsequent API requests:"
+msgstr "Включать в последующие API-запросы:"
+
+msgid "Insufficient permissions."
+msgstr "Недостаточно прав."
+
+msgid "Invalid Reddy ID."
+msgstr "Некорректный Reddy ID."
+
+msgid "Invalid credentials."
+msgstr "Неверные учетные данные."
+
+msgid "Invalid token."
+msgstr "Некорректный токен."
+
+msgid "Lifetime of the authorize button link and login intent."
+msgstr "Срок действия ссылки кнопки подтверждения и login intent."
+
+msgid "Limits"
+msgstr "Лимиты"
+
+msgid "Locks public pages for non-authenticated visitors. Keep the selected login page accessible so users can sign in."
+msgstr "Закрывает публичные страницы для неаутентифицированных посетителей. Оставьте выбранную страницу входа доступной, чтобы пользователи могли войти."
+
+msgid "Log in"
+msgstr "Войти"
+
+msgid "Logged out."
+msgstr "Вы вышли из системы."
+
+msgid "Login attempt limit (per 10 minutes)"
+msgstr "Лимит попыток входа (за 10 минут)"
+
+msgid "Login page"
+msgstr "Страница входа"
+
+msgid "Max OTP send requests per Reddy ID and client IP within a fixed 5-minute window."
+msgstr "Максимум запросов отправки OTP на Reddy ID и IP клиента за фиксированное окно 5 минут."
+
+msgid "Max login attempts per Reddy ID and client IP within a fixed 10-minute window."
+msgstr "Максимум попыток входа на Reddy ID и IP клиента за фиксированное окно 10 минут."
+
+msgid "Messages"
+msgstr "Сообщения"
+
+msgid "Messenger delivery mode"
+msgstr "Режим доставки в мессенджер"
+
+msgid "Method"
+msgstr "Метод"
+
+msgid "One-Click"
+msgstr "One-Click"
+
+msgid "One-click flow"
+msgstr "One-click авторизация"
+
+msgid "Send code → user enters OTP from messenger → verify → Bearer token."
+msgstr "Отправить код → пользователь вводит OTP из мессенджера → проверить → Bearer-токен."
+
+msgid "Send code → user taps Authorize in messenger → poll until approved → complete login → Bearer token."
+msgstr "Отправить код → пользователь нажимает Подтвердить в мессенджере → ждать подтверждения → завершить вход → Bearer-токен."
+
+msgid "Run OTP and one-click paths at the same time. Whichever completes first wins; cancel the other."
+msgstr "Запустите оба пути одновременно. Кто завершится первым — тот и выигрывает; второй отменяется."
+
+msgid "OTP + authorize button"
+msgstr "OTP + кнопка подтверждения"
+
+msgid "OTP flow"
+msgstr "Поток OTP"
+
+msgid "OTP TTL (seconds)"
+msgstr "TTL OTP (сек)"
+
+msgid "OTP is invalid or expired. Request a new code and try again."
+msgstr "OTP недействителен или истек. Запросите новый код и попробуйте снова."
+
+msgid "OTP message template"
+msgstr "Шаблон сообщения OTP"
+
+msgid "OTP message template must include the {code} placeholder. Default template restored."
+msgstr "Шаблон OTP должен содержать плейсхолдер {code}. Восстановлен шаблон по умолчанию."
+
+msgid "OTP only"
+msgstr "Только OTP"
+
+msgid "OTP was sent successfully."
+msgstr "OTP успешно отправлен."
+
+msgid "One URL per line (scheme + host, optional path prefix). Empty = no restriction. Applies only to plugin REST routes (/mksddn-reddy-auth/v1/*), not the login shortcode."
+msgstr "Один URL в строке (scheme + host, префикс пути опционален). Пусто = без ограничений. Применяется только к REST-маршрутам плагина (/mksddn-reddy-auth/v1/*), не к шорткоду входа."
+
+msgid "One Reddy ID per line. Empty = no restriction. Applies to OTP send and login completion."
+msgstr "Один Reddy ID на строку. Пусто = без ограничений. Применяется к отправке OTP и завершению входа."
+
+msgid "One-Click Authorization"
+msgstr "One-click авторизация"
+
+msgid "One-click lets users authorize from messenger without entering OTP manually. Keep OTP flow as fallback."
+msgstr "One-click позволяет подтверждать вход в мессенджере без ручного ввода OTP. Оставляйте OTP-поток как резервный."
+
+msgid "One-click link TTL (seconds)"
+msgstr "TTL one-click ссылки (сек)"
+
+msgid "One-click message template"
+msgstr "Шаблон one-click сообщения"
+
+msgid "One-click redirect URL"
+msgstr "URL перенаправления one-click"
+
+msgid "One-time code"
+msgstr "Одноразовый код"
+
+msgid "Open settings"
+msgstr "Открыть настройки"
+
+msgid "Optional. Redirect target after successful one-click login. Defaults to home or login page."
+msgstr "Необязательно. URL перенаправления после успешного one-click входа. По умолчанию используется главная или страница входа."
+
+msgid "Pass issue_session: true in login or complete-intent to set a WordPress auth cookie."
+msgstr "Передайте issue_session: true в login или complete-intent, чтобы установить cookie WordPress."
+
+msgid "Paste your bot token here to connect WordPress with Reddy."
+msgstr "Вставьте токен бота для подключения WordPress к Reddy."
+
+msgid "Poll one-click login intent status."
+msgstr "Опросить статус one-click входа."
+
+msgid "Please sign in with Reddy to access site content."
+msgstr "Чтобы получить доступ к контенту сайта, войдите через Reddy."
+
+msgid "Protect all REST API content"
+msgstr "Защитить весь REST API-контент"
+
+msgid "Protect site content"
+msgstr "Защитить контент сайта"
+
+msgid "Quick Start"
+msgstr "Быстрый старт"
+
+msgid "REST API (headless / SPA)"
+msgstr "REST API (headless / SPA)"
+
+msgid "Return the authenticated user."
+msgstr "Вернуть аутентифицированного пользователя."
+
+msgid "Revoke session or Bearer token."
+msgstr "Отозвать сессию или Bearer-токен."
+
+msgid "Recommended: OTP + authorize button. Select OTP only to disable one-click authorization."
+msgstr "Рекомендуется: OTP + кнопка подтверждения. Выберите Только OTP, чтобы отключить one-click авторизацию."
+
+msgid "Reddy Auth"
+msgstr "Reddy Auth"
+
+msgid "Reddy Auth Settings"
+msgstr "Настройки Reddy Auth"
+
+msgid "Reddy Auth is active."
+msgstr "Reddy Auth активен."
+
+msgid "Reddy ID"
+msgstr "Reddy ID"
+
+msgid "Reddy authentication required."
+msgstr "Требуется аутентификация через Reddy."
+
+msgid "Reddy bot connection test from WordPress plugin."
+msgstr "Тест подключения бота Reddy из плагина WordPress."
+
+msgid "Request not allowed from this source."
+msgstr "Запрос из этого источника запрещен."
+
+msgid "Require Reddy authentication for all REST API content (except send-code/login)."
+msgstr "Требовать аутентификацию Reddy для всего REST API-контента (кроме send-code/login)."
+
+msgid "Require Reddy authentication for frontend site content."
+msgstr "Требовать аутентификацию Reddy для фронтенд-контента сайта."
+
+msgid "Security Limits"
+msgstr "Ограничения безопасности"
+
+msgid "Select page where [mksddn_reddy_login] shortcode is placed."
+msgstr "Выберите страницу, где размещен шорткод [mksddn_reddy_login]."
+
+msgid "Send OTP to a Reddy user."
+msgstr "Отправить OTP пользователю Reddy."
+
+msgid "Send code"
+msgstr "Отправить код"
+
+msgid "Shortcode (monolith mode)"
+msgstr "Шорткод (монолитный режим)"
+
+msgid "Send-code limit (per 5 minutes)"
+msgstr "Лимит отправки кода (за 5 минут)"
+
+msgid "Sends a test message to the specified Reddy user."
+msgstr "Отправляет тестовое сообщение указанному пользователю Reddy."
+
+msgid "Sent when an administrator runs Bot connection test."
+msgstr "Отправляется, когда администратор запускает тест подключения бота."
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "Target these classes to style the shortcode form:"
+msgstr "Используйте эти классы для стилизации формы:"
+
+msgid "Short label shown on messenger button (for example: Authorize, Log in)."
+msgstr "Короткий текст на кнопке в мессенджере (например: Подтвердить, Войти)."
+
+msgid "Soft guard for browser apps: checks Origin or Referer, not a secret key. Headers can be spoofed—rely on OTP, rate limits, and API lock for real protection. Server clients (curl, Postman, backends) usually need an empty list or the mksddn_reddy_is_request_url_allowed filter."
+msgstr "Мягкая защита для браузерных приложений: проверяет Origin или Referer, а не секретный ключ. Заголовки можно подделать — для реальной защиты используйте OTP, лимиты и блокировку API. Серверным клиентам (curl, Postman, backend) обычно нужен пустой список или фильтр mksddn_reddy_is_request_url_allowed."
+
+msgid "Tap Authorize to sign in. The link expires in {ttl} seconds."
+msgstr "Нажмите «Подтвердить», чтобы войти. Ссылка истекает через {ttl} сек."
+
+msgid "Test Reddy ID is required."
+msgstr "Нужно указать тестовый Reddy ID."
+
+msgid "Test bot connection"
+msgstr "Проверить подключение бота"
+
+msgid "Too many requests. Try again later."
+msgstr "Слишком много запросов. Попробуйте позже."
+
+msgid "Tune OTP/token TTL and anti-abuse limits. Start with defaults unless you have specific security requirements."
+msgstr "Настройте TTL OTP/токена и антиабуз-лимиты. Начните со значений по умолчанию, если нет специальных требований по безопасности."
+
+msgid "Unable to create or resolve account. Contact the site administrator."
+msgstr "Не удалось создать или определить учетную запись. Обратитесь к администратору сайта."
+
+msgid "Unable to create session."
+msgstr "Не удалось создать сессию."
+
+msgid "Unable to deliver OTP via bot API."
+msgstr "Не удалось отправить OTP через Bot API."
+
+msgid "Unable to issue token."
+msgstr "Не удалось выдать токен."
+
+msgid "Unable to process authentication request."
+msgstr "Не удалось обработать запрос аутентификации."
+
+msgid "Unable to resolve identity."
+msgstr "Не удалось определить identity."
+
+msgid "Use {code} for the one-time password, {ttl} for expiry time in seconds, and {link} for the authorize URL. Example: Your verification code: {code}. It expires in {ttl} seconds."
+msgstr "Используйте {code} для одноразового кода, {ttl} для времени жизни в секундах и {link} для URL подтверждения. Пример: Your verification code: {code}. It expires in {ttl} seconds."
+
+msgid "Used when delivery mode is authorize button only. Placeholders: {link}, {ttl}."
+msgstr "Используется в режиме доставки только кнопкой подтверждения. Плейсхолдеры: {link}, {ttl}."
+
+msgid "Configure this URL in your Reddy bot (BotMother) as the webhook endpoint to receive button press events."
+msgstr "Настройте этот URL в вашем Reddy-боте (BotMother) как адрес вебхука для получения событий нажатия кнопки."
+
+msgid "Verify OTP and issue token or session."
+msgstr "Проверить OTP и выдать токен или сессию."
+
+msgid "Waiting for authorization in Reddy. You can also enter the code below."
+msgstr "Ожидаем подтверждение в Reddy. Вы также можете ввести код ниже."
+
+msgid "Webhook URL"
+msgstr "URL вебхука"
+
+msgid "Webhook secret (optional)"
+msgstr "Webhook secret (необязательно)"
+
+msgid "Must match Secret in BotMother webhook settings. Leave empty to use sha256(body + token) compatibility mode."
+msgstr "Должен совпадать с Secret в настройках вебхука BotMother. Оставьте пустым, чтобы использовать режим совместимости sha256(body + token)."
+
+msgid "Your verification code: {code}. It expires in {ttl} seconds."
+msgstr "Ваш код подтверждения: {code}. Он истекает через {ttl} сек."

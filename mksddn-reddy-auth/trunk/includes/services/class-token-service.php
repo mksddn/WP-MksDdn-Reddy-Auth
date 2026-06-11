@@ -210,8 +210,7 @@ class Mksddn_Reddy_Auth_Token_Service {
 	 * @return void
 	 */
 	private function bootstrap_from_settings() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( isset( $settings['token_ttl_seconds'] ) ) {
 			$this->ttl_seconds = max( 3600, min( 7776000, (int) $settings['token_ttl_seconds'] ) );

@@ -145,8 +145,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return bool
 	 */
 	private function is_api_lock_enabled() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( ! isset( $settings['api_lock_enabled'] ) ) {
 			return false;
@@ -161,8 +160,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return bool
 	 */
 	private function is_monolith_lock_enabled() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 
 		if ( ! isset( $settings['monolith_lock_enabled'] ) ) {
 			return false;
@@ -182,12 +180,19 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return false;
 		}
 
-		$path   = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
-		$prefix = '/' . rest_get_url_prefix() . '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/';
-		$send   = $prefix . 'send-code';
-		$login  = $prefix . 'login';
+		$path            = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		$prefix          = '/' . rest_get_url_prefix() . '/' . Mksddn_Reddy_Auth_Plugin::REST_NAMESPACE . '/auth/';
+		$send            = $prefix . 'send-code';
+		$login           = $prefix . 'login';
+		$intent_status   = $prefix . 'intent-status';
+		$complete_intent = $prefix . 'complete-intent';
+		$button_callback = $prefix . 'button-callback';
 
-		return $this->path_ends_with( $path, $send ) || $this->path_ends_with( $path, $login );
+		return $this->path_ends_with( $path, $send )
+			|| $this->path_ends_with( $path, $login )
+			|| $this->path_ends_with( $path, $intent_status )
+			|| $this->path_ends_with( $path, $complete_intent )
+			|| $this->path_ends_with( $path, $button_callback );
 	}
 
 	/**
@@ -221,7 +226,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return false;
 		}
 
-		$user  = wp_get_current_user();
+		$user   = wp_get_current_user();
 		$exempt = current_user_can( 'edit_posts' );
 
 		return (bool) apply_filters( 'mksddn_reddy_content_lock_bypass', $exempt, $user );
@@ -238,10 +243,6 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 		}
 
 		if ( ! $this->is_monolith_lock_enabled() ) {
-			return;
-		}
-
-		if ( ! $this->has_login_destination_configured() ) {
 			return;
 		}
 
@@ -290,28 +291,6 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	}
 
 	/**
-	 * True when a login page is selected, URL is set, or a shortcode page exists.
-	 *
-	 * @return bool
-	 */
-	private function has_login_destination_configured() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
-		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
-		$url      = isset( $settings['login_page_url'] ) ? esc_url_raw( (string) $settings['login_page_url'] ) : '';
-
-		if ( $page_id > 0 && get_permalink( $page_id ) ) {
-			return true;
-		}
-
-		if ( '' !== $url ) {
-			return true;
-		}
-
-		return '' !== $this->find_first_login_shortcode_page_url();
-	}
-
-	/**
 	 * Detect if current singular page renders login shortcode.
 	 *
 	 * @return bool
@@ -339,8 +318,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return true;
 		}
 
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
 
 		if ( $page_id > 0 && is_page( $page_id ) ) {
@@ -356,8 +334,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 	 * @return string
 	 */
 	private function resolve_login_url() {
-		$settings = get_option( self::SETTINGS_OPTION_KEY, array() );
-		$settings = is_array( $settings ) ? $settings : array();
+		$settings = Mksddn_Reddy_Auth_Settings_Page::get_runtime_settings();
 		$page_id  = isset( $settings['login_page_id'] ) ? absint( $settings['login_page_id'] ) : 0;
 		$url      = isset( $settings['login_page_url'] ) ? esc_url_raw( (string) $settings['login_page_url'] ) : '';
 
@@ -377,7 +354,7 @@ class Mksddn_Reddy_Auth_Rest_Auth_Middleware {
 			return $fallback;
 		}
 
-		return home_url( '/' );
+		return wp_login_url();
 	}
 
 	/**
